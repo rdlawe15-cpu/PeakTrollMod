@@ -7,5 +7,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("PEAK Troll Mod")]
 [assembly: ComVisible(false)]
 [assembly: Guid("8e2c4942-7667-4f44-a4d8-88d4502a3db9")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
+[assembly: AssemblyVersion("0.2.0.0")]
+[assembly: AssemblyFileVersion("0.2.0.0")]

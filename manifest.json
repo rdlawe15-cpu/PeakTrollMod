@@ -1,8 +1,8 @@
 {
   "name": "PEAK_Troll_Mod",
-  "version_number": "0.1.0",
-  "website_url": "",
-  "description": "Private-lobby F7 troll controls with player effects, tracked ambushes, Mirage Scouts, visual-only fake enemies, targeted fake audio, ping placement, Chaos Mode, and safe cleanup.",
+  "version_number": "0.2.0",
+  "website_url": "https://github.com/rdlawe15-cpu/PeakTrollMod",
+  "description": "Private-lobby F7 troll controls with player effects, tracked ambushes, Phantom Pings, visual-only fake enemies, targeted fake audio, Chaos Mode, and safe cleanup.",
   "dependencies": [
     "BepInEx-BepInExPack_PEAK-5.4.75301"
   ]

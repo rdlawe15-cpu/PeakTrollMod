@@ -41,6 +41,9 @@ namespace PeakTrollMod
         private bool _randomLaunch;
         private bool _ragdollLaunch = true;
         private bool _multiPlace;
+        private int _phantomPingPattern;
+        private int _phantomPingCount = 6;
+        private float _phantomPingInterval = 1f;
         private bool _clothesOnly;
         private bool _colorOnly;
         private bool _confirmEliminate;
@@ -86,7 +89,7 @@ namespace PeakTrollMod
         {
             DrawPanel(new Rect(18, 120, 192, 690), new Color(.015f, .045f, .075f, .92f), new Color(.09f, .2f, .3f, 1f), 1f);
             for (int i = 0; i < _tabs.Length; i++) if (GUI.Button(new Rect(24, 138 + i * 54, 180, 48), _tabs[i], i == _tab ? _navSelected : _nav)) _tab = i;
-            GUI.Label(new Rect(35, 754, 165, 24), "PEAK Troll Mod v0.1.0", _small);
+            GUI.Label(new Rect(35, 754, 165, 24), "PEAK Troll Mod v" + TrollModPlugin.Version, _small);
         }
 
         private void DrawContent()
@@ -214,7 +217,15 @@ namespace PeakTrollMod
                 if (CapabilityButton("IT'S FOLLOWING YOU", fakeCapability, _button, 38)) CreateFake(MirageBehavior.FollowAtDistance);
                 if (CapabilityButton("VANISH WHEN CLOSE", fakeCapability, _button, 38)) CreateFake(MirageBehavior.VanishWhenClose);
             });
-            Card(new Rect(238, 500, 990, 158), "↶  Mirage Registry", new Color(.3f, 1f, .55f), delegate { GUILayout.Label("Active on this client: " + _plugin.Mirages.Count + "    Fake enemies: " + _plugin.Mirages.FakeEnemyCount, _label); GUILayout.BeginHorizontal(); if (GUILayout.Button("UNDO LAST LOCAL", _button, GUILayout.Height(42))) _plugin.Mirages.UndoLast(); if (GUILayout.Button("CLEAR FAKE ENEMIES LOCAL", _button, GUILayout.Height(42))) _plugin.Mirages.ClearType(MirageKind.FakeEnemy); if (GUILayout.Button("CLEAR FOR AUDIENCE", _danger, GUILayout.Height(42))) ClearMirageAudience(); GUILayout.EndHorizontal(); });
+            Card(new Rect(238, 500, 480, 190), "⌖  Phantom Pings", new Color(.35f, .65f, 1f), delegate
+            {
+                Badge(PermissionKind.EveryoneNeedsMod); GUILayout.Label("Target-only decoy pings; one bounded sequence per viewer.", _small);
+                if (GUILayout.Button(((PhantomPingPattern)_phantomPingPattern).ToString() + "  ▾", _button, GUILayout.Height(30))) _phantomPingPattern = (_phantomPingPattern + 1) % 3;
+                GUILayout.Label("Count " + _phantomPingCount, _small); _phantomPingCount = Mathf.RoundToInt(GUILayout.HorizontalSlider(_phantomPingCount, 3, 12));
+                GUILayout.Label("Interval " + _phantomPingInterval.ToString("0.00") + "s", _small); _phantomPingInterval = GUILayout.HorizontalSlider(_phantomPingInterval, .35f, 3f);
+                GUILayout.BeginHorizontal(); if (CapabilityButton("START", FeatureCapability.PhantomPings, _button, 34)) Owner(NetCommand.PhantomPings, new object[] { _phantomPingPattern, _phantomPingCount, _phantomPingInterval }); if (GUILayout.Button("CANCEL", _danger, GUILayout.Height(34))) Owner(NetCommand.CancelPhantomPings, new object[0]); GUILayout.EndHorizontal();
+            });
+            Card(new Rect(735, 500, 493, 190), "↶  Mirage Registry", new Color(.3f, 1f, .55f), delegate { GUILayout.Label("Active: " + _plugin.Mirages.Count + "    Fake enemies: " + _plugin.Mirages.FakeEnemyCount, _label); if (GUILayout.Button("UNDO LAST LOCAL", _button, GUILayout.Height(34))) _plugin.Mirages.UndoLast(); if (GUILayout.Button("CLEAR FAKE ENEMIES LOCAL", _button, GUILayout.Height(34))) _plugin.Mirages.ClearType(MirageKind.FakeEnemy); if (GUILayout.Button("CLEAR FOR AUDIENCE", _danger, GUILayout.Height(34))) ClearMirageAudience(); });
         }
 
         private void DrawAudio(Rect area)

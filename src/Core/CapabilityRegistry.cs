@@ -45,6 +45,7 @@ namespace PeakTrollMod
             Need(FeatureCapability.MushroomZombieSpawn, FindZombiePrefab() != null, "no loaded MushroomZombieSpawner prefab reference");
             Need(FeatureCapability.LookerSpawn, false, "no verified network prefab path in PEAK 2.4.b");
             Need(FeatureCapability.PingPlacement, ReflectionHelpers.HasMethod(typeof(PointPinger), "TryGetPingHit", typeof(RaycastHit).MakeByRefType(), typeof(Vector3)), "PointPinger.TryGetPingHit missing");
+            Need(FeatureCapability.PhantomPings, ReflectionHelpers.HasMethod(typeof(PointPinger), "ReceivePoint_Rpc", typeof(Vector3), typeof(Vector3)) && ReflectionHelpers.HasField(typeof(PointPinger), "character"), "PointPinger.ReceivePoint_Rpc or character reference missing");
             Need(FeatureCapability.MirageScout, true, "");
             Need(FeatureCapability.MirageLuggage, HasLoaded(typeof(Luggage)), "no loaded Luggage visual source");
             Need(FeatureCapability.MirageStatue, HasLoaded(typeof(Peak.ScoutStatue)), "no loaded ScoutStatue visual source");

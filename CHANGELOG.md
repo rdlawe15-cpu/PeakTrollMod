@@ -1,8 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 — 2026-09-06
 
-- Added compatible-client summit helicopter suppression, propagated through protocol v4; a compatible host is required to suppress the authoritative rescue completion.
+- Added bounded, target-only Phantom Pings with breadcrumb-trail, circle, and behind-you patterns, configurable count and interval, explicit cancellation, and reset cleanup.
+- Updated compatible-client networking to protocol v5.
+- Added compatible-client summit helicopter suppression, propagated through the current protocol; a compatible host is required to suppress the authoritative rescue completion.
 - Added the persistent Campfire Reset Trap: the first observed ignition of each campfire warps every available scout back to the first segment start using native PEAK RPCs.
 - Added a reusable timed Chaos Combo Builder with selectable Mandrake Rain, knockout, Sky High, Horizontal Yeet, and One Live One steps.
 - Added Position Roulette, a randomized no-fixed-point rotation of every available scout's position.

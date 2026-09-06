@@ -1,8 +1,11 @@
 # PEAK Troll Mod
 
+[![Download latest release](https://img.shields.io/badge/Download-Latest%20Release-2ea44f?style=for-the-badge&logo=github)](https://github.com/rdlawe15-cpu/PeakTrollMod/releases/latest)
+
 PEAK Troll Mod is a BepInEx 5 mod for private/cooperative PEAK lobbies. Press **F7** for a dark in-game control panel covering player physics, movement, visibility, teleportation, statuses, item delivery, tracked enemy ambushes, visual-only mirages, fake audio, enemy decoys, and bounded Chaos Mode.
 
-Version: **0.1.0**  
+Version: **0.2.0**
+
 Inspected game build: **PEAK 2.4.b (`3e62ee214`)**
 
 ## Safety and authority model
@@ -18,7 +21,7 @@ The mod does not impersonate Photon players, spoof ownership, or bypass host/mas
 
 Use this only with friends who expect modded lobby antics. Mod-rendered effects require the viewing client to have the same protocol version; native PEAK RPC actions are called out separately in the menu.
 
-## Implemented in 0.1.0
+## Implemented in 0.2.0
 
 - F7 menu with cursor restoration, input blocking, mouse/keyboard support, UI scaling, transparency, target refresh, permission badges, and emergency controls.
 - Player discovery through `PlayerHandler.GetAllPlayerCharacters()`.
@@ -36,13 +39,14 @@ Use this only with friends who expect modded lobby antics. Mod-rendered effects 
 - Bounded Item Storm and Mandrake Rain using real networked PEAK item prefabs with tracked cleanup.
 - Chaos Combo Builder for reusable timed multi-action sequences, plus Position Roulette and the one-live-fuse Dynamite preset.
 - Optional Campfire Reset Trap that returns the lobby to the first segment start when a campfire is lit.
-- Optional summit helicopter suppression synchronized among protocol-v4 compatible clients; unmodded clients cannot have their local rescue presentation intercepted.
+- Optional summit helicopter suppression synchronized among protocol-v5 compatible clients; unmodded clients cannot have their local rescue presentation intercepted.
 - Host-only Scoutmaster and Mushroom Zombie ambushes using verified PEAK prefab paths/sources. Each tracked enemy retains the selected target through periodic host-authoritative retargeting.
 - A bounded, target-following shower of 1–64 real networked Dynamite items, with height, spread, interval, lit-fuse controls, a separately configurable 1–128 active-item cap, and owner cleanup. It uses PEAK's runtime item prefab and is visible to unmodded clients.
 - Native **Horizontal Yeet** ragdoll with an independently bounded 25–150 strength range.
 - Independently scrollable menu cards so controls remain reachable at smaller resolutions and UI scales.
 - Strict tracking and cleanup of objects created by this mod only.
 - One-shot or multi-place ping placement that temporarily intercepts `PointPinger.DoPing`, sends the visual to the selected viewer or every compatible viewer, and restores normal pings after placement.
+- Target-only Phantom Ping sequences in breadcrumb-trail, circle, and behind-you patterns, bounded to 3–12 pings at 0.35–3 second intervals with cancellation and reset cleanup.
 - Renderer-only Mirage Scouts copied from a participating player's current appearance.
 - Visual-only Luggage, Amulet Statue, Capybara, Scoutmaster, Mushroom Zombie, and Looker mirages when a runtime visual source is loaded.
 - Fake Enemy behaviors: stand, stare, follow, follow at distance, walk past, look around, run away, charge, vanish when close, and timed despawn.
@@ -91,7 +95,7 @@ Output: `bin\Release\PeakTrollMod.dll`.
 
 1. Install `BepInEx-BepInExPack_PEAK-5.4.75301` (or a newer compatible BepInEx 5 pack).
 2. Copy `PeakTrollMod.dll` to `PEAK\BepInEx\plugins\PeakTrollMod\`.
-3. Launch PEAK and check `BepInEx\LogOutput.log` for `PEAK Troll Mod 0.1.0 loaded`.
+3. Launch PEAK and check `BepInEx\LogOutput.log` for `PEAK Troll Mod 0.2.0 loaded`.
 4. Every friend who should see targeted mirages/audio must install the same mod version. Native ragdoll, knockout, elimination, and item-in-hand targets do not need it.
 5. Press F7 in a lobby/run.
 
@@ -103,13 +107,13 @@ Create an original square **256×256 PNG** named `icon.png` in the project root;
 .\package.ps1
 ```
 
-The script builds Release, creates the required `BepInEx/plugins/PeakTrollMod/` package layout, includes the manifest/docs/icon, and writes `artifacts\PEAK_Troll_Mod-0.1.0.zip`. Do not add PEAK, Unity, Photon, Harmony, or BepInEx DLLs to the archive.
+The script builds Release, creates the required `BepInEx/plugins/PeakTrollMod/` package layout, includes the manifest/docs/icon, and writes `artifacts\PEAK_Troll_Mod-0.2.0.zip`. Do not add PEAK, Unity, Photon, Harmony, or BepInEx DLLs to the archive.
 
 ## Troubleshooting
 
 - **F7 does nothing:** confirm the DLL is beneath `BepInEx\plugins`, inspect `LogOutput.log`, and check that another mod did not bind F7. Change `MenuKey` in `BepInEx\config\com.peaktrollmod.core.cfg`.
-- **Remote action says the player is incompatible:** that player has not advertised the exact 0.1.0 protocol. Install the same version on all participating clients and rejoin the room.
-- **Only the menu user sees placed luggage:** update every intended viewer to the protocol-3 build. Mirage props are visual-only and are created by each receiving client; unmodded clients cannot render them.
+- **Remote action says the player is incompatible:** that player has not advertised the exact 0.2.0 protocol. Install the same version on all participating clients and rejoin the room.
+- **Only the menu user sees placed luggage or Phantom Pings:** update every intended viewer to the protocol-5 build. Mirage props and Phantom Pings are rendered by each receiving client; unmodded clients cannot render them.
 - **A mirage type is disabled:** its visual prefab/model is not loaded in the current scene. Use “Refresh Runtime Visual Sources” after the relevant content loads.
 - **Zombie spawning is disabled:** the current scene has no live `MushroomZombieSpawner` prefab source.
 - **Host button is locked:** only Photon’s current master client can use genuine enemy spawning/retargeting.

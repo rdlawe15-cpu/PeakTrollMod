@@ -11,7 +11,7 @@ namespace PeakTrollMod
     internal sealed class TrollNetworkManager : IOnEventCallback
     {
         private const byte EventCode = 197;
-        private const int ProtocolVersion = 4;
+        private const int ProtocolVersion = 5;
         private readonly ManualLogSource _log;
         private readonly PlayerManager _players;
         private readonly PlayerActions _actions;
@@ -201,6 +201,8 @@ namespace PeakTrollMod
                 case NetCommand.MirageScout: return _mirages.CreateScout(target, Int(args, 0, targetActor), Position(args, 1, target.Character.Center, 50f), (MirageBehavior)Mathf.Clamp(Int(args, 4, 0), 0, 7), Mathf.Clamp(Float(args, 5, 12f), 1f, 120f), senderActor);
                 case NetCommand.FakeEnemy: return _mirages.CreateFakeEnemy(target, (FakeEnemyKind)Mathf.Clamp(Int(args, 0, 0), 0, 2), Position(args, 1, target.Character.Center, 50f), (MirageBehavior)Mathf.Clamp(Int(args, 4, 0), 0, 7), Mathf.Clamp(Float(args, 5, 12f), 1f, 120f), senderActor);
                 case NetCommand.ClearMirages: _mirages.ClearAll(); return ActionResult.Ok("Mirages cleared.");
+                case NetCommand.PhantomPings: return TrollModPlugin.Instance.PhantomPings.Start(target, (PhantomPingPattern)Mathf.Clamp(Int(args, 0, 0), 0, 2), Mathf.Clamp(Int(args, 1, 6), 3, 12), Mathf.Clamp(Float(args, 2, 1f), .35f, 3f));
+                case NetCommand.CancelPhantomPings: TrollModPlugin.Instance.PhantomPings.Cancel(); return ActionResult.Ok("Phantom Pings cancelled.");
                 case NetCommand.MirageProp:
                     int kind = Mathf.Clamp(Int(args, 0, 0), 0, 2); Vector3 normal = V3(args, 4); if (normal.sqrMagnitude < .01f) normal = Vector3.up;
                     return _mirages.CreateStatic((MirageKind)kind, Position(args, 1, target.Character.Center, 50f), Quaternion.FromToRotation(Vector3.up, normal.normalized), senderActor, targetActor);
@@ -215,7 +217,7 @@ namespace PeakTrollMod
         private static Vector3 V3(object[] a, int i) { Vector3 value = new Vector3(Float(a, i, 0f), Float(a, i + 1, 0f), Float(a, i + 2, 0f)); return Finite(value) ? value : Vector3.zero; }
         private static Vector3 Position(object[] a, int i, Vector3 origin, float maxDistance) { Vector3 value=V3(a,i);Vector3 delta=value-origin;if(delta.magnitude>maxDistance)value=origin+delta.normalized*maxDistance;return value; }
         private static bool Finite(Vector3 value) { return !float.IsNaN(value.x) && !float.IsNaN(value.y) && !float.IsNaN(value.z) && !float.IsInfinity(value.x) && !float.IsInfinity(value.y) && !float.IsInfinity(value.z); }
-        private ActionResult ResetTarget(PlayerEntry target) { _audio.StopForTarget(target.ActorNumber); _audio.RestoreVoice(target.ActorNumber); _mirages.ClearTarget(target.ActorNumber); if(TrollModPlugin.Instance.Appearance!=null)TrollModPlugin.Instance.Appearance.Restore(target); return _actions.ResetLocal(target); }
+        private ActionResult ResetTarget(PlayerEntry target) { _audio.StopForTarget(target.ActorNumber); _audio.RestoreVoice(target.ActorNumber); _mirages.ClearTarget(target.ActorNumber); if(target.IsLocal&&TrollModPlugin.Instance.PhantomPings!=null)TrollModPlugin.Instance.PhantomPings.Cancel(); if(TrollModPlugin.Instance.Appearance!=null)TrollModPlugin.Instance.Appearance.Restore(target); return _actions.ResetLocal(target); }
 
         public void Dispose() { if (_registered) { PhotonNetwork.RemoveCallbackTarget(this); _registered = false; } }
     }

@@ -51,6 +51,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 
 - `PointPinger.DoPing()` calls private `TryGetPingHit(out RaycastHit, Vector3)`, then sends the normal `ReceivePoint_Rpc` with hit point/normal.
 - Placement mode patches only `DoPing`, invokes the real hit-test, sends the prop description to the selected compatible viewer (or every compatible viewer), consumes a successful placement ping, and automatically disarms unless Multi-Place is enabled. Each recipient reconstructs a renderer-only prop from its loaded PEAK visual source. When placement is inactive or hit-testing fails, normal ping behavior is untouched.
+- Phantom Pings ask only the compatible target owner to invoke the verified local `ReceivePoint_Rpc(Vector3,Vector3)` display path. Breadcrumb, circle, and behind-you positions are ground-probed; each sequence is clamped to 3–12 pings and 0.35–3 second intervals, and a new sequence replaces the previous one.
 
 ### Enemies and spawning
 
@@ -89,12 +90,13 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 | Statuses | 🔒 Host native / 🟡 non-host | PEAK validates the host sender natively; otherwise a compatible target owner executes the normal path |
 | Visibility | 🟡 Everyone Needs Mod | Compatible observers apply/restore cached renderer state locally |
 | Mirage Scout, props, fake enemies, fake sound | 🟡 Everyone Needs Mod | Intended victim renders/plays locally; no real identity/entity created |
+| Phantom Pings | 🟡 Everyone Needs Mod | Compatible target owner renders a bounded local decoy-ping sequence; no room-wide ping RPC is sent |
 | Scoutmaster/Zombie spawn and tracked enemy targeting | 🔒 Host Only | `PhotonNetwork.IsMasterClient` checked before verified spawning/targeting paths |
 | Genuine Looker, voice features, appearance swap, hazard clouds | ⚠ Unsupported | Disabled; no request is sent |
 
 ## Network validation
 
-- Custom Photon event code 197, exact protocol 3 / mod version `0.1.0`.
+- Custom Photon event code 197, exact protocol 5 / mod version `0.2.0`.
 - Sender must resolve to a player in the current room.
 - Target actor must resolve to a participating character.
 - Command enum, argument count/type, enum range, string length, position type, speed, force, duration, volume, status, and object limits are checked or clamped.
@@ -113,7 +115,7 @@ Startup checks cache reflected methods/fields. Scene/runtime refresh discovers l
 - Confirm the receiving client has every requested item prefab loaded before master spawning.
 - Exercise host migration with tracked room objects; cleanup remains host-only.
 - Inspect Mirage bone/animator alignment for every cosmetic and enemy variant.
-- Verify ping-placed props and audience cleanup with two-, three-, and four-client protocol-3 lobbies.
+- Verify ping-placed props, Phantom Ping patterns/cancellation, and audience cleanup with two-, three-, and four-client protocol-5 lobbies.
 - Validate lit/unlit Dynamite Shower timing, cleanup, and the 300 m Sky High ceiling across each biome in a private multiplayer lobby.
 - Confirm Photon custom event code 198 does not conflict with the final dependency set.
 - Profile a full 24-object mirage cap and verify allocations during creation only.

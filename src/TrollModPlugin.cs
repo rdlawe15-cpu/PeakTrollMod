@@ -15,7 +15,7 @@ namespace PeakTrollMod
     {
         public const string Guid = "com.dougl.peaktrollmod";
         public const string Name = "PEAK Troll Mod";
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         internal static TrollModPlugin Instance;
         internal ModConfig Settings;
@@ -26,6 +26,7 @@ namespace PeakTrollMod
         internal SpawnManager Spawns;
         internal MirageManager Mirages;
         internal PingPlacementManager PingPlacement;
+        internal PhantomPingManager PhantomPings;
         internal AudioManager Audio;
         internal AppearanceManager Appearance;
         internal ProgressionManager Progression;
@@ -52,6 +53,7 @@ namespace PeakTrollMod
             Spawns = new SpawnManager(Logger, Players, Capabilities);
             Network = new TrollNetworkManager(Logger, Players, Actions, Mirages, Audio);
             PingPlacement = new PingPlacementManager(Logger, Mirages, Players, Network);
+            PhantomPings = new PhantomPingManager(Logger, Players);
             Appearance = new AppearanceManager(Logger);
             Progression = new ProgressionManager(Logger, Players, Settings);
             CampfireTroll = new CampfireTrollManager(Logger, Players, Actions, Settings);
@@ -70,7 +72,7 @@ namespace PeakTrollMod
         private void Update()
         {
             if (Settings.MenuKey.Value.IsDown()) Ui.Toggle();
-            Players.Tick(); Network.Tick(); Actions.Tick(); Audio.Tick(); Mirages.Tick(); Spawns.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
+            Players.Tick(); Network.Tick(); Actions.Tick(); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
 
             bool inRoom = PhotonNetwork.InRoom;
             if (_wasInRoom && !inRoom) Reset.ResetAll();
