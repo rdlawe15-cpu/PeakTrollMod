@@ -399,6 +399,15 @@ namespace PeakTrollMod
             return ActionResult.Ok("Flight enabled for " + target.Name + " at " + speed.ToString("0") + " m/s. Close F7, then use WASD, Space/Ctrl, and Shift.");
         }
 
+        public ActionResult StopFlightLocal(PlayerEntry target)
+        {
+            if (target == null) return ActionResult.Fail("Local player unavailable.");
+            CachedState state;
+            if (!_states.TryGetValue(target.ActorNumber, out state) || !state.FlightActive) return ActionResult.Ok("Flight was already disabled.");
+            RestoreFlight(state);
+            return ActionResult.Ok("Flight disabled and its cached physics restored.");
+        }
+
         private static void RestoreFlight(CachedState state)
         {
             if (state == null) return;
@@ -452,6 +461,14 @@ namespace PeakTrollMod
             if (segment == null || segment.reconnectSpawnPos == null) return false;
             position = segment.reconnectSpawnPos.position;
             return true;
+        }
+
+        public bool TryGetCheckpointPosition(out Vector3 position)
+        {
+            position = Vector3.zero;
+            MapHandler map = UnityEngine.Object.FindFirstObjectByType<MapHandler>();
+            if (map == null || MapHandler.CurrentBaseCampSpawnPoint == null) return false;
+            return TrySafePosition(MapHandler.CurrentBaseCampSpawnPoint.position, out position);
         }
 
         public ActionResult KnockoutLocal(PlayerEntry target)
@@ -570,13 +587,25 @@ namespace PeakTrollMod
             if (!target.Character.data.dead && !target.Character.data.fullyPassedOut) return ActionResult.Fail(target.Name + " is already alive.");
             if (!Finite(desiredPosition)) return ActionResult.Fail("Revive destination is invalid.");
             Vector3 safe;
-            if (!TrySafePosition(desiredPosition, out safe)) safe = desiredPosition + Vector3.up * 1.1f;
+            if (!TrySafePosition(desiredPosition, out safe)) return ActionResult.Fail("No safe ground was found near the revive destination.");
             try
             {
                 target.Character.refs.view.RPC("RPCA_ReviveAtPosition", RpcTarget.All, new object[] { safe, applyPostReviveStatus, -1 });
                 return ActionResult.Ok("Resurrected " + target.Name + " through PEAK's native synchronized revive; host and target mod are not required.");
             }
             catch (Exception ex) { return Error("Resurrect", ex); }
+        }
+
+        public ActionResult HaltVelocityLocal(PlayerEntry target)
+        {
+            if (target == null || target.Character == null || target.Character.refs == null || target.Character.refs.ragdoll == null) return ActionResult.Fail("Local ragdoll unavailable.");
+            try
+            {
+                target.Character.refs.ragdoll.HaltBodyVelocity(true);
+                target.Character.data.fallSeconds = 0f;
+                return ActionResult.Ok("Stopped local character velocity and reset fall damage buildup.");
+            }
+            catch (Exception ex) { return Error("Stabilize player", ex); }
         }
 
         public ActionResult ResetLocal(PlayerEntry target)
@@ -596,7 +625,7 @@ namespace PeakTrollMod
 
         public void ResetKnownPlayers() { _wrongMountainJobs.Clear(); List<PlayerEntry> copy = new List<PlayerEntry>(_players.Entries); for (int i = 0; i < copy.Count; i++) ResetLocal(copy[i]); _states.Clear(); }
 
-        private static bool TrySafePosition(Vector3 desired, out Vector3 safe)
+        internal static bool TrySafePosition(Vector3 desired, out Vector3 safe)
         {
             safe = desired;
             RaycastHit hit;
@@ -607,7 +636,7 @@ namespace PeakTrollMod
             return !Physics.CheckSphere(safe, .35f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
         }
 
-        private static bool Finite(Vector3 value)
+        internal static bool Finite(Vector3 value)
         {
             return !float.IsNaN(value.x) && !float.IsInfinity(value.x) && !float.IsNaN(value.y) && !float.IsInfinity(value.y) && !float.IsNaN(value.z) && !float.IsInfinity(value.z);
         }

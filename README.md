@@ -11,8 +11,10 @@ Skip the spectator wait when joining an expedition in progress, resurrect fallen
 ## Features
 
 - **Phantom Pings** — Target one player with Breadcrumb Trail, Circle, or Behind You ping patterns.
-- **No Wait** — When you join an expedition already in progress, automatically revive beside the nearest living scout. It works for non-host clients and does not auto-revive later deaths.
-- **Resurrection Controls** — Revive the selected scout, everyone, or yourself through PEAK's native synchronized revive path; the caller does not need to be host and the target does not need the mod.
+- **No Wait Plus** — Join an expedition in progress beside the nearest or lowest safely grounded scout, or at the active checkpoint. Reconnecting scouts can retain restored inventory and conditions, and post-warp velocity is cleared.
+- **Quick Reconnect** — Remembers the last valid Steam lobby and reconnects through PEAK's native version-checked lobby flow.
+- **Emergency Recovery** — Return yourself to recorded safe ground, the nearest safe scout, or the active checkpoint; stop flight and dangerous velocity; or restore reversible local changes.
+- **Resurrection Controls** — Revive the selected scout, yourself, or queue the whole fallen party at safe intervals through PEAK's native synchronized revive path; the caller does not need to be host and the target does not need the mod.
 - **Player Effects** — Reversible owner-controlled flight, ragdoll, knockout, launch, Horizontal Yeet, Sky High, Off Mountain, teleportation, status effects, and movement-speed controls.
 - **Fake Enemies and Mirages** — Create visual-only scouts, luggage, statues, creatures, and enemy decoys with configurable behaviors.
 - **Enemy Ambushes** — Spawn and track supported real enemies when host authority and runtime prefabs are available.
@@ -34,7 +36,7 @@ The menu labels actions by their authority requirements:
 - **Host Only** — Requires the current Photon master client.
 - **Unsupported** — Disabled when PEAK does not expose a reliable compatible API.
 
-Some native PEAK actions—including resurrection, ragdoll, knockout, teleport, and several item effects—can affect unmodded targets. Phantom Pings, mirages, fake audio, and other mod-rendered effects require compatible clients.
+Some native PEAK actions—including resurrection, recovery warps, ragdoll, knockout, teleport, and several item effects—can affect unmodded targets. No Wait and Quick Reconnect operate on the installing client. Phantom Pings, mirages, fake audio, and other mod-rendered effects require compatible clients.
 
 For the best experience, have everyone install the same version before joining the lobby.
 

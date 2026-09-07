@@ -5,7 +5,7 @@ namespace PeakTrollMod
 {
     internal enum FeatureCapability
     {
-        PlayerDiscovery, Ragdoll, Launch, Speed, Flight, Visibility, Teleport, StartEndTeleport, Resurrect,
+        PlayerDiscovery, Ragdoll, Launch, Speed, Flight, Visibility, Teleport, StartEndTeleport, Resurrect, QuickReconnect, EmergencyRecovery,
         Knockout, Eliminate, StatusEffects, GiveItem, ScoutmasterSpawn, MushroomZombieSpawn,
         LookerSpawn, Mandrake, PingPlacement, MirageLuggage, MirageStatue, MirageCapybara,
         MirageScout, FakeEnemyScoutmaster, FakeEnemyZombie, FakeEnemyLooker, FakeAudio,
@@ -30,6 +30,7 @@ namespace PeakTrollMod
     internal enum FakeEnemyKind { Scoutmaster, MushroomZombie, Looker }
     internal enum MirageBehavior { StandStill, StandAndStare, FollowAtDistance, ApproachSlowly, ChargeTarget, WalkAcross, RunAway, VanishWhenClose }
     internal enum PhantomPingPattern { BreadcrumbTrail, Circle, BehindYou }
+    internal enum NoWaitDestination { NearestLiving, LowestLiving, Checkpoint }
 
     internal sealed class ActionResult
     {

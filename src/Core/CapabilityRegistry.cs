@@ -27,6 +27,8 @@ namespace PeakTrollMod
             Need(FeatureCapability.Teleport, typeof(Character).GetMethod("WarpPlayerRPC") != null, "Character.WarpPlayerRPC missing");
             Need(FeatureCapability.StartEndTeleport, typeof(MapHandler).GetField("segments") != null, "MapHandler segment references missing");
             Need(FeatureCapability.Resurrect, ReflectionHelpers.HasMethod(typeof(Character), "RPCA_ReviveAtPosition", typeof(Vector3), typeof(bool), typeof(int)), "Character.RPCA_ReviveAtPosition missing");
+            Need(FeatureCapability.QuickReconnect, ReflectionHelpers.HasMethod(typeof(SteamLobbyHandler), "TryJoinLobby", typeof(Steamworks.CSteamID)), "Steam lobby join path missing");
+            Need(FeatureCapability.EmergencyRecovery, Available(FeatureCapability.Teleport) && ReflectionHelpers.HasMethod(typeof(CharacterRagdoll), "HaltBodyVelocity", typeof(bool)), "safe warp or rigidbody halt path missing");
             Need(FeatureCapability.Knockout, typeof(Character).GetMethod("PassOutInstantly") != null, "Character.PassOutInstantly missing");
             Need(FeatureCapability.Eliminate, typeof(Character).GetMethod("RPCA_Die") != null, "Character.RPCA_Die missing");
             Need(FeatureCapability.StatusEffects, typeof(CharacterAfflictions).GetMethod("AddStatus") != null, "CharacterAfflictions.AddStatus missing");

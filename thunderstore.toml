@@ -5,7 +5,7 @@ schemaVersion = "0.0.1"
 namespace = "FuniPeakModz"
 name = "PEAK_Troll_Mod"
 versionNumber = "0.0.0"
-description = "Private-lobby F7 controls with No Wait late-join revival, manual resurrection, flight, tracked ambushes, Phantom Pings, Chaos Mode, and safe cleanup."
+description = "Private-lobby F7 controls with No Wait Plus, Quick Reconnect, Emergency Recovery, resurrection, flight, tracked ambushes, Phantom Pings, and Chaos Mode."
 websiteUrl = "https://github.com/rdlawe15-cpu/PeakTrollMod"
 containsNsfwContent = false
 

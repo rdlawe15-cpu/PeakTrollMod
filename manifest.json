@@ -2,7 +2,7 @@
   "name": "PEAK_Troll_Mod",
   "version_number": "0.4.0",
   "website_url": "https://github.com/rdlawe15-cpu/PeakTrollMod",
-  "description": "Private-lobby F7 controls with No Wait late-join revival, manual resurrection, flight, stronger launches, tracked ambushes, Phantom Pings, and Chaos Mode.",
+  "description": "Private-lobby F7 controls with No Wait Plus, Quick Reconnect, Emergency Recovery, resurrection, flight, tracked ambushes, Phantom Pings, and Chaos Mode.",
   "dependencies": [
     "BepInEx-BepInExPack_PEAK-5.4.75301"
   ]

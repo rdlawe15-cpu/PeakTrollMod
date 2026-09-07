@@ -116,6 +116,7 @@ namespace PeakTrollMod
                 GUILayout.Label("PEAK version: " + Application.version, _label); GUILayout.Label("Host: " + (_plugin.Players.IsHost ? "Yes" : "No"), _label);
                 GUILayout.Label("Local: " + (_plugin.Players.Local == null ? "Not resolved" : _plugin.Players.Local.Name), _label); GUILayout.Label("Lobby players: " + _plugin.Players.Entries.Count, _label);
                 GUILayout.Label("Compatible clients: " + _plugin.Network.CompatibleCount, _label);
+                GUILayout.Label("Last Steam lobby: " + _plugin.QuickReconnect.LastLobbyDisplay, _small);
             });
             Card(new Rect(558, 218, 310, 202), "✦  Active Effects", new Color(.62f, .42f, 1f), delegate
             {
@@ -127,11 +128,23 @@ namespace PeakTrollMod
             {
                 GUILayout.Label("🟢 Local / harmless visual", _small); GUILayout.Label("🟡 Target needs this mod", _small); GUILayout.Label("🔒 Photon host authority", _small); GUILayout.Label("⚠ Disabled when unresolved", _small);
             });
-            Card(new Rect(238, 438, 990, 240), "↻  Emergency Controls", new Color(.25f, 1f, .5f), delegate
+            Card(new Rect(238, 438, 990, 300), "↻  Reconnect & Emergency Recovery", new Color(.25f, 1f, .5f), delegate
             {
+                GUILayout.BeginHorizontal();
+                if (CapabilityButton("RECONNECT LAST LOBBY", FeatureCapability.QuickReconnect, _success, 40)) ReconnectLastLobby();
+                if (CapabilityButton("LAST SAFE GROUND", FeatureCapability.EmergencyRecovery, _button, 40)) Say(_plugin.Recovery.RecoverLastSafeGround());
+                if (CapabilityButton("NEAREST SAFE SCOUT", FeatureCapability.EmergencyRecovery, _button, 40)) Say(_plugin.Recovery.RecoverNearestScout());
+                if (CapabilityButton("ACTIVE CHECKPOINT", FeatureCapability.EmergencyRecovery, _button, 40)) Say(_plugin.Recovery.RecoverCheckpoint());
+                GUILayout.EndHorizontal();
+                GUILayout.Space(8);
+                GUILayout.BeginHorizontal();
+                if (CapabilityButton("STOP FLIGHT + VELOCITY", FeatureCapability.EmergencyRecovery, _button, 38)) Say(_plugin.Recovery.StabilizeSelf());
+                if (CapabilityButton("RESTORE SELF", FeatureCapability.EmergencyRecovery, _button, 38)) Say(_plugin.Recovery.RestoreSelf());
+                GUILayout.EndHorizontal();
+                GUILayout.Space(12);
                 GUILayout.BeginHorizontal(); if (AnimatedButton("STOP CHAOS", _danger, GUILayout.Height(42))) { _plugin.Chaos.Stop(); _plugin.Chaos.StopCombo(); Say("Chaos and combo runner stopped."); } if (AnimatedButton("CLEAR MIRAGES", _button, GUILayout.Height(42))) { _plugin.Mirages.ClearAll(); Say("All local mirages cleared."); } if (AnimatedButton("CLEAR TROLL SPAWNS", _button, GUILayout.Height(42))) ClearTrollSpawns(); GUILayout.EndHorizontal();
-                GUILayout.Space(12); if (AnimatedButton("RESET ALL TROLL EFFECTS", _danger, GUILayout.Height(48))) EmergencyReset();
-                GUILayout.Space(8); GUILayout.Label("Cleanup only touches cached player changes and objects created by this mod.", _small);
+                GUILayout.Space(8); if (AnimatedButton("RESET ALL TROLL EFFECTS", _danger, GUILayout.Height(42))) EmergencyReset();
+                GUILayout.Label("Recovery uses recorded safe ground and native PEAK warps. Cleanup only touches state and objects tracked by this mod.", _small);
             });
         }
 
@@ -157,6 +170,10 @@ namespace PeakTrollMod
                 GUILayout.BeginHorizontal();
                 if (CapabilityButton(_plugin.NoWait.Enabled ? "NO WAIT: ON" : "NO WAIT: OFF", FeatureCapability.Resurrect, _plugin.NoWait.Enabled ? _success : _button, 38)) { _plugin.NoWait.Enabled = !_plugin.NoWait.Enabled; Say("No Wait " + (_plugin.NoWait.Enabled ? "enabled." : "disabled.")); }
                 if (CapabilityButton("RESURRECT SELF", FeatureCapability.Resurrect, _success, 38)) ResurrectSelf();
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                if (CapabilityButton("DESTINATION: " + NoWaitDestinationName(), FeatureCapability.Resurrect, _button, 34)) CycleNoWaitDestination();
+                if (CapabilityButton(_plugin.NoWait.PreserveReconnectState ? "KEEP RECONNECT GEAR: ON" : "KEEP RECONNECT GEAR: OFF", FeatureCapability.Resurrect, _plugin.NoWait.PreserveReconnectState ? _success : _button, 34)) { _plugin.NoWait.PreserveReconnectState = !_plugin.NoWait.PreserveReconnectState; Say("Reconnect state preservation " + (_plugin.NoWait.PreserveReconnectState ? "enabled." : "disabled.")); }
                 GUILayout.EndHorizontal();
                 if (CapabilityButton(_targetAll ? "RESURRECT EVERYONE" : "RESURRECT SELECTED", FeatureCapability.Resurrect, _success, 36)) ResurrectSelected();
                 GUILayout.Space(12);
@@ -386,8 +403,11 @@ namespace PeakTrollMod
         private void HorizontalRagdoll(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Network.HorizontalRagdoll(list[i],_horizontalRagdollStrength);Say(last==null?"No targets available.":"Applied horizontal yeet to lobby players. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.HorizontalRagdoll(target,_horizontalRagdollStrength));}
         private void SkyLaunch(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Network.SkyLaunch(list[i],_skyHeight);Say(last==null?"No targets available.":"Sent lobby players sky high. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.SkyLaunch(target,_skyHeight));}
         private void ClearStatuses(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Network.ClearStatuses(list[i]);Say(last==null?"No targets available.":"Cleared tracked statuses for eligible players. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.ClearStatuses(target));}
-        private void ResurrectSelected(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}int revived=0;string last="";for(int i=0;i<list.Count;i++){ActionResult result=_plugin.Network.Resurrect(list[i]);if(result.Success)revived++;last=result.Message;}Say("Resurrected "+revived+" player"+(revived==1?"":"s")+". "+last);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.Resurrect(target));}
+        private void ResurrectSelected(){if(_targetAll){Say(_plugin.NoWait.QueueResurrectAll());return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.Resurrect(target));}
         private void ResurrectSelf(){PlayerEntry local=_plugin.Players.Local;if(local==null){Say("Local player unavailable.");return;}Say(_plugin.Network.Resurrect(local));}
+        private void ReconnectLastLobby(){ActionResult result=_plugin.QuickReconnect.Reconnect();Say(result);if(result.Success)ForceClose();}
+        private string NoWaitDestinationName(){return _plugin.NoWait.Destination==NoWaitDestination.NearestLiving?"NEAREST":_plugin.NoWait.Destination==NoWaitDestination.LowestLiving?"LOWEST":"CHECKPOINT";}
+        private void CycleNoWaitDestination(){_plugin.NoWait.Destination=(NoWaitDestination)(((int)_plugin.NoWait.Destination+1)%3);Say("No Wait destination set to "+NoWaitDestinationName().ToLowerInvariant()+".");}
         private void StartDynamiteShower(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Spawns.StartDynamiteShower(list[i],_dynamiteCount,_dynamiteHeight,_dynamiteSpread,_dynamiteInterval,_lightDynamite);Say(last==null?"No targets available.":"Queued showers for eligible lobby players. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Spawns.StartDynamiteShower(target,_dynamiteCount,_dynamiteHeight,_dynamiteSpread,_dynamiteInterval,_lightDynamite));}
         private void StartOneLiveOne(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Spawns.StartOneLiveOne(list[i],_dynamiteCount,_dynamiteHeight,_dynamiteSpread,_dynamiteInterval);Say(last==null?"No targets available.":"Queued One Live One for eligible lobby players. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Spawns.StartOneLiveOne(target,_dynamiteCount,_dynamiteHeight,_dynamiteSpread,_dynamiteInterval));}
         private void StartItemStorm(){string item=CurrentItemName();if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Spawns.StartItemStorm(list[i],_itemStormCount,_itemStormHeight,_itemStormSpread,_itemStormInterval,_itemStormRandom,item);Say(last==null?"No targets available.":"Queued Item Storms for eligible lobby players. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Spawns.StartItemStorm(target,_itemStormCount,_itemStormHeight,_itemStormSpread,_itemStormInterval,_itemStormRandom,item));}

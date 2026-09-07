@@ -24,6 +24,9 @@ namespace PeakTrollMod
         public readonly ConfigEntry<bool> CampfireResetEnabled;
         public readonly ConfigEntry<bool> HelicopterSuppressionEnabled;
         public readonly ConfigEntry<bool> NoWaitEnabled;
+        public readonly ConfigEntry<NoWaitDestination> NoWaitDestinationMode;
+        public readonly ConfigEntry<bool> NoWaitPreserveReconnectState;
+        public readonly ConfigEntry<string> LastLobbyId;
 
         public ModConfig(ConfigFile config)
         {
@@ -46,6 +49,9 @@ namespace PeakTrollMod
             CampfireResetEnabled = config.Bind("World", "CampfireTeleportsEveryoneToStart", false, "When this client observes a campfire ignition, teleport all scouts back to the first segment start.");
             HelicopterSuppressionEnabled = config.Bind("World", "SuppressSummitHelicopter", false, "Suppress the summit rescue sequence locally and advertise suppression to compatible clients.");
             NoWaitEnabled = config.Bind("Player", "NoWait", true, "When joining an expedition already in progress, automatically revive the local scout beside the nearest living player.");
+            NoWaitDestinationMode = config.Bind("Player", "NoWaitDestination", NoWaitDestination.NearestLiving, "Where No Wait places a late joiner: nearest living scout, lowest living scout, or the active checkpoint.");
+            NoWaitPreserveReconnectState = config.Bind("Player", "NoWaitPreserveReconnectState", true, "When reconnecting, preserve the local scout's restored inventory, statuses, thorns, extra stamina, and petrification state.");
+            LastLobbyId = config.Bind("Reconnect", "LastLobbyId", string.Empty, "Last valid Steam lobby ID observed by Quick Reconnect.");
         }
     }
 }

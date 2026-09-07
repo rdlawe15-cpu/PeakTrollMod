@@ -5,6 +5,10 @@
 - Added No Wait: a local late-join detector that revives you beside the nearest living scout when entering an expedition already in progress, including when you are not host.
 - Added independent Resurrect Selected, Resurrect Everyone, and Resurrect Self controls using PEAK's native all-client revive RPC; targets do not need the mod.
 - Limited No Wait to the initial room-join window and consumed it on normal airport entry or a stable living spawn, preventing it from becoming a permanent auto-revive cheat.
+- Upgraded No Wait to wait for stable grounded scouts, support nearest/lowest/checkpoint destinations, halt residual ragdoll velocity, retain reconnect inventory, and restore reconnect statuses, thorns, extra stamina, and petrification.
+- Staggered Resurrect Everyone at 1.5-second intervals to reduce synchronization spikes.
+- Added Quick Reconnect, which persists the last observed Steam lobby ID and rejoins through PEAK's native lobby lookup and game-version validation flow.
+- Added Emergency Recovery controls for last safe ground, nearest safely grounded scout, active checkpoint, flight/velocity stabilization, and reversible local-state restoration.
 - Preserved compatible-client protocol v6 because resurrection uses PEAK's existing native synchronization rather than a new mod packet.
 
 ## 0.3.5 Beta — 2026-09-07

@@ -88,6 +88,8 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 | Sky High / Dynamite Shower | 🟢 Anyone | Native character RPCs and caller-owned PEAK item prefabs; target mod and host authority not required |
 | Launch / teleport | 🟢 Anyone | Native all-client character force/warp RPCs; host and target mod not required |
 | No Wait / resurrection | 🟢 Anyone | Native `RPCA_ReviveAtPosition` broadcast clears death/pass-out state and warps the target; host and target mod not required |
+| Quick Reconnect | 🟢 Local | Saves the current `IMatchmakingAPI.LobbyId` and calls PEAK's public `SteamLobbyHandler.TryJoinLobby`, preserving native lobby lookup and version validation |
+| Emergency Recovery | 🟢 Local | Tracks only stable grounded positions, uses native safe warps/revive, and halts registered ragdoll velocity before and after movement |
 | Speed / Flight | 🟡 Everyone Needs Mod | Request sent only to compatible target owner; flight caches and restores registered rigidbody gravity/velocity limits |
 | Statuses | 🔒 Host native / 🟡 non-host | PEAK validates the host sender natively; otherwise a compatible target owner executes the normal path |
 | Visibility | 🟡 Everyone Needs Mod | Compatible observers apply/restore cached renderer state locally |
@@ -104,6 +106,8 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 - Command enum, argument count/type, enum range, string length, position type, speed, force, duration, volume, status, and object limits are checked or clamped.
 - Unknown, malformed, or version-mismatched messages are rejected and logged.
 - No network logic lives in UI rendering code; UI calls the network abstraction.
+
+No Wait reconnect preservation snapshots whatever `ReconnectData` PEAK has initialized before revival. This covers both Photon rejoin and ordinary Steam-lobby re-entry paths, which do not report `HasRejoined` uniformly. A narrowly scoped Harmony prefix suppresses only the local revive-triggered `DropAllItems` call for 1.5 seconds, after which native dropping resumes. Statuses, thorns, extra stamina, and petrification are restored through PEAK's reconnect APIs; inventory remains in its already-restored slots.
 
 ## Capability behavior
 
