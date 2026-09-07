@@ -3,24 +3,30 @@ name: Publish release to Thunderstore
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: GitHub release tag whose packaged ZIP should be published
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 concurrency:
-  group: thunderstore-${{ github.event.release.tag_name }}
+  group: thunderstore-${{ inputs.release_tag || github.event.release.tag_name }}
   cancel-in-progress: false
 
 jobs:
   publish:
-    if: ${{ github.event.release.prerelease == false }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.release.prerelease == false }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out release source
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ inputs.release_tag || github.event.release.tag_name }}
 
       - name: Set up .NET 6 for Thunderstore CLI
         uses: actions/setup-dotnet@v4
@@ -30,7 +36,7 @@ jobs:
       - name: Download the packaged release asset
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
         shell: bash
         run: |
           set -euo pipefail
@@ -50,7 +56,7 @@ jobs:
 
       - name: Validate the release package version
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.event.release.tag_name }}
         shell: bash
         run: |
           set -euo pipefail

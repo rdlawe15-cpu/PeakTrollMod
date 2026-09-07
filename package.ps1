@@ -22,7 +22,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'CHANGELOG.md') -Destination $st
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'LICENSE') -Destination $staging
 Copy-Item -LiteralPath $icon -Destination $staging
 
-$archive = Join-Path $artifacts 'PEAK_Troll_Mod-0.3.0.zip'
+$archive = Join-Path $artifacts 'PEAK_Troll_Mod-0.3.5.zip'
 if (Test-Path -LiteralPath $archive) { Remove-Item -LiteralPath $archive -Force }
 Compress-Archive -Path (Join-Path $staging '*') -DestinationPath $archive -CompressionLevel Optimal
 Write-Host "Packaged: $archive"

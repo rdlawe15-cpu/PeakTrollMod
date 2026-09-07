@@ -45,7 +45,7 @@ For the best experience, have everyone install the same version before joining t
 
 ## Compatibility
 
-- Mod version: **0.3.0**
+- Mod version: **0.3.5 Beta**
 - Networking protocol: **v6**
 - Inspected PEAK build: **2.4.b (`3e62ee214`)**
 

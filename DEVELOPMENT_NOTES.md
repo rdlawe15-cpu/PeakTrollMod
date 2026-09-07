@@ -97,7 +97,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 
 ## Network validation
 
-- Custom Photon event code 197, exact protocol 6 / mod version `0.3.0`.
+- Custom Photon event code 197, exact protocol 6 / mod version `0.3.5` beta.
 - Sender must resolve to a player in the current room.
 - Target actor must resolve to a participating character.
 - Command enum, argument count/type, enum range, string length, position type, speed, force, duration, volume, status, and object limits are checked or clamped.

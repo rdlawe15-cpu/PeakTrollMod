@@ -1,8 +1,8 @@
 {
   "name": "PEAK_Troll_Mod",
-  "version_number": "0.3.0",
+  "version_number": "0.3.5",
   "website_url": "https://github.com/rdlawe15-cpu/PeakTrollMod",
-  "description": "Private-lobby F7 troll controls with flight, player effects, tracked ambushes, Phantom Pings, fake enemies and audio, Chaos Mode, and safe cleanup.",
+  "description": "Private-lobby F7 troll controls with a clean expedition UI, flight, stronger launches, tracked ambushes, Phantom Pings, Chaos Mode, and safe cleanup.",
   "dependencies": [
     "BepInEx-BepInExPack_PEAK-5.4.75301"
   ]

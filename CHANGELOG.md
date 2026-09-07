@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.5 Beta — 2026-09-07
+
+- Redesigned the F7 overlay around the selected expedition-console concept with a calmer slate/teal palette, compact header targeting, restrained cards, and clearer navigation states.
+- Reorganized Player Controls around a large Movement workspace with flight controls first, a dedicated Health & Status panel, and compact Teleport, Visibility & Speed, and Inventory & Reset panels.
+- Added a teal hover glow and a short press pulse animation to interactive menu buttons.
+- Increased standard Launch strength from 65 to 120 and standard/Off Mountain Ragdoll strength from 35 to 75; all incoming values remain hard-clamped.
+- Preserved the compatible-client networking protocol at v6 because this release changes presentation and existing action limits without adding packet types.
+
 ## 0.3.0 — 2026-09-07
 
 - Added reversible owner-controlled flight to the Player → Movement card, with a bounded 4–20 m/s speed control, Shift boost, and WASD/Space/Ctrl controls.

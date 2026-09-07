@@ -58,7 +58,7 @@ namespace PeakTrollMod
 
         public ActionResult RagdollOffMountain(PlayerEntry target, float strength)
         {
-            return _actions.RagdollOffMountainLocal(target, Mathf.Clamp(strength, 1f, 35f));
+            return _actions.RagdollOffMountainLocal(target, Mathf.Clamp(strength, 1f, 75f));
         }
 
         public ActionResult HorizontalRagdoll(PlayerEntry target, float strength)

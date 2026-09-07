@@ -15,7 +15,7 @@ namespace PeakTrollMod
     {
         public const string Guid = "com.dougl.peaktrollmod";
         public const string Name = "PEAK Troll Mod";
-        public const string Version = "0.3.0";
+        public const string Version = "0.3.5";
 
         internal static TrollModPlugin Instance;
         internal ModConfig Settings;

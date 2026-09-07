@@ -86,7 +86,7 @@ namespace PeakTrollMod
         {
             if (!_capabilities.Available(FeatureCapability.Ragdoll)) return Missing(FeatureCapability.Ragdoll);
             if (target == null || target.Character == null) return ActionResult.Fail("Target unavailable.");
-            strength = Mathf.Clamp(strength, 1f, 35f); seconds = Mathf.Clamp(seconds, .25f, 5f);
+            strength = Mathf.Clamp(strength, 1f, 75f); seconds = Mathf.Clamp(seconds, .25f, 5f);
             direction = direction.sqrMagnitude < .01f ? Vector3.up : direction.normalized;
             try
             {
@@ -101,7 +101,7 @@ namespace PeakTrollMod
         {
             if (!_capabilities.Available(FeatureCapability.Ragdoll)) return Missing(FeatureCapability.Ragdoll);
             if (target == null || target.Character == null) return ActionResult.Fail("Target unavailable.");
-            strength = Mathf.Clamp(strength, 1f, 35f);
+            strength = Mathf.Clamp(strength, 1f, 75f);
             bool foundDrop;
             Vector3 direction = FindDropDirection(target.Character.Center, out foundDrop);
             try
@@ -334,7 +334,7 @@ namespace PeakTrollMod
         {
             if (!_capabilities.Available(FeatureCapability.Launch)) return Missing(FeatureCapability.Launch);
             if (target == null || target.Character == null) return ActionResult.Fail("Target unavailable.");
-            strength = Mathf.Clamp(strength, 5f, 65f);
+            strength = Mathf.Clamp(strength, 5f, 120f);
             direction = direction.sqrMagnitude < .01f ? Vector3.up : direction.normalized;
             try
             {
