@@ -2,6 +2,11 @@
 
 ## Unreleased (0.4.0)
 
+- Added a compact Team Status Panel with nearby scout stamina, distance, life state, and prominent conditions.
+- Added Quick Backpack with a configurable hotkey and the native equipped-backpack wheel.
+- Added Better Spectating with configurable player cycling, target altitude/state overlay, PEAK's native free camera, cooldown-respecting ghost pings, and revive-beside-spectated controls.
+- Added a Mod Config page for toggling the built-in QoL modules, browsing all loaded BepInEx plugins, session-level component switches, and persisted editing/resetting of exposed settings through BepInEx's own serializer.
+- Added automatic overlap protection for PeakStatsEx teammate stamina and EasyBackpack, with a preference toggle for users who want the built-in implementations instead.
 - Added No Wait: a local late-join detector that revives you beside the nearest living scout when entering an expedition already in progress, including when you are not host.
 - Added independent Resurrect Selected, Resurrect Everyone, and Resurrect Self controls using PEAK's native all-client revive RPC; targets do not need the mod.
 - Limited No Wait to the initial room-join window and consumed it on normal airport entry or a stable living spawn, preventing it from becoming a permanent auto-revive cheat.

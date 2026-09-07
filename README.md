@@ -4,7 +4,7 @@
 
 A private-lobby trolling and chaos toolkit for **PEAK**, controlled through an in-game menu opened with **F7**.
 
-Skip the spectator wait when joining an expedition in progress, resurrect fallen scouts, fly around the mountain, launch friends into the sky, summon enemy ambushes, create unsettling mirages, place Phantom Pings, or combine multiple effects into custom chaos sequences.
+Skip the spectator wait when joining an expedition in progress, monitor the team, open your backpack instantly, use an upgraded spectator mode, resurrect fallen scouts, fly around the mountain, launch friends into the sky, summon enemy ambushes, create unsettling mirages, or combine multiple effects into custom chaos sequences.
 
 > Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
 
@@ -14,6 +14,10 @@ Skip the spectator wait when joining an expedition in progress, resurrect fallen
 - **No Wait Plus** — Join an expedition in progress beside the nearest or lowest safely grounded scout, or at the active checkpoint. Reconnecting scouts can retain restored inventory and conditions, and post-warp velocity is cleared.
 - **Quick Reconnect** — Remembers the last valid Steam lobby and reconnects through PEAK's native version-checked lobby flow.
 - **Emergency Recovery** — Return yourself to recorded safe ground, the nearest safe scout, or the active checkpoint; stop flight and dangerous velocity; or restore reversible local changes.
+- **Team Status Panel** — Shows nearby scouts' stamina, distance, life state, and important conditions in a compact HUD.
+- **Quick Backpack** — Opens the equipped backpack wheel with a configurable hotkey (default **B**).
+- **Better Spectating** — Cycle scouts with configurable keys, inspect target altitude/state, use PEAK's native free camera, place ghost pings, or revive beside the spectated scout.
+- **Mod Config** — Toggle PEAK Troll Mod modules, browse every loaded BepInEx plugin, soft-enable/disable plugin components for the current session, and edit their exposed settings with the owning config serializer.
 - **Resurrection Controls** — Revive the selected scout, yourself, or queue the whole fallen party at safe intervals through PEAK's native synchronized revive path; the caller does not need to be host and the target does not need the mod.
 - **Player Effects** — Reversible owner-controlled flight, ragdoll, knockout, launch, Horizontal Yeet, Sky High, Off Mountain, teleportation, status effects, and movement-speed controls.
 - **Fake Enemies and Mirages** — Create visual-only scouts, luggage, statues, creatures, and enemy decoys with configurable behaviors.
@@ -39,6 +43,14 @@ The menu labels actions by their authority requirements:
 Some native PEAK actions—including resurrection, recovery warps, ragdoll, knockout, teleport, and several item effects—can affect unmodded targets. No Wait and Quick Reconnect operate on the installing client. Phantom Pings, mirages, fake audio, and other mod-rendered effects require compatible clients.
 
 For the best experience, have everyone install the same version before joining the lobby.
+
+## Mod Config and Compatibility
+
+Open **Mod Config** from the F7 sidebar to control the built-in quality-of-life modules or edit settings exposed by other loaded BepInEx mods. Setting changes are written to each mod's own config file. Whether they apply immediately depends on that mod, so restart PEAK when a setting does not update live.
+
+Runtime component switches are session-only. They cannot guarantee that Harmony patches are removed, and some disabled components cannot initialize again until restart. PEAK Troll Mod therefore never offers to disable its own menu from inside the menu.
+
+When **Prefer enabled external QoL mods** is on, the built-in Team Status Panel yields to PeakStatsEx's enabled teammate-stamina display, and Quick Backpack yields to EasyBackpack. Turn the preference off if you intentionally want the built-in versions.
 
 ## Installation
 

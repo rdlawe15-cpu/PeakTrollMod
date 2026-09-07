@@ -26,6 +26,10 @@ namespace PeakTrollMod
         internal NoWaitManager NoWait;
         internal RecoveryManager Recovery;
         internal QuickReconnectManager QuickReconnect;
+        internal ModConfigBrowser ModBrowser;
+        internal TeamStatusManager TeamStatus;
+        internal QuickBackpackManager QuickBackpack;
+        internal BetterSpectatingManager BetterSpectating;
         internal SpawnManager Spawns;
         internal MirageManager Mirages;
         internal PingPlacementManager PingPlacement;
@@ -48,6 +52,7 @@ namespace PeakTrollMod
         {
             Instance = this;
             Settings = new ModConfig(base.Config);
+            ModBrowser = new ModConfigBrowser(); ModBrowser.Refresh();
             Capabilities = new CapabilityRegistry(Logger); Capabilities.Discover();
             Players = new PlayerManager(Logger);
             Audio = new AudioManager(Logger);
@@ -56,6 +61,9 @@ namespace PeakTrollMod
             NoWait = new NoWaitManager(Logger, Players, Actions, Capabilities, Settings);
             Recovery = new RecoveryManager(Logger, Players, Actions);
             QuickReconnect = new QuickReconnectManager(Logger, Settings, Capabilities);
+            TeamStatus = new TeamStatusManager(Players, Settings, ModBrowser);
+            QuickBackpack = new QuickBackpackManager(Logger, Settings, ModBrowser);
+            BetterSpectating = new BetterSpectatingManager(Logger, Players, Actions, Settings);
             Spawns = new SpawnManager(Logger, Players, Capabilities);
             Network = new TrollNetworkManager(Logger, Players, Actions, Mirages, Audio);
             PingPlacement = new PingPlacementManager(Logger, Mirages, Players, Network);
@@ -78,7 +86,7 @@ namespace PeakTrollMod
         private void Update()
         {
             if (Settings.MenuKey.Value.IsDown()) Ui.Toggle();
-            Players.Tick(); QuickReconnect.Tick(); Network.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
+            Players.Tick(); QuickReconnect.Tick(); Network.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); QuickBackpack.Tick(Ui.IsOpen); BetterSpectating.Tick(Ui.IsOpen); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
 
             bool inRoom = PhotonNetwork.InRoom;
             if (_wasInRoom && !inRoom) Reset.ResetAll();
@@ -90,7 +98,7 @@ namespace PeakTrollMod
             }
         }
 
-        private void OnGUI() { if (Ui != null) Ui.Draw(); }
+        private void OnGUI() { if (TeamStatus != null) TeamStatus.Draw(Ui != null && Ui.IsOpen); if (BetterSpectating != null) BetterSpectating.Draw(Ui != null && Ui.IsOpen); if (Ui != null) Ui.Draw(); }
 
         private void FixedUpdate() { if (Actions != null) Actions.FixedTick(); }
 
@@ -102,6 +110,7 @@ namespace PeakTrollMod
             if (Actions != null) Actions.RefreshItemCatalog();
             if (NoWait != null) NoWait.OnSceneLoaded();
             if (Recovery != null) Recovery.OnSceneLoaded();
+            if (BetterSpectating != null) BetterSpectating.OnSceneLoaded();
             if (CampfireTroll != null) CampfireTroll.ResetScene();
             if (HelicopterTroll != null) HelicopterTroll.ResetScene();
             DebugLog("Scene loaded: " + scene.name);
@@ -122,6 +131,22 @@ namespace PeakTrollMod
         }
 
         internal void DebugLog(string message) { if (Settings != null && Settings.DebugLogging.Value) Logger.LogInfo("[PTM] " + message); }
+    }
+
+    [HarmonyPatch(typeof(PointPinger), "get_canPing")]
+    internal static class SpectatorGhostPingPatch
+    {
+        private static readonly FieldInfo LastPinged = AccessTools.Field(typeof(PointPinger), "_timeLastPinged");
+        private static readonly FieldInfo Cooldown = AccessTools.Field(typeof(PointPinger), "coolDown");
+        private static void Postfix(PointPinger __instance, ref bool __result)
+        {
+            TrollModPlugin plugin = TrollModPlugin.Instance;
+            Character local = Character.localCharacter;
+            if (__result || plugin == null || plugin.Settings == null || !plugin.Settings.BetterSpectatingEnabled.Value || !plugin.Settings.SpectateGhostPings.Value || local == null || local.data == null || !local.data.fullyPassedOut || __instance == null) return;
+            float last = LastPinged == null ? 0f : (float)LastPinged.GetValue(__instance);
+            float cooldown = Cooldown == null ? .5f : (float)Cooldown.GetValue(__instance);
+            if (Time.time - last >= cooldown) __result = true;
+        }
     }
 
     [HarmonyPatch(typeof(CharacterItems), "DropAllItems")]

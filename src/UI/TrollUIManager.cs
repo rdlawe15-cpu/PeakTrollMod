@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using BepInEx;
+using BepInEx.Configuration;
 using UnityEngine;
 
 namespace PeakTrollMod
@@ -9,8 +11,8 @@ namespace PeakTrollMod
         private const float DesignWidth = 1280f;
         private const float DesignHeight = 850f;
         private readonly TrollModPlugin _plugin;
-        private readonly string[] _tabs = { "⌂  Home", "♟  Player", "▣  Spawning", "✦  Mirage", "♪  Audio", "●  Appearance", "☠  Enemies", "▲  World", "◈  Chaos", "⚙  Settings" };
-        private readonly string[] _tabNames = { "Home", "Player", "Spawning", "Mirage", "Audio", "Appearance", "Enemies", "World", "Chaos Mode", "Settings" };
+        private readonly string[] _tabs = { "⌂  Home", "♟  Player", "▣  Spawning", "✦  Mirage", "♪  Audio", "●  Appearance", "☠  Enemies", "▲  World", "◈  Chaos", "⚙  Settings", "☷  Mod Config" };
+        private readonly string[] _tabNames = { "Home", "Player", "Spawning", "Mirage", "Audio", "Appearance", "Enemies", "World", "Chaos Mode", "Settings", "Mod Config" };
         private int _tab;
         private int _targetIndex;
         private int _statusIndex = 3;
@@ -48,6 +50,10 @@ namespace PeakTrollMod
         private bool _clothesOnly;
         private bool _colorOnly;
         private bool _confirmEliminate;
+        private int _modIndex;
+        private int _configIndex;
+        private string _configEdit = string.Empty;
+        private string _configEditKey = string.Empty;
         private string _message = "Ready. Private lobbies, compatible friends, sensible chaos.";
         private float _messageUntil;
         private CursorLockMode _oldLock;
@@ -84,7 +90,7 @@ namespace PeakTrollMod
             GUIStyle brandSub = new GUIStyle(_logo); brandSub.fontSize = 21; GUI.Label(new Rect(42, 50, 150, 54), "TROLL\nMOD", brandSub);
             GUI.Label(new Rect(238, 29, 520, 44), HeadingForTab(), _title);
             GUI.Label(new Rect(240, 74, 570, 24), SubtitleForTab(), _subtitle);
-            if (_tab != 0 && _tab != 9)
+            if (_tab != 0 && _tab != 9 && _tab != 10)
             {
                 GUI.Label(new Rect(826, 41, 72, 30), "Target", _label);
                 if (AnimatedButton(new Rect(895, 32, 235, 44), CurrentTargetName() + "   ▾", _button)) CycleTarget();
@@ -106,7 +112,7 @@ namespace PeakTrollMod
         private void DrawContent()
         {
             Rect area = new Rect(220, 128, 1030, 622);
-            if (_tab == 0) DrawHome(area); else if (_tab == 1) DrawPlayer(area); else if (_tab == 2) DrawSpawning(area); else if (_tab == 3) DrawMirage(area); else if (_tab == 4) DrawAudio(area); else if (_tab == 5) DrawAppearance(area); else if (_tab == 6) DrawEnemies(area); else if (_tab == 7) DrawWorld(area); else if (_tab == 8) DrawChaos(area); else DrawSettings(area);
+            if (_tab == 0) DrawHome(area); else if (_tab == 1) DrawPlayer(area); else if (_tab == 2) DrawSpawning(area); else if (_tab == 3) DrawMirage(area); else if (_tab == 4) DrawAudio(area); else if (_tab == 5) DrawAppearance(area); else if (_tab == 6) DrawEnemies(area); else if (_tab == 7) DrawWorld(area); else if (_tab == 8) DrawChaos(area); else if (_tab == 9) DrawSettings(area); else DrawModConfig(area);
         }
 
         private void DrawHome(Rect area)
@@ -376,6 +382,43 @@ namespace PeakTrollMod
             Card(new Rect(735, 218, 493, 380), "⌁  Diagnostics", new Color(.63f, .42f, 1f), delegate { _plugin.Settings.DebugLogging.Value = GUILayout.Toggle(_plugin.Settings.DebugLogging.Value, "Debug logging"); _plugin.Settings.NetworkDiagnostics.Value = GUILayout.Toggle(_plugin.Settings.NetworkDiagnostics.Value, "Network diagnostics"); _plugin.Settings.MirageDebug.Value = GUILayout.Toggle(_plugin.Settings.MirageDebug.Value, "Mirage debug info"); _plugin.Settings.FakeEnemyDebug.Value = GUILayout.Toggle(_plugin.Settings.FakeEnemyDebug.Value, "Fake Enemy debug info"); GUILayout.Space(12); if (AnimatedButton("REFRESH CAPABILITIES", _button, GUILayout.Height(40))) { _plugin.Capabilities.RefreshDynamic(); _plugin.Actions.RefreshItemCatalog(); Say("Runtime capabilities refreshed."); } GUILayout.Label("SpongePEAKLib: not used; Photon RaiseEvent provides the required validated mod channel.", _small); });
         }
 
+        private void DrawModConfig(Rect area)
+        {
+            Card(new Rect(238, 142, 990, 178), "◆  Built-in Quality of Life", new Color(.25f, .75f, .7f), delegate
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.Settings.TeamStatusEnabled.Value = GUILayout.Toggle(_plugin.Settings.TeamStatusEnabled.Value, "Team Status Panel"); GUILayout.Label(_plugin.TeamStatus.SuppressedByExternal ? "Yielding to PeakStatsEx" : "Nearby stamina + conditions", _small); GUILayout.EndVertical();
+                GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.Settings.QuickBackpackEnabled.Value = GUILayout.Toggle(_plugin.Settings.QuickBackpackEnabled.Value, "Quick Backpack  [" + _plugin.Settings.QuickBackpackKey.Value + "]"); GUILayout.Label(_plugin.QuickBackpack.SuppressedByExternal ? "Yielding to EasyBackpack" : "Opens the equipped pack wheel", _small); GUILayout.EndVertical();
+                GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.Settings.BetterSpectatingEnabled.Value = GUILayout.Toggle(_plugin.Settings.BetterSpectatingEnabled.Value, "Better Spectating"); _plugin.Settings.SpectateGhostPings.Value = GUILayout.Toggle(_plugin.Settings.SpectateGhostPings.Value, "Ghost pings"); GUILayout.EndVertical();
+                GUILayout.EndHorizontal();
+                _plugin.Settings.PreferExternalQualityOfLifeMods.Value = GUILayout.Toggle(_plugin.Settings.PreferExternalQualityOfLifeMods.Value, "Prefer enabled external QoL mods when features overlap");
+                GUILayout.BeginHorizontal(); if (AnimatedButton(_plugin.BetterSpectating.FreeCamera ? "RETURN TO SCOUT" : "SPECTATOR FREE CAM", _button, GUILayout.Height(30))) Say(_plugin.BetterSpectating.SetFreeCamera(!_plugin.BetterSpectating.FreeCamera)); if (AnimatedButton("REVIVE BESIDE SPECTATED", _success, GUILayout.Height(30))) Say(_plugin.BetterSpectating.ReviveBesideSpectated()); GUILayout.EndHorizontal();
+            });
+            Card(new Rect(238, 334, 320, 388), "☷  Loaded Mods", new Color(.45f, .65f, 1f), delegate
+            {
+                if (AnimatedButton("REFRESH LOADED MODS", _button, GUILayout.Height(30))) { _plugin.ModBrowser.Refresh(); _modIndex=0; _configIndex=0; _configEditKey=string.Empty; Say("Loaded mod list refreshed."); }
+                IList<PluginInfo> plugins = _plugin.ModBrowser.Plugins;
+                for (int i=0;i<plugins.Count;i++) { PluginInfo info=plugins[i]; string marker=info.Instance.enabled?"● ":"○ "; if(AnimatedButton(marker+info.Metadata.Name+(i==_modIndex?"  ›":""),i==_modIndex?_navSelected:_button,GUILayout.Height(29))){_modIndex=i;_configIndex=0;_configEditKey=string.Empty;} }
+            });
+            Card(new Rect(574, 334, 654, 388), "⚙  Selected Mod & Settings", new Color(.68f, .46f, 1f), delegate
+            {
+                PluginInfo info=SelectedPlugin(); if(info==null){GUILayout.Label("No loaded plugin selected.",_label);return;}
+                GUILayout.Label(info.Metadata.Name+"  v"+info.Metadata.Version,_cardTitle); GUILayout.Label(info.Metadata.GUID,_small);
+                bool isSelf=info.Metadata.GUID==TrollModPlugin.Guid; GUI.enabled=!isSelf; if(AnimatedButton(info.Instance.enabled?"DISABLE COMPONENT THIS SESSION":"ENABLE COMPONENT THIS SESSION",info.Instance.enabled?_danger:_success,GUILayout.Height(34)))Say(_plugin.ModBrowser.SetComponentEnabled(info,!info.Instance.enabled)); GUI.enabled=true;
+                GUILayout.Label(isSelf?"Use the module toggles above for this mod.":"Component switches are session-only. Harmony patches may remain until restart.",_small); GUILayout.Space(8);
+                ConfigEntryBase[] entries=info.Instance.Config.GetConfigEntries(); if(entries.Length==0){GUILayout.Label("This plugin exposes no BepInEx settings.",_label);return;} if(_configIndex>=entries.Length)_configIndex=0;
+                GUILayout.BeginHorizontal(); if(AnimatedButton("‹",_button,GUILayout.Width(42),GUILayout.Height(30))){_configIndex=(_configIndex+entries.Length-1)%entries.Length;_configEditKey=string.Empty;} GUILayout.Label((_configIndex+1)+" / "+entries.Length,_label,GUILayout.Width(70)); if(AnimatedButton("NEXT SETTING  ›",_button,GUILayout.Height(30))){_configIndex=(_configIndex+1)%entries.Length;_configEditKey=string.Empty;} GUILayout.EndHorizontal();
+                ConfigEntryBase entry=entries[_configIndex]; string key=info.Metadata.GUID+"|"+entry.Definition.Section+"|"+entry.Definition.Key; if(_configEditKey!=key){_configEditKey=key;_configEdit=entry.GetSerializedValue();}
+                GUILayout.Label(entry.Definition.Section+"  /  "+entry.Definition.Key,_label); if(!string.IsNullOrEmpty(entry.Description.Description))GUILayout.Label(entry.Description.Description,_small);
+                if(entry.SettingType==typeof(bool)){bool value=(bool)entry.BoxedValue;if(AnimatedButton(value?"ON — CLICK TO TURN OFF":"OFF — CLICK TO TURN ON",value?_success:_button,GUILayout.Height(34))){Say(_plugin.ModBrowser.SetValue(entry,(!value).ToString()));_configEdit=entry.GetSerializedValue();}}
+                else { GUILayout.BeginHorizontal(); _configEdit=GUILayout.TextField(_configEdit,_button,GUILayout.Height(32)); if(AnimatedButton("APPLY",_success,GUILayout.Width(80),GUILayout.Height(32))){Say(_plugin.ModBrowser.SetValue(entry,_configEdit));_configEdit=entry.GetSerializedValue();} GUILayout.EndHorizontal(); }
+                GUILayout.BeginHorizontal(); GUILayout.Label("Current: "+entry.GetSerializedValue(),_small); if(AnimatedButton("RESET DEFAULT",_button,GUILayout.Width(125),GUILayout.Height(27))){Say(_plugin.ModBrowser.ResetValue(entry));_configEdit=entry.GetSerializedValue();} GUILayout.EndHorizontal();
+                GUILayout.Label("Changes are saved to the owning mod's config. Live application depends on that mod; restart PEAK when in doubt.",_small);
+            });
+        }
+
+        private PluginInfo SelectedPlugin() { IList<PluginInfo> plugins=_plugin.ModBrowser.Plugins;if(plugins.Count==0)return null;if(_modIndex>=plugins.Count)_modIndex=0;return plugins[_modIndex]; }
+
         private void UnsupportedPage(string title, string reason)
         {
             Card(new Rect(238, 230, 990, 300), "⚠  " + title, new Color(1f, .65f, .22f), delegate { Badge(PermissionKind.Unsupported); GUILayout.Space(12); GUILayout.Label(reason, _label); GUILayout.Space(18); GUILayout.Label("This page remains visible so capability loss after a PEAK update is explicit rather than silently unsafe.", _small); });
@@ -437,7 +480,7 @@ namespace PeakTrollMod
         private void CycleSound() { if(_plugin.Audio.Clips.Count>0)_soundIndex=(_soundIndex+1)%_plugin.Audio.Clips.Count; }
         private void Say(ActionResult result) { Say(result.Message); }
         private void Say(string text) { _message=text; _messageUntil=Time.unscaledTime+6f; }
-        private string SubtitleForTab() { string[] s={"Session overview, capabilities, and emergency cleanup.","Target, manipulate, and mess with players in your lobby.","Host-authorized genuine enemy ambushes with strict tracking.","Harmless visual decoys, fake enemies, and ping placement.","Runtime-discovered 3D sound cues and voice capability status.","Cosmetic confusion without identity impersonation.","Controls for mod-spawned genuine enemies.","Environmental hazards separated from direct statuses.","Bounded randomized events with compatible-client validation.","Interface, safety limits, and diagnostics."}; return s[_tab]; }
+        private string SubtitleForTab() { string[] s={"Session overview, capabilities, and emergency cleanup.","Target, manipulate, and mess with players in your lobby.","Host-authorized genuine enemy ambushes with strict tracking.","Harmless visual decoys, fake enemies, and ping placement.","Runtime-discovered 3D sound cues and voice capability status.","Cosmetic confusion without identity impersonation.","Controls for mod-spawned genuine enemies.","Environmental hazards separated from direct statuses.","Bounded randomized events with compatible-client validation.","Interface, safety limits, and diagnostics.","Toggle built-ins and safely edit loaded BepInEx mod settings."}; return s[_tab]; }
         private string HeadingForTab() { return _tab == 1 ? "PLAYER CONTROLS" : _tabNames[_tab].ToUpperInvariant(); }
         private void EmergencyReset(){for(int i=0;i<_plugin.Players.Entries.Count;i++)_plugin.Network.SendToAll(NetCommand.Reset,_plugin.Players.Entries[i].ActorNumber,new object[0]);if(_plugin.Players.Local!=null)_plugin.Network.SendToAll(NetCommand.ClearMirages,_plugin.Players.Local.ActorNumber,new object[0]);_plugin.Reset.ResetAll();Say("Cleanup and restoration completed on compatible clients.");}
 
