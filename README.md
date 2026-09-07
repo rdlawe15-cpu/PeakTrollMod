@@ -8,6 +8,19 @@ Skip the spectator wait when joining an expedition in progress, monitor the team
 
 > Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
 
+## v0.4 Quality-of-Life Bundle
+
+- **No Wait Plus** automatically revives late-joining scouts and safely places them beside the team or at a checkpoint, with optional reconnect-state restoration.
+- **Quick Reconnect** remembers the last valid Steam lobby and rejoins it through PEAK's native version-checked flow.
+- **Emergency Recovery** returns you to safe ground, a nearby scout, the expedition start, or a checkpoint and can clear dangerous velocity or reversible effects.
+- **Team Status Panel** keeps nearby scout stamina, distance, life state, and important conditions visible in a compact HUD.
+- **Quick Backpack** opens the equipped backpack wheel instantly with a configurable hotkey.
+- **Better Spectating** adds configurable player cycling, target information, native free camera access, ghost pings, and revive-beside-target controls.
+- **Mod Config** provides one place to toggle built-in modules and inspect or edit settings exposed by other loaded BepInEx mods.
+- **Persistent Player Preferences** remembers aliases, UI colors, voice settings, and random-target exclusions for your regular Steam friends.
+- **Lobby Readiness** shows ready and loading states, mod/version/protocol compatibility, host changes, player count, and a copyable lobby code.
+- **Accessibility Options** add interface scaling, high-contrast status colors, camera-shake scaling, reduced repeated effects, flexible menu input, and configurable shortcuts.
+
 ## Features
 
 - **Phantom Pings** — Target one player with Breadcrumb Trail, Circle, or Behind You ping patterns.
@@ -66,7 +79,7 @@ When **Prefer enabled external QoL mods** is on, the built-in Team Status Panel 
 
 ## Compatibility
 
-- Mod version: **0.4.0 Development**
+- Mod version: **0.4.0**
 - Networking protocol: **v6**
 - Inspected PEAK build: **2.4.b (`3e62ee214`)**
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased (0.4.0)
+## 0.4.0 — 2026-09-07
 
 - Added Persistent Player Preferences keyed by Steam user ID, including local alias/color, voice volume, mute, and exclusion from random troll targeting.
 - Added a Lobby Readiness page with explicit compatible-client ready state, loaded/loading fallback for unmodded players, mod/version/protocol status, host identity and migration count, player count, and one-click lobby-code copying.
