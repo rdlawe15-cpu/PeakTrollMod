@@ -1,0 +1,87 @@
+name: Publish release to Thunderstore
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: thunderstore-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.event.release.prerelease == false }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up .NET 6 for Thunderstore CLI
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 6.0.x
+
+      - name: Download the packaged release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          gh release download "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "PEAK_Troll_Mod-*.zip" \
+            --dir artifacts
+
+          mapfile -t packages < <(find artifacts -maxdepth 1 -type f -name 'PEAK_Troll_Mod-*.zip')
+          if [[ ${#packages[@]} -ne 1 ]]; then
+            echo "Expected exactly one PEAK_Troll_Mod release ZIP; found ${#packages[@]}." >&2
+            exit 1
+          fi
+
+          mv "${packages[0]}" artifacts/thunderstore-package.zip
+
+      - name: Validate the release package version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_version="${RELEASE_TAG#v}"
+          manifest_version="$(unzip -p artifacts/thunderstore-package.zip manifest.json | jq -r '.version_number')"
+
+          if [[ "$manifest_version" != "$expected_version" ]]; then
+            echo "Release tag version $expected_version does not match manifest version $manifest_version." >&2
+            exit 1
+          fi
+
+      - name: Install Thunderstore CLI
+        run: dotnet tool install --global tcli --version 0.2.4
+
+      - name: Publish package to Thunderstore
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          TCLI_AUTH_TOKEN: ${{ secrets.TCLI_AUTH_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${TCLI_AUTH_TOKEN:-}" ]]; then
+            echo "The TCLI_AUTH_TOKEN repository secret is not configured." >&2
+            exit 1
+          fi
+
+          version="${RELEASE_TAG#v}"
+          tcli publish \
+            --config-path ./thunderstore.toml \
+            --file ./artifacts/thunderstore-package.zip \
+            --package-namespace FuniPeakModz \
+            --package-name PEAK_Troll_Mod \
+            --package-version "$version" \
+            --repository https://thunderstore.io
