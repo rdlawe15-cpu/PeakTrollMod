@@ -167,6 +167,43 @@ namespace PeakTrollMod
             return StartItemStorm(target, count, height, spread, interval, false, mandrake);
         }
 
+        public ActionResult SpawnItemNear(PlayerEntry target, string itemName, int count)
+        {
+            if (!_capabilities.Available(FeatureCapability.ItemStorm)) return ActionResult.Fail(_capabilities.Reason(FeatureCapability.ItemStorm));
+            if (target == null || target.Character == null) return ActionResult.Fail("Select an individual target.");
+            count = Mathf.Clamp(count, 1, 12);
+            int spawned = 0;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 offset = UnityEngine.Random.insideUnitCircle * 1.5f;
+                Vector3 position = target.Character.Center + new Vector3(offset.x, 1.2f + i * .12f, offset.y);
+                ActionResult result = SpawnWorldItem(itemName, position);
+                if (!result.Success) return spawned == 0 ? result : ActionResult.Ok("Spawned " + spawned + " item(s); stopped because " + result.Message);
+                spawned++;
+            }
+            return ActionResult.Ok("Spawned " + spawned + " " + itemName + " near " + target.Name + ".");
+        }
+
+        public ActionResult SpawnWorldItem(string itemName, Vector3 position)
+        {
+            if (!PhotonNetwork.InRoom || PhotonNetwork.LocalPlayer == null) return ActionResult.Fail("Join a Photon room before spawning a world item.");
+            if (!CanSpawnItemStorm()) return ActionResult.Fail("The configured network-item cap has been reached.");
+            List<string> prefabs = FindItemPrefabNames();
+            string normalized = NormalizePrefabName(itemName);
+            string prefabName = prefabs.Find(delegate(string value) { return string.Equals(value, normalized, StringComparison.OrdinalIgnoreCase); });
+            if (string.IsNullOrEmpty(prefabName)) return ActionResult.Fail("The selected item is not a loaded network prefab.");
+            try
+            {
+                GameObject go = PhotonNetwork.Instantiate("0_Items/" + prefabName, position, UnityEngine.Random.rotation, 0, null);
+                if (go == null) throw new InvalidOperationException("Photon returned no item object.");
+                Item item = go.GetComponent<Item>();
+                if (item != null) item.SetKinematicNetworked(false, position, go.transform.rotation);
+                Track(go, PhotonNetwork.LocalPlayer.ActorNumber, go.GetComponent<Dynamite>() != null, true);
+                return ActionResult.Ok("Spawned " + prefabName + ".");
+            }
+            catch (Exception ex) { _log.LogWarning("World item spawn failed safely: " + ex.Message); return ActionResult.Fail(ex.Message); }
+        }
+
         private static List<string> FindItemPrefabNames()
         {
             Item[] items = Resources.FindObjectsOfTypeAll<Item>();

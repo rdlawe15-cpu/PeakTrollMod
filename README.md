@@ -6,6 +6,8 @@ A private-lobby trolling and chaos toolkit for **PEAK**, controlled through an i
 
 Skip the spectator wait when joining an expedition in progress, monitor the team, open your backpack instantly, use an upgraded spectator mode, resurrect fallen scouts, fly around the mountain, launch friends into the sky, summon enemy ambushes, create unsettling mirages, or combine multiple effects into custom chaos sequences.
 
+Version 0.4.5 is currently in development. It adds a dedicated searchable item-spawner page, safe effect previews, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The scheduled GitHub build will be a prerelease.
+
 > Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
 
 ## v0.4 Quality-of-Life Bundle
@@ -23,6 +25,10 @@ Skip the spectator wait when joining an expedition in progress, monitor the team
 
 ## Features
 
+- **Clean Item Spawner** — Search the live PEAK item catalog, choose quantities, give items to a selected scout or yourself, place tracked world items near a scout, and refresh the catalog without leaving the menu.
+- **Safe Effect Preview** — Inspect an effect's target, authority, current strength/count/timing, cleanup behavior, and a small non-executing animation before opening its controls.
+- **Unlimited Lobby** — Optionally raise newly hosted rooms from four to 4–30 players and scale campfire food/backpacks for extra and late-joining scouts. Automatically yields when the standalone PEAK Unlimited mod is installed.
+- **Favorites & Recent Actions** — Persist quick-access item and effect shortcuts locally so common actions are easy to find again.
 - **Phantom Pings** — Target one player with Breadcrumb Trail, Circle, or Behind You ping patterns.
 - **No Wait Plus** — Join an expedition in progress beside the nearest or lowest safely grounded scout, or at the active checkpoint. Reconnecting scouts can retain restored inventory and conditions, and post-warp velocity is cleared.
 - **Quick Reconnect** — Remembers the last valid Steam lobby and reconnects through PEAK's native version-checked lobby flow.
@@ -79,7 +85,7 @@ When **Prefer enabled external QoL mods** is on, the built-in Team Status Panel 
 
 ## Compatibility
 
-- Mod version: **0.4.0**
+- Mod version: **0.4.5 Development**
 - Networking protocol: **v6**
 - Inspected PEAK build: **2.4.b (`3e62ee214`)**
 

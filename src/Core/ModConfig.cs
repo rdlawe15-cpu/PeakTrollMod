@@ -46,6 +46,18 @@ namespace PeakTrollMod
         public readonly ConfigEntry<float> CameraShakeScale;
         public readonly ConfigEntry<bool> ReduceFlashingEffects;
         public readonly ConfigEntry<MenuActivationMode> MenuActivation;
+        public readonly ConfigEntry<bool> ItemSpawnerEnabled;
+        public readonly ConfigEntry<bool> EffectPreviewEnabled;
+        public readonly ConfigEntry<bool> FavoritesAndRecentsEnabled;
+        public readonly ConfigEntry<string> FavoriteItemsData;
+        public readonly ConfigEntry<string> RecentItemsData;
+        public readonly ConfigEntry<string> FavoriteEffectsData;
+        public readonly ConfigEntry<string> RecentEffectsData;
+        public readonly ConfigEntry<bool> UnlimitedLobbyEnabled;
+        public readonly ConfigEntry<int> UnlimitedLobbyMaxPlayers;
+        public readonly ConfigEntry<bool> UnlimitedLobbyScaleSupplies;
+        public readonly ConfigEntry<bool> UnlimitedLobbyExtraFood;
+        public readonly ConfigEntry<bool> UnlimitedLobbyExtraBackpacks;
 
         public ModConfig(ConfigFile config)
         {
@@ -90,6 +102,18 @@ namespace PeakTrollMod
             CameraShakeScale = config.Bind("Accessibility", "CameraShakeScale", 1f, "Scale PEAK camera shake from 0 (off) to 1 (normal).");
             ReduceFlashingEffects = config.Bind("Accessibility", "ReduceFlashingTrollEffects", false, "Slow and cap repeated visual troll effects such as Phantom Pings.");
             MenuActivation = config.Bind("Accessibility", "MenuActivation", MenuActivationMode.Toggle, "Open F7 as a toggle or only while the shortcut is held.");
+            ItemSpawnerEnabled = config.Bind("Quality of Life", "ItemSpawner", true, "Show the searchable item spawner page in the F7 menu.");
+            EffectPreviewEnabled = config.Bind("Quality of Life", "EffectPreview", true, "Show safe, non-executing effect previews before use.");
+            FavoritesAndRecentsEnabled = config.Bind("Quality of Life", "FavoritesAndRecentActions", true, "Remember favorite and recently used items/effect previews.");
+            FavoriteItemsData = config.Bind("Quick Access", "FavoriteItems", string.Empty, "Newline-separated favorite runtime item names.");
+            RecentItemsData = config.Bind("Quick Access", "RecentItems", string.Empty, "Newline-separated recently used runtime item names.");
+            FavoriteEffectsData = config.Bind("Quick Access", "FavoriteEffects", string.Empty, "Newline-separated favorite effect preview names.");
+            RecentEffectsData = config.Bind("Quick Access", "RecentEffects", string.Empty, "Newline-separated recently previewed effects.");
+            UnlimitedLobbyEnabled = config.Bind("Unlimited Lobby", "Enabled", false, "Raise the next hosted lobby's player cap. Automatically yields to the standalone PEAK Unlimited mod.");
+            UnlimitedLobbyMaxPlayers = config.Bind("Unlimited Lobby", "MaxPlayers", 12, "Maximum players for newly hosted rooms (4-30). Change before creating the lobby.");
+            UnlimitedLobbyScaleSupplies = config.Bind("Unlimited Lobby", "ScaleCampfireSupplies", true, "Scale campfire food and backpack spawns for players above the vanilla four-player count.");
+            UnlimitedLobbyExtraFood = config.Bind("Unlimited Lobby", "ExtraCampfireFood", true, "Spawn one additional marshmallow per player above four, including late joiners.");
+            UnlimitedLobbyExtraBackpacks = config.Bind("Unlimited Lobby", "ExtraBackpacks", true, "Spawn roughly one additional backpack per four players above the vanilla cap.");
         }
     }
 }

@@ -42,6 +42,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 ### Items and held items
 
 - `ItemDatabase` exposes item lookup/load methods, but the mod uses loaded `Item` objects to build a runtime catalog resiliently.
+- The v0.4.5 Item Spawner filters that same catalog in a dedicated menu page. Give actions retain PEAK's native in-hand path; ground placement uses the already-verified `0_Items/<item name>` Photon prefab convention, applies native item physics, and enters the mod-owned cleanup registry.
 - Internal `CharacterItems.SpawnItemInHand(string)` sends `RPC_SpawnItemInHandMaster` to the master client. `ItemSpawnerEnhanced` installed locally uses the same method via reflection.
 - Give Item invokes that verified method directly on the selected character's `CharacterItems`, so PEAK performs the room item spawn through its native master-client RPC. The caller and recipient do not need host authority, and the recipient does not need this mod.
 - `Mandrake` is a real `ItemComponent`; its item prefab is selected from the runtime item catalog by name. No audio is extracted or redistributed.
@@ -98,9 +99,15 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 | Scoutmaster/Zombie spawn and tracked enemy targeting | 🔒 Host Only | `PhotonNetwork.IsMasterClient` checked before verified spawning/targeting paths |
 | Genuine Looker, voice features, appearance swap, hazard clouds | ⚠ Unsupported | Disabled; no request is sent |
 
+### Unlimited lobby development path
+
+- `Peak.Network.NetworkingUtilities.MAX_PLAYERS` and the parameterless `HostRoomOptions()` method are the two room-cap sources used by the current inspected build. The built-in v0.4.5 option patches only these entry points, clamps the requested cap to 4–30, and applies it to newly hosted rooms.
+- Campfire supply scaling runs only for the Photon master client, uses runtime-discovered Marshmallow and Backpack item prefabs, accounts only for players above the vanilla four-player baseline, and adds food as late joiners increase the room count.
+- The built-in implementation scans loaded BepInEx plugin identity and assembly names and yields completely when the standalone PEAK Unlimited plugin is present, preventing competing room-option or provision patches.
+
 ## Network validation
 
-- Custom Photon event code 197, exact protocol 6 / mod version `0.4.0` development.
+- Custom Photon event code 197, exact protocol 6 / mod version `0.4.5` development.
 - Sender must resolve to a player in the current room.
 - Target actor must resolve to a participating character.
 - Command enum, argument count/type, enum range, string length, position type, speed, force, duration, volume, status, and object limits are checked or clamped.

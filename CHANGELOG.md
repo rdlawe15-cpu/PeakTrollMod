@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased (0.4.5)
+
+- Added a dedicated searchable Item Spawner page backed by PEAK's live runtime catalog, with quantity selection, give-to-target/self actions, tracked ground spawning, refresh controls, and no bundled game assets.
+- Added safe Effect Preview cards that show the selected target, authority context, live effect parameters, and a non-executing animation before routing to the real controls.
+- Added an optional Unlimited Lobby mode for newly hosted 4–30 player rooms, plus host-owned campfire food and backpack scaling for extra and late-joining scouts.
+- Added automatic overlap protection that disables the built-in unlimited-lobby patches whenever the standalone PEAK Unlimited plugin is loaded.
+- Added persistent Favorites & Recent Actions for runtime items and effect previews.
+- Added a persistent one-pixel outline to every menu button, with authority-aware color accents that brighten into the existing hover glow.
+- Isolated the menu from shared Unity IMGUI state so another UI cannot leave every button disabled, forced the F7 panel to a stable foreground depth, and added automatic style-texture rebuilding after scene changes or draw failures.
+- Kept compatible-client networking at protocol v6; the new item and lobby behavior uses verified native PEAK/Photon paths and the preview/shortcut state is local.
+
 ## 0.4.0 — 2026-09-07
 
 - Added Persistent Player Preferences keyed by Steam user ID, including local alias/color, voice volume, mute, and exclusion from random troll targeting.
