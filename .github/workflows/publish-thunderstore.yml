@@ -67,7 +67,6 @@ jobs:
 
       - name: Publish package to Thunderstore
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
           TCLI_AUTH_TOKEN: ${{ secrets.TCLI_AUTH_TOKEN }}
         shell: bash
         run: |
@@ -77,11 +76,7 @@ jobs:
             exit 1
           fi
 
-          version="${RELEASE_TAG#v}"
           tcli publish \
             --config-path ./thunderstore.toml \
             --file ./artifacts/thunderstore-package.zip \
-            --package-namespace FuniPeakModz \
-            --package-name PEAK_Troll_Mod \
-            --package-version "$version" \
             --repository https://thunderstore.io
