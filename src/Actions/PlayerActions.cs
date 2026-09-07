@@ -546,6 +546,39 @@ namespace PeakTrollMod
             catch (Exception ex) { return Error("Give item", ex); }
         }
 
+        public ActionResult ResurrectAtLastLivingPosition(PlayerEntry target)
+        {
+            if (target == null || target.Character == null) return ActionResult.Fail("Target unavailable.");
+            Vector3 desired = target.Character.LastLivingPosition;
+            if (!Finite(desired) || desired.sqrMagnitude < .01f) desired = target.Character.Center;
+            return ResurrectLocal(target, desired, false);
+        }
+
+        public ActionResult ResurrectNearPlayer(PlayerEntry target, PlayerEntry anchor)
+        {
+            if (anchor == null || anchor.Character == null) return ActionResult.Fail("No living player is available to join.");
+            Vector3 direction = anchor.Character.data == null ? Vector3.right : anchor.Character.data.lookDirection_Right;
+            direction.y = 0f;
+            if (!Finite(direction) || direction.sqrMagnitude < .01f) direction = Vector3.right;
+            return ResurrectLocal(target, anchor.Character.Center + direction.normalized * 1.5f, false);
+        }
+
+        public ActionResult ResurrectLocal(PlayerEntry target, Vector3 desiredPosition, bool applyPostReviveStatus)
+        {
+            if (!_capabilities.Available(FeatureCapability.Resurrect)) return Missing(FeatureCapability.Resurrect);
+            if (target == null || target.Character == null || target.Character.data == null || target.Character.refs == null || target.Character.refs.view == null) return ActionResult.Fail("Target revive view unavailable.");
+            if (!target.Character.data.dead && !target.Character.data.fullyPassedOut) return ActionResult.Fail(target.Name + " is already alive.");
+            if (!Finite(desiredPosition)) return ActionResult.Fail("Revive destination is invalid.");
+            Vector3 safe;
+            if (!TrySafePosition(desiredPosition, out safe)) safe = desiredPosition + Vector3.up * 1.1f;
+            try
+            {
+                target.Character.refs.view.RPC("RPCA_ReviveAtPosition", RpcTarget.All, new object[] { safe, applyPostReviveStatus, -1 });
+                return ActionResult.Ok("Resurrected " + target.Name + " through PEAK's native synchronized revive; host and target mod are not required.");
+            }
+            catch (Exception ex) { return Error("Resurrect", ex); }
+        }
+
         public ActionResult ResetLocal(PlayerEntry target)
         {
             if (target == null || target.Character == null) return ActionResult.Fail("Target unavailable.");
@@ -572,6 +605,11 @@ namespace PeakTrollMod
             else return false;
             if (Physics.CheckSphere(safe, .35f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) safe += Vector3.up * 1.25f;
             return !Physics.CheckSphere(safe, .35f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        }
+
+        private static bool Finite(Vector3 value)
+        {
+            return !float.IsNaN(value.x) && !float.IsInfinity(value.x) && !float.IsNaN(value.y) && !float.IsInfinity(value.y) && !float.IsNaN(value.z) && !float.IsInfinity(value.z);
         }
 
         private ActionResult Missing(FeatureCapability capability) { return ActionResult.Fail(capability + " unsupported: " + _capabilities.Reason(capability)); }

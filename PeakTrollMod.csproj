@@ -36,7 +36,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\TrollModPlugin.cs" />
     <Compile Include="src\Core\Models.cs" /><Compile Include="src\Core\ModConfig.cs" /><Compile Include="src\Core\ReflectionHelpers.cs" /><Compile Include="src\Core\CapabilityRegistry.cs" />
-    <Compile Include="src\Players\PlayerManager.cs" /><Compile Include="src\Actions\PlayerActions.cs" /><Compile Include="src\Networking\TrollNetworkManager.cs" />
+    <Compile Include="src\Players\PlayerManager.cs" /><Compile Include="src\Actions\PlayerActions.cs" /><Compile Include="src\Actions\NoWaitManager.cs" /><Compile Include="src\Networking\TrollNetworkManager.cs" />
     <Compile Include="src\Spawning\SpawnManager.cs" /><Compile Include="src\Mirages\VisualCloneFactory.cs" /><Compile Include="src\Mirages\MiragePuppetController.cs" /><Compile Include="src\Mirages\MirageManager.cs" /><Compile Include="src\Mirages\PingPlacementManager.cs" /><Compile Include="src\Mirages\PhantomPingManager.cs" />
     <Compile Include="src\Audio\AudioManager.cs" /><Compile Include="src\Appearance\AppearanceManager.cs" /><Compile Include="src\Appearance\ProgressionManager.cs" /><Compile Include="src\Chaos\ChaosManager.cs" /><Compile Include="src\Chaos\CampfireTrollManager.cs" /><Compile Include="src\Chaos\HelicopterTrollManager.cs" /><Compile Include="src\Reset\ResetManager.cs" /><Compile Include="src\UI\TrollUIManager.cs" />
   </ItemGroup>

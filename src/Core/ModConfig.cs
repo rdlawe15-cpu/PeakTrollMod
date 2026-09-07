@@ -23,6 +23,7 @@ namespace PeakTrollMod
         public readonly ConfigEntry<bool> UnlockAllBadges;
         public readonly ConfigEntry<bool> CampfireResetEnabled;
         public readonly ConfigEntry<bool> HelicopterSuppressionEnabled;
+        public readonly ConfigEntry<bool> NoWaitEnabled;
 
         public ModConfig(ConfigFile config)
         {
@@ -44,6 +45,7 @@ namespace PeakTrollMod
             UnlockAllBadges = config.Bind("Progression", "UnlockAllBadges", false, "Expose all PEAK badges and sync the local sash while enabled without granting platform achievements.");
             CampfireResetEnabled = config.Bind("World", "CampfireTeleportsEveryoneToStart", false, "When this client observes a campfire ignition, teleport all scouts back to the first segment start.");
             HelicopterSuppressionEnabled = config.Bind("World", "SuppressSummitHelicopter", false, "Suppress the summit rescue sequence locally and advertise suppression to compatible clients.");
+            NoWaitEnabled = config.Bind("Player", "NoWait", true, "When joining an expedition already in progress, automatically revive the local scout beside the nearest living player.");
         }
     }
 }

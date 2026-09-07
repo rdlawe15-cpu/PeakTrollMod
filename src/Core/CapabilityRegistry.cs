@@ -26,6 +26,7 @@ namespace PeakTrollMod
             Need(FeatureCapability.Visibility, typeof(Renderer) != null, "Unity Renderer unavailable");
             Need(FeatureCapability.Teleport, typeof(Character).GetMethod("WarpPlayerRPC") != null, "Character.WarpPlayerRPC missing");
             Need(FeatureCapability.StartEndTeleport, typeof(MapHandler).GetField("segments") != null, "MapHandler segment references missing");
+            Need(FeatureCapability.Resurrect, ReflectionHelpers.HasMethod(typeof(Character), "RPCA_ReviveAtPosition", typeof(Vector3), typeof(bool), typeof(int)), "Character.RPCA_ReviveAtPosition missing");
             Need(FeatureCapability.Knockout, typeof(Character).GetMethod("PassOutInstantly") != null, "Character.PassOutInstantly missing");
             Need(FeatureCapability.Eliminate, typeof(Character).GetMethod("RPCA_Die") != null, "Character.RPCA_Die missing");
             Need(FeatureCapability.StatusEffects, typeof(CharacterAfflictions).GetMethod("AddStatus") != null, "CharacterAfflictions.AddStatus missing");

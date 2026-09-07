@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased (0.4.0)
+
+- Added No Wait: a local late-join detector that revives you beside the nearest living scout when entering an expedition already in progress, including when you are not host.
+- Added independent Resurrect Selected, Resurrect Everyone, and Resurrect Self controls using PEAK's native all-client revive RPC; targets do not need the mod.
+- Limited No Wait to the initial room-join window and consumed it on normal airport entry or a stable living spawn, preventing it from becoming a permanent auto-revive cheat.
+- Preserved compatible-client protocol v6 because resurrection uses PEAK's existing native synchronization rather than a new mod packet.
+
 ## 0.3.5 Beta — 2026-09-07
 
 - Redesigned the F7 overlay around the selected expedition-console concept with a calmer slate/teal palette, compact header targeting, restrained cards, and clearer navigation states.

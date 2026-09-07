@@ -4,13 +4,15 @@
 
 A private-lobby trolling and chaos toolkit for **PEAK**, controlled through an in-game menu opened with **F7**.
 
-Fly around the mountain, launch friends into the sky, knock them out, summon enemy ambushes, create unsettling mirages, play fake sounds, place Phantom Pings, rain items from above, or combine multiple effects into custom chaos sequences.
+Skip the spectator wait when joining an expedition in progress, resurrect fallen scouts, fly around the mountain, launch friends into the sky, summon enemy ambushes, create unsettling mirages, place Phantom Pings, or combine multiple effects into custom chaos sequences.
 
 > Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
 
 ## Features
 
 - **Phantom Pings** — Target one player with Breadcrumb Trail, Circle, or Behind You ping patterns.
+- **No Wait** — When you join an expedition already in progress, automatically revive beside the nearest living scout. It works for non-host clients and does not auto-revive later deaths.
+- **Resurrection Controls** — Revive the selected scout, everyone, or yourself through PEAK's native synchronized revive path; the caller does not need to be host and the target does not need the mod.
 - **Player Effects** — Reversible owner-controlled flight, ragdoll, knockout, launch, Horizontal Yeet, Sky High, Off Mountain, teleportation, status effects, and movement-speed controls.
 - **Fake Enemies and Mirages** — Create visual-only scouts, luggage, statues, creatures, and enemy decoys with configurable behaviors.
 - **Enemy Ambushes** — Spawn and track supported real enemies when host authority and runtime prefabs are available.
@@ -32,7 +34,7 @@ The menu labels actions by their authority requirements:
 - **Host Only** — Requires the current Photon master client.
 - **Unsupported** — Disabled when PEAK does not expose a reliable compatible API.
 
-Some native PEAK actions—including several ragdoll, knockout, teleport, and item effects—can affect unmodded targets. Phantom Pings, mirages, fake audio, and other mod-rendered effects require compatible clients.
+Some native PEAK actions—including resurrection, ragdoll, knockout, teleport, and several item effects—can affect unmodded targets. Phantom Pings, mirages, fake audio, and other mod-rendered effects require compatible clients.
 
 For the best experience, have everyone install the same version before joining the lobby.
 
@@ -45,7 +47,7 @@ For the best experience, have everyone install the same version before joining t
 
 ## Compatibility
 
-- Mod version: **0.3.5 Beta**
+- Mod version: **0.4.0 Development**
 - Networking protocol: **v6**
 - Inspected PEAK build: **2.4.b (`3e62ee214`)**
 

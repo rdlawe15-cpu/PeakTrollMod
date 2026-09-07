@@ -81,6 +81,11 @@ namespace PeakTrollMod
             return _actions.SkyLaunchLocal(target, Mathf.Clamp(height, 25f, 300f));
         }
 
+        public ActionResult Resurrect(PlayerEntry target)
+        {
+            return _actions.ResurrectAtLastLivingPosition(target);
+        }
+
         public ActionResult ClearStatuses(PlayerEntry target)
         {
             if (target == null) return ActionResult.Fail("No target selected.");

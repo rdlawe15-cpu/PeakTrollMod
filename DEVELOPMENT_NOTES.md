@@ -87,6 +87,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 | Give item | 🟢 Anyone | Calls PEAK's native `SpawnItemInHand` → master-client RPC path; target mod not required |
 | Sky High / Dynamite Shower | 🟢 Anyone | Native character RPCs and caller-owned PEAK item prefabs; target mod and host authority not required |
 | Launch / teleport | 🟢 Anyone | Native all-client character force/warp RPCs; host and target mod not required |
+| No Wait / resurrection | 🟢 Anyone | Native `RPCA_ReviveAtPosition` broadcast clears death/pass-out state and warps the target; host and target mod not required |
 | Speed / Flight | 🟡 Everyone Needs Mod | Request sent only to compatible target owner; flight caches and restores registered rigidbody gravity/velocity limits |
 | Statuses | 🔒 Host native / 🟡 non-host | PEAK validates the host sender natively; otherwise a compatible target owner executes the normal path |
 | Visibility | 🟡 Everyone Needs Mod | Compatible observers apply/restore cached renderer state locally |
@@ -97,7 +98,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 
 ## Network validation
 
-- Custom Photon event code 197, exact protocol 6 / mod version `0.3.5` beta.
+- Custom Photon event code 197, exact protocol 6 / mod version `0.4.0` development.
 - Sender must resolve to a player in the current room.
 - Target actor must resolve to a participating character.
 - Command enum, argument count/type, enum range, string length, position type, speed, force, duration, volume, status, and object limits are checked or clamped.

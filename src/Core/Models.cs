@@ -5,7 +5,7 @@ namespace PeakTrollMod
 {
     internal enum FeatureCapability
     {
-        PlayerDiscovery, Ragdoll, Launch, Speed, Flight, Visibility, Teleport, StartEndTeleport,
+        PlayerDiscovery, Ragdoll, Launch, Speed, Flight, Visibility, Teleport, StartEndTeleport, Resurrect,
         Knockout, Eliminate, StatusEffects, GiveItem, ScoutmasterSpawn, MushroomZombieSpawn,
         LookerSpawn, Mandrake, PingPlacement, MirageLuggage, MirageStatue, MirageCapybara,
         MirageScout, FakeEnemyScoutmaster, FakeEnemyZombie, FakeEnemyLooker, FakeAudio,

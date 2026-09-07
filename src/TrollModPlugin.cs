@@ -15,7 +15,7 @@ namespace PeakTrollMod
     {
         public const string Guid = "com.dougl.peaktrollmod";
         public const string Name = "PEAK Troll Mod";
-        public const string Version = "0.3.5";
+        public const string Version = "0.4.0";
 
         internal static TrollModPlugin Instance;
         internal ModConfig Settings;
@@ -23,6 +23,7 @@ namespace PeakTrollMod
         internal PlayerManager Players;
         internal TrollNetworkManager Network;
         internal PlayerActions Actions;
+        internal NoWaitManager NoWait;
         internal SpawnManager Spawns;
         internal MirageManager Mirages;
         internal PingPlacementManager PingPlacement;
@@ -50,6 +51,7 @@ namespace PeakTrollMod
             Audio = new AudioManager(Logger);
             Mirages = new MirageManager(Logger);
             Actions = new PlayerActions(Logger, Players, Capabilities, Audio);
+            NoWait = new NoWaitManager(Logger, Players, Actions, Capabilities, Settings);
             Spawns = new SpawnManager(Logger, Players, Capabilities);
             Network = new TrollNetworkManager(Logger, Players, Actions, Mirages, Audio);
             PingPlacement = new PingPlacementManager(Logger, Mirages, Players, Network);
@@ -72,7 +74,7 @@ namespace PeakTrollMod
         private void Update()
         {
             if (Settings.MenuKey.Value.IsDown()) Ui.Toggle();
-            Players.Tick(); Network.Tick(); Actions.Tick(); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
+            Players.Tick(); Network.Tick(); Actions.Tick(); NoWait.Tick(); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
 
             bool inRoom = PhotonNetwork.InRoom;
             if (_wasInRoom && !inRoom) Reset.ResetAll();
@@ -94,6 +96,7 @@ namespace PeakTrollMod
             if (Players != null) Players.Refresh();
             if (Capabilities != null) Capabilities.RefreshDynamic();
             if (Actions != null) Actions.RefreshItemCatalog();
+            if (NoWait != null) NoWait.OnSceneLoaded();
             if (CampfireTroll != null) CampfireTroll.ResetScene();
             if (HelicopterTroll != null) HelicopterTroll.ResetScene();
             DebugLog("Scene loaded: " + scene.name);
