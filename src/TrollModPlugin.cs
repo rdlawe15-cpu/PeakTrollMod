@@ -15,7 +15,7 @@ namespace PeakTrollMod
     {
         public const string Guid = "com.dougl.peaktrollmod";
         public const string Name = "PEAK Troll Mod";
-        public const string Version = "0.2.0";
+        public const string Version = "0.3.0";
 
         internal static TrollModPlugin Instance;
         internal ModConfig Settings;
@@ -85,6 +85,8 @@ namespace PeakTrollMod
         }
 
         private void OnGUI() { if (Ui != null) Ui.Draw(); }
+
+        private void FixedUpdate() { if (Actions != null) Actions.FixedTick(); }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {

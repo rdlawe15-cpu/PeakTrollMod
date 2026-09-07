@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 — 2026-09-07
+
+- Added reversible owner-controlled flight to the Player → Movement card, with a bounded 4–20 m/s speed control, Shift boost, and WASD/Space/Ctrl controls.
+- Flight automatically restores each character rigidbody's gravity and velocity limit during disable, player reset, scene changes, lobby exit, plugin shutdown, and emergency cleanup.
+- Updated compatible-client networking to protocol v6.
+
 ## 0.2.0 — 2026-09-06
 
 - Added bounded, target-only Phantom Pings with breadcrumb-trail, circle, and behind-you patterns, configurable count and interval, explicit cancellation, and reset cleanup.

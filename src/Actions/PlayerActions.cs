@@ -21,9 +21,17 @@ namespace PeakTrollMod
         {
             public bool HasSpeed;
             public float Speed;
+            public bool FlightActive;
+            public float FlightSpeed;
+            public readonly Dictionary<Rigidbody, FlightBodyState> FlightBodies = new Dictionary<Rigidbody, FlightBodyState>();
             public readonly Dictionary<Renderer, bool> Renderers = new Dictionary<Renderer, bool>();
             public readonly HashSet<CharacterAfflictions.STATUSTYPE> Statuses = new HashSet<CharacterAfflictions.STATUSTYPE>();
             public readonly Dictionary<CharacterAfflictions.STATUSTYPE, float> HostStatusDeltas = new Dictionary<CharacterAfflictions.STATUSTYPE, float>();
+        }
+        private sealed class FlightBodyState
+        {
+            public bool UseGravity;
+            public float MaxLinearVelocity;
         }
 
         private readonly ManualLogSource _log;
@@ -38,6 +46,7 @@ namespace PeakTrollMod
         private readonly MethodInfo _die;
         private readonly MethodInfo _spawnItem;
         private readonly MethodInfo _hostApplyStatuses;
+        private readonly FieldInfo _ragdollRigidbodies;
         public IList<Item> Items { get { return _items.AsReadOnly(); } }
 
         public PlayerActions(ManualLogSource log, PlayerManager players, CapabilityRegistry capabilities, AudioManager audio)
@@ -48,6 +57,7 @@ namespace PeakTrollMod
             _die = ReflectionHelpers.Method(typeof(Character), "DieInstantly", Type.EmptyTypes);
             _spawnItem = ReflectionHelpers.Method(typeof(CharacterItems), "SpawnItemInHand", new Type[] { typeof(string) });
             _hostApplyStatuses = ReflectionHelpers.Method(typeof(CharacterAfflictions), "RPC_ApplyStatusesFromFloatArray", new Type[] { typeof(float[]), typeof(PhotonMessageInfo) });
+            _ragdollRigidbodies = ReflectionHelpers.Field(typeof(CharacterRagdoll), "rigidbodies");
             RefreshItemCatalog();
         }
 
@@ -211,6 +221,45 @@ namespace PeakTrollMod
             }
         }
 
+        public void FixedTick()
+        {
+            foreach (KeyValuePair<int, CachedState> pair in _states)
+            {
+                CachedState state = pair.Value;
+                if (!state.FlightActive) continue;
+                PlayerEntry target = _players.Find(pair.Key);
+                if (target == null || !target.IsLocal || target.Character == null || target.Character.data == null || target.Character.data.dead)
+                {
+                    RestoreFlight(state);
+                    continue;
+                }
+
+                Vector3 direction = Vector3.zero;
+                TrollModPlugin plugin = TrollModPlugin.Instance;
+                if (plugin == null || plugin.Ui == null || !plugin.Ui.IsOpen)
+                {
+                    Vector3 forward = target.Character.data.lookDirection_Flat; forward.y = 0f;
+                    Vector3 right = target.Character.data.lookDirection_Right; right.y = 0f;
+                    if (forward.sqrMagnitude > .01f) forward.Normalize();
+                    if (right.sqrMagnitude > .01f) right.Normalize();
+                    float forwardInput = (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow) ? 1f : 0f) - (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow) ? 1f : 0f);
+                    float rightInput = (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1f : 0f) - (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f);
+                    float upInput = (Input.GetKey(KeyCode.Space) ? 1f : 0f) - (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl) ? 1f : 0f);
+                    direction = forward * forwardInput + right * rightInput + Vector3.up * upInput;
+                    if (direction.sqrMagnitude > 1f) direction.Normalize();
+                }
+                float boost = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift) ? 1.75f : 1f;
+                Vector3 velocity = direction * state.FlightSpeed * boost;
+                foreach (KeyValuePair<Rigidbody, FlightBodyState> body in state.FlightBodies)
+                {
+                    if (body.Key == null) continue;
+                    body.Key.useGravity = false;
+                    body.Key.maxLinearVelocity = Mathf.Max(body.Key.maxLinearVelocity, state.FlightSpeed * 2f);
+                    body.Key.linearVelocity = velocity;
+                }
+            }
+        }
+
         private Vector3 FindDropDirection(Vector3 origin, out bool foundDrop)
         {
             float baseGroundY;
@@ -320,6 +369,48 @@ namespace PeakTrollMod
             if (!state.HasSpeed) { state.Speed = target.Character.refs.movement.movementModifier; state.HasSpeed = true; }
             target.Character.refs.movement.movementModifier = Mathf.Clamp(multiplier, .25f, 3f);
             return ActionResult.Ok("Speed set to " + multiplier.ToString("0.00") + "x.");
+        }
+
+        public ActionResult SetFlightLocal(PlayerEntry target, bool enabled, float speed)
+        {
+            if (!_capabilities.Available(FeatureCapability.Flight)) return Missing(FeatureCapability.Flight);
+            if (target == null || !target.IsLocal || target.Character == null || target.Character.refs == null || target.Character.refs.ragdoll == null || _ragdollRigidbodies == null) return ActionResult.Fail("Flight requires the selected player's compatible owner client.");
+            CachedState state = State(target);
+            if (!enabled)
+            {
+                RestoreFlight(state);
+                return ActionResult.Ok("Flight disabled for " + target.Name + ".");
+            }
+
+            speed = Mathf.Clamp(speed, 4f, 20f);
+            IList<Rigidbody> bodies = _ragdollRigidbodies.GetValue(target.Character.refs.ragdoll) as IList<Rigidbody>;
+            if (bodies == null) return ActionResult.Fail("No character rigidbody registry was available for flight.");
+            for (int i = 0; i < bodies.Count; i++)
+            {
+                Rigidbody body = bodies[i];
+                if (body == null) continue;
+                if (!state.FlightBodies.ContainsKey(body)) state.FlightBodies.Add(body, new FlightBodyState { UseGravity = body.useGravity, MaxLinearVelocity = body.maxLinearVelocity });
+                body.useGravity = false;
+                body.maxLinearVelocity = Mathf.Max(body.maxLinearVelocity, speed * 2f);
+            }
+            if (state.FlightBodies.Count == 0) return ActionResult.Fail("No character rigidbodies were available for flight.");
+            state.FlightSpeed = speed;
+            state.FlightActive = true;
+            return ActionResult.Ok("Flight enabled for " + target.Name + " at " + speed.ToString("0") + " m/s. Close F7, then use WASD, Space/Ctrl, and Shift.");
+        }
+
+        private static void RestoreFlight(CachedState state)
+        {
+            if (state == null) return;
+            foreach (KeyValuePair<Rigidbody, FlightBodyState> pair in state.FlightBodies)
+            {
+                if (pair.Key == null) continue;
+                pair.Key.linearVelocity = Vector3.zero;
+                pair.Key.useGravity = pair.Value.UseGravity;
+                pair.Key.maxLinearVelocity = pair.Value.MaxLinearVelocity;
+            }
+            state.FlightBodies.Clear();
+            state.FlightActive = false;
         }
 
         public ActionResult SetVisibilityLocal(PlayerEntry target, bool visible)
@@ -460,6 +551,7 @@ namespace PeakTrollMod
             if (target == null || target.Character == null) return ActionResult.Fail("Target unavailable.");
             CachedState state;
             if (!_states.TryGetValue(target.ActorNumber, out state)) return ActionResult.Ok("No reversible troll state was cached.");
+            RestoreFlight(state);
             if (state.HasSpeed && target.Character.refs != null && target.Character.refs.movement != null) target.Character.refs.movement.movementModifier = state.Speed;
             foreach (KeyValuePair<Renderer, bool> pair in state.Renderers) if (pair.Key != null) pair.Key.enabled = pair.Value;
             if (target.Character.refs != null && target.Character.refs.afflictions != null)

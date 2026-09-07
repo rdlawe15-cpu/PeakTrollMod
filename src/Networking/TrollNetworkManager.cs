@@ -11,7 +11,7 @@ namespace PeakTrollMod
     internal sealed class TrollNetworkManager : IOnEventCallback
     {
         private const byte EventCode = 197;
-        private const int ProtocolVersion = 5;
+        private const int ProtocolVersion = 6;
         private readonly ManualLogSource _log;
         private readonly PlayerManager _players;
         private readonly PlayerActions _actions;
@@ -189,6 +189,7 @@ namespace PeakTrollMod
                 case NetCommand.Ragdoll: return _actions.RagdollLocal(target, V3(args, 0), Float(args, 3, 30f), Float(args, 4, 1.5f));
                 case NetCommand.Launch: return _actions.LaunchLocal(target, V3(args, 0), Float(args, 3, 35f), Bool(args, 4, true));
                 case NetCommand.Speed: return _actions.SetSpeedLocal(target, Mathf.Clamp(Float(args, 0, 1f), .25f, 3f));
+                case NetCommand.Flight: return _actions.SetFlightLocal(target, Bool(args, 0, false), Mathf.Clamp(Float(args, 1, 10f), 4f, 20f));
                 case NetCommand.Visibility: return _actions.SetVisibilityLocal(target, Bool(args, 0, true));
                 case NetCommand.Teleport: return _actions.TeleportLocal(target, Position(args, 0, target.Character.Center, 5000f));
                 case NetCommand.Knockout: return _actions.KnockoutLocal(target);

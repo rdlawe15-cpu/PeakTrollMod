@@ -26,6 +26,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 ### Movement and teleportation
 
 - `CharacterMovement.movementModifier` is a public multiplier and is cached before modification.
+- Flight runs only on the selected character owner's compatible client. It caches each registered ragdoll rigidbody's `useGravity` and `maxLinearVelocity`, drives bounded camera-relative velocity during `FixedUpdate`, and restores the cached values on disable or any global reset path.
 - `Character.WarpPlayerRPC(Vector3,bool)` is the game RPC used for teleportation. The installed `SimpleTeleport` mod independently invokes this RPC on the moving character's `PhotonView`, corroborating the call shape.
 - `MapHandler.segments` contains `MapHandler.MapSegment.reconnectSpawnPos`; the first and final loaded segments are used for start/end destinations instead of hard-coded coordinates.
 - Safe teleport probes ground with `Physics.Raycast` and tests body clearance with `Physics.CheckSphere` before sending the warp.
@@ -86,7 +87,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 | Give item | 🟢 Anyone | Calls PEAK's native `SpawnItemInHand` → master-client RPC path; target mod not required |
 | Sky High / Dynamite Shower | 🟢 Anyone | Native character RPCs and caller-owned PEAK item prefabs; target mod and host authority not required |
 | Launch / teleport | 🟢 Anyone | Native all-client character force/warp RPCs; host and target mod not required |
-| Speed | 🟡 Everyone Needs Mod | Request sent only to compatible target owner; owner executes normal game path |
+| Speed / Flight | 🟡 Everyone Needs Mod | Request sent only to compatible target owner; flight caches and restores registered rigidbody gravity/velocity limits |
 | Statuses | 🔒 Host native / 🟡 non-host | PEAK validates the host sender natively; otherwise a compatible target owner executes the normal path |
 | Visibility | 🟡 Everyone Needs Mod | Compatible observers apply/restore cached renderer state locally |
 | Mirage Scout, props, fake enemies, fake sound | 🟡 Everyone Needs Mod | Intended victim renders/plays locally; no real identity/entity created |
@@ -96,7 +97,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 
 ## Network validation
 
-- Custom Photon event code 197, exact protocol 5 / mod version `0.2.0`.
+- Custom Photon event code 197, exact protocol 6 / mod version `0.3.0`.
 - Sender must resolve to a player in the current room.
 - Target actor must resolve to a participating character.
 - Command enum, argument count/type, enum range, string length, position type, speed, force, duration, volume, status, and object limits are checked or clamped.
@@ -115,7 +116,7 @@ Startup checks cache reflected methods/fields. Scene/runtime refresh discovers l
 - Confirm the receiving client has every requested item prefab loaded before master spawning.
 - Exercise host migration with tracked room objects; cleanup remains host-only.
 - Inspect Mirage bone/animator alignment for every cosmetic and enemy variant.
-- Verify ping-placed props, Phantom Ping patterns/cancellation, and audience cleanup with two-, three-, and four-client protocol-5 lobbies.
+- Verify ping-placed props, Phantom Ping patterns/cancellation, flight controls/restoration, and audience cleanup with two-, three-, and four-client protocol-6 lobbies.
 - Validate lit/unlit Dynamite Shower timing, cleanup, and the 300 m Sky High ceiling across each biome in a private multiplayer lobby.
 - Confirm Photon custom event code 198 does not conflict with the final dependency set.
 - Profile a full 24-object mirage cap and verify allocations during creation only.

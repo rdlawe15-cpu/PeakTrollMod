@@ -22,6 +22,7 @@ namespace PeakTrollMod
             Need(FeatureCapability.Ragdoll, ReflectionHelpers.HasMethod(typeof(Character), "AddForceAtPosition", typeof(Vector3), typeof(Vector3), typeof(float)) && ReflectionHelpers.HasMethod(typeof(Character), "Fall", typeof(float), typeof(float)), "native Character.AddForceAtPosition/Fall RPC paths missing");
             Need(FeatureCapability.Launch, ReflectionHelpers.HasMethod(typeof(Character), "AddForceAtPosition", typeof(Vector3), typeof(Vector3), typeof(float)), "native Character.AddForceAtPosition RPC path missing");
             Need(FeatureCapability.Speed, ReflectionHelpers.HasField(typeof(CharacterMovement), "movementModifier"), "CharacterMovement.movementModifier missing");
+            Need(FeatureCapability.Flight, ReflectionHelpers.HasField(typeof(CharacterRagdoll), "rigidbodies") && typeof(Rigidbody).GetProperty("linearVelocity") != null && typeof(Rigidbody).GetProperty("useGravity") != null, "character rigidbodies or flight physics properties missing");
             Need(FeatureCapability.Visibility, typeof(Renderer) != null, "Unity Renderer unavailable");
             Need(FeatureCapability.Teleport, typeof(Character).GetMethod("WarpPlayerRPC") != null, "Character.WarpPlayerRPC missing");
             Need(FeatureCapability.StartEndTeleport, typeof(MapHandler).GetField("segments") != null, "MapHandler segment references missing");

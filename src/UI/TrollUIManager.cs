@@ -23,6 +23,7 @@ namespace PeakTrollMod
         private float _horizontalRagdollStrength = 90f;
         private float _launchStrength = 35f;
         private float _speed = 1f;
+        private float _flightSpeed = 10f;
         private float _statusAmount = .15f;
         private float _spawnDistance = 10f;
         private float _lifetime = 12f;
@@ -153,6 +154,9 @@ namespace PeakTrollMod
                 GUILayout.Label("Ragdoll Strength  " + _ragdollStrength.ToString("0"), _label); _ragdollStrength = GUILayout.HorizontalSlider(_ragdollStrength, 1f, 35f);
                 GUILayout.BeginHorizontal(); if (CapabilityButton("RAGDOLL", FeatureCapability.Ragdoll, _button, 30)) { Vector3 d = new Vector3(UnityEngine.Random.Range(-.5f,.5f), .5f, UnityEngine.Random.Range(-.5f,.5f)).normalized; Owner(NetCommand.Ragdoll, new object[] { d.x,d.y,d.z,_ragdollStrength,1.5f }); } if (CapabilityButton("OFF MOUNTAIN", FeatureCapability.Ragdoll, _danger, 30)) RagdollOffMountain(); GUILayout.EndHorizontal();
                 GUILayout.Label("Horizontal Yeet Strength  "+_horizontalRagdollStrength.ToString("0"),_label);_horizontalRagdollStrength=GUILayout.HorizontalSlider(_horizontalRagdollStrength,25f,150f);if(CapabilityButton("HORIZONTAL YEET",FeatureCapability.Ragdoll,_danger,32))HorizontalRagdoll();
+                GUILayout.Space(8); Badge(PermissionKind.EveryoneNeedsMod); GUILayout.Label("Flight Speed  " + _flightSpeed.ToString("0") + " m/s", _label); _flightSpeed = GUILayout.HorizontalSlider(_flightSpeed, 4f, 20f);
+                GUILayout.BeginHorizontal(); if (CapabilityButton("ENABLE FLIGHT", FeatureCapability.Flight, _success, 34)) Owner(NetCommand.Flight, new object[] { true, _flightSpeed }); if (CapabilityButton("DISABLE", FeatureCapability.Flight, _button, 34)) Owner(NetCommand.Flight, new object[] { false, _flightSpeed }); GUILayout.EndHorizontal();
+                GUILayout.Label("Close F7: WASD move, Space/Ctrl rise/fall, Shift boosts.", _small);
             });
             Card(new Rect(898, 212, 330, 250), "◉  Visibility", new Color(.38f, .55f, 1f), delegate
             {

@@ -4,14 +4,14 @@
 
 A private-lobby trolling and chaos toolkit for **PEAK**, controlled through an in-game menu opened with **F7**.
 
-Launch friends into the sky, knock them out, summon enemy ambushes, create unsettling mirages, play fake sounds, place Phantom Pings, rain items from above, or combine multiple effects into custom chaos sequences.
+Fly around the mountain, launch friends into the sky, knock them out, summon enemy ambushes, create unsettling mirages, play fake sounds, place Phantom Pings, rain items from above, or combine multiple effects into custom chaos sequences.
 
 > Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
 
 ## Features
 
 - **Phantom Pings** — Target one player with Breadcrumb Trail, Circle, or Behind You ping patterns.
-- **Player Effects** — Ragdoll, knockout, launch, Horizontal Yeet, Sky High, Off Mountain, teleportation, status effects, and movement-speed controls.
+- **Player Effects** — Reversible owner-controlled flight, ragdoll, knockout, launch, Horizontal Yeet, Sky High, Off Mountain, teleportation, status effects, and movement-speed controls.
 - **Fake Enemies and Mirages** — Create visual-only scouts, luggage, statues, creatures, and enemy decoys with configurable behaviors.
 - **Enemy Ambushes** — Spawn and track supported real enemies when host authority and runtime prefabs are available.
 - **Fake Audio** — Play discovered in-game sounds as targeted 2D or positioned 3D cues.
@@ -45,8 +45,8 @@ For the best experience, have everyone install the same version before joining t
 
 ## Compatibility
 
-- Mod version: **0.2.0**
-- Networking protocol: **v5**
+- Mod version: **0.3.0**
+- Networking protocol: **v6**
 - Inspected PEAK build: **2.4.b (`3e62ee214`)**
 
 Game updates may change internal APIs or prefab availability. Unsupported capabilities disable themselves instead of relying on guessed game behavior.
