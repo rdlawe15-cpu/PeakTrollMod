@@ -11,8 +11,8 @@ namespace PeakTrollMod
         private const float DesignWidth = 1280f;
         private const float DesignHeight = 850f;
         private readonly TrollModPlugin _plugin;
-        private readonly string[] _tabs = { "⌂  Home", "♟  Player", "▣  Spawning", "✦  Mirage", "♪  Audio", "●  Appearance", "☠  Enemies", "▲  World", "◈  Chaos", "⚙  Settings", "☷  Mod Config" };
-        private readonly string[] _tabNames = { "Home", "Player", "Spawning", "Mirage", "Audio", "Appearance", "Enemies", "World", "Chaos Mode", "Settings", "Mod Config" };
+        private readonly string[] _tabs = { "⌂  Home", "♟  Player", "▣  Spawning", "✦  Mirage", "♪  Audio", "●  Appearance", "☠  Enemies", "▲  World", "◈  Chaos", "◎  Lobby", "⚙  Settings", "☷  Mod Config" };
+        private readonly string[] _tabNames = { "Home", "Player", "Spawning", "Mirage", "Audio", "Appearance", "Enemies", "World", "Chaos Mode", "Lobby Readiness", "Settings", "Mod Config" };
         private int _tab;
         private int _targetIndex;
         private int _statusIndex = 3;
@@ -54,12 +54,20 @@ namespace PeakTrollMod
         private int _configIndex;
         private string _configEdit = string.Empty;
         private string _configEditKey = string.Empty;
+        private ulong _preferenceSteamId;
+        private string _preferenceAlias = string.Empty;
+        private float _preferenceVolume = 1f;
+        private bool _preferenceMuted;
+        private bool _preferenceExcluded;
+        private Color _preferenceColor = new Color(.35f,.85f,.78f,1f);
         private string _message = "Ready. Private lobbies, compatible friends, sensible chaos.";
         private float _messageUntil;
         private CursorLockMode _oldLock;
         private bool _oldCursor;
         private GUIStyle _title, _logo, _subtitle, _nav, _navSelected, _label, _small, _button, _danger, _success, _disabled, _cardTitle, _badge;
         private Texture2D _pixel;
+        private float _styledTextScale;
+        private bool _styledHighContrast;
         private readonly Dictionary<string, Vector2> _cardScroll = new Dictionary<string, Vector2>();
         private readonly Dictionary<string, float> _buttonHover = new Dictionary<string, float>();
         private readonly Dictionary<string, float> _buttonPulseUntil = new Dictionary<string, float>();
@@ -68,6 +76,7 @@ namespace PeakTrollMod
         public TrollUIManager(TrollModPlugin plugin) { _plugin = plugin; }
 
         public void Toggle() { if (IsOpen) ForceClose(); else Open(); }
+        public void SetOpen(bool open) { if(open&&!IsOpen)Open();else if(!open&&IsOpen)ForceClose(); }
         private void Open() { _oldLock = Cursor.lockState; _oldCursor = Cursor.visible; IsOpen = true; Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
         public void ForceClose() { if (!IsOpen) return; IsOpen = false; Cursor.lockState = _oldLock; Cursor.visible = _oldCursor; _confirmEliminate = false; }
         public void Tick() { if (IsOpen) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; } }
@@ -90,7 +99,7 @@ namespace PeakTrollMod
             GUIStyle brandSub = new GUIStyle(_logo); brandSub.fontSize = 21; GUI.Label(new Rect(42, 50, 150, 54), "TROLL\nMOD", brandSub);
             GUI.Label(new Rect(238, 29, 520, 44), HeadingForTab(), _title);
             GUI.Label(new Rect(240, 74, 570, 24), SubtitleForTab(), _subtitle);
-            if (_tab != 0 && _tab != 9 && _tab != 10)
+            if (_tab != 0 && _tab < 9)
             {
                 GUI.Label(new Rect(826, 41, 72, 30), "Target", _label);
                 if (AnimatedButton(new Rect(895, 32, 235, 44), CurrentTargetName() + "   ▾", _button)) CycleTarget();
@@ -105,14 +114,14 @@ namespace PeakTrollMod
         private void DrawSidebar()
         {
             DrawPanel(new Rect(18, 120, 192, 690), new Color(.025f, .035f, .038f, .96f), new Color(.13f, .2f, .21f, 1f), 1f);
-            for (int i = 0; i < _tabs.Length; i++) if (AnimatedButton(new Rect(24, 136 + i * 55, 180, 48), _tabs[i], i == _tab ? _navSelected : _nav)) _tab = i;
+            for (int i = 0; i < _tabs.Length; i++) if (AnimatedButton(new Rect(24, 136 + i * 50, 180, 44), _tabs[i], i == _tab ? _navSelected : _nav)) _tab = i;
             GUI.Label(new Rect(35, 756, 165, 24), "Version " + TrollModPlugin.Version, _small);
         }
 
         private void DrawContent()
         {
             Rect area = new Rect(220, 128, 1030, 622);
-            if (_tab == 0) DrawHome(area); else if (_tab == 1) DrawPlayer(area); else if (_tab == 2) DrawSpawning(area); else if (_tab == 3) DrawMirage(area); else if (_tab == 4) DrawAudio(area); else if (_tab == 5) DrawAppearance(area); else if (_tab == 6) DrawEnemies(area); else if (_tab == 7) DrawWorld(area); else if (_tab == 8) DrawChaos(area); else if (_tab == 9) DrawSettings(area); else DrawModConfig(area);
+            if (_tab == 0) DrawHome(area); else if (_tab == 1) DrawPlayer(area); else if (_tab == 2) DrawSpawning(area); else if (_tab == 3) DrawMirage(area); else if (_tab == 4) DrawAudio(area); else if (_tab == 5) DrawAppearance(area); else if (_tab == 6) DrawEnemies(area); else if (_tab == 7) DrawWorld(area); else if (_tab == 8) DrawChaos(area); else if (_tab == 9) DrawLobby(area); else if (_tab == 10) DrawSettings(area); else DrawModConfig(area);
         }
 
         private void DrawHome(Rect area)
@@ -368,18 +377,57 @@ namespace PeakTrollMod
             });
         }
 
+        private void DrawLobby(Rect area)
+        {
+            Card(new Rect(238, 142, 326, 202), "◎  Lobby Readiness", new Color(.3f,.7f,1f), delegate
+            {
+                string code=_plugin.LobbyReadiness.LobbyCode;GUILayout.Label("Host: "+_plugin.LobbyReadiness.HostName,_label);GUILayout.Label("Host migration: "+_plugin.LobbyReadiness.HostMigration,_small);GUILayout.Label("Loaded players: "+_plugin.Players.Entries.Count,_label);GUILayout.Label("Compatible clients: "+_plugin.Network.CompatibleCount,_label);
+                if(AnimatedButton(_plugin.Network.LocalReady?"READY — CLICK TO UNREADY":"MARK MYSELF READY",_plugin.Network.LocalReady?_success:_button,GUILayout.Height(31))){_plugin.Network.SetLocalReady(!_plugin.Network.LocalReady);Say(_plugin.Network.LocalReady?"Marked ready for compatible clients.":"Marked not ready.");}
+                GUILayout.Label("Lobby code: "+(string.IsNullOrEmpty(code)?"Unavailable":code),_small);GUI.enabled=!string.IsNullOrEmpty(code);if(AnimatedButton("COPY LOBBY CODE",_button,GUILayout.Height(31))){GUIUtility.systemCopyBuffer=code;Say("Lobby code copied to the clipboard.");}GUI.enabled=true;
+            });
+            Card(new Rect(580, 142, 648, 202), "♟  Player Readiness & Versions", new Color(.4f,.85f,.65f), delegate
+            {
+                IList<PlayerEntry> entries=_plugin.Players.Entries;if(entries.Count==0){GUILayout.Label("No lobby players resolved.",_label);return;}
+                for(int i=0;i<entries.Count;i++){PlayerEntry entry=entries[i];GUILayout.BeginHorizontal();GUIStyle ns=new GUIStyle(_label);ns.normal.textColor=_plugin.Settings.HighContrast.Value?Color.white:_plugin.PlayerPreferences.DisplayColor(entry);GUILayout.Label(_plugin.PlayerPreferences.DisplayName(entry)+(entry.IsLocal?" (You)":""),ns,GUILayout.Width(190));string readiness=_plugin.Network.HasAdvertisement(entry.ActorNumber)?(_plugin.Network.IsReady(entry.ActorNumber)?"READY":"NOT READY"):_plugin.LobbyReadiness.Readiness(entry);GUILayout.Label(readiness,_small,GUILayout.Width(90));GUILayout.Label(_plugin.Network.CompatibilityStatus(entry.ActorNumber),_small);if(AnimatedButton("EDIT",_button,GUILayout.Width(54),GUILayout.Height(25))){_targetAll=false;_targetIndex=i;LoadPreferenceEditor(entry); }GUILayout.EndHorizontal();}
+            });
+            Card(new Rect(238, 360, 480, 360), "♥  Persistent Player Preferences", new Color(.72f,.48f,1f), delegate
+            {
+                PlayerEntry target=Target();if(target==null){GUILayout.Label("Select a player from the roster.",_label);return;}EnsurePreferenceEditor(target);GUILayout.Label("Editing: "+target.Name,_label);GUILayout.Label("Saved locally by Steam ID; aliases and colors appear only in this mod.",_small);
+                GUILayout.Label("Preferred display name",_small);_preferenceAlias=GUILayout.TextField(_preferenceAlias,_button,GUILayout.Height(30));
+                GUILayout.Label("Voice volume  "+Mathf.RoundToInt(_preferenceVolume*100f)+"%",_label);_preferenceVolume=GUILayout.HorizontalSlider(_preferenceVolume,0f,1f);_preferenceMuted=GUILayout.Toggle(_preferenceMuted,"Always mute locally");_preferenceExcluded=GUILayout.Toggle(_preferenceExcluded,"Exclude from random troll targeting");
+                GUILayout.Label("UI name color",_small);GUILayout.Label("Red",_small);_preferenceColor.r=GUILayout.HorizontalSlider(_preferenceColor.r,0f,1f);GUILayout.Label("Green",_small);_preferenceColor.g=GUILayout.HorizontalSlider(_preferenceColor.g,0f,1f);GUILayout.Label("Blue",_small);_preferenceColor.b=GUILayout.HorizontalSlider(_preferenceColor.b,0f,1f);
+                GUILayout.BeginHorizontal();if(AnimatedButton("SAVE PREFERENCE",_success,GUILayout.Height(34)))Say(SavePreference(target));if(AnimatedButton("RESET",_button,GUILayout.Height(34))){Say(_plugin.PlayerPreferences.Reset(target));LoadPreferenceEditor(target);}GUILayout.EndHorizontal();
+            });
+            Card(new Rect(735, 360, 493, 360), "⚕  Emergency Recovery", new Color(1f,.58f,.25f), delegate
+            {
+                GUILayout.Label("Local, safe-ground recovery. No host permission or target mod is needed.",_small);GUILayout.Space(8);
+                if(AnimatedButton("UNSTUCK — LAST SAFE GROUND",_success,GUILayout.Height(38)))Say(_plugin.Recovery.RecoverLastSafeGround());
+                GUILayout.BeginHorizontal();if(AnimatedButton("NEAREST SAFE SCOUT",_button,GUILayout.Height(36)))Say(_plugin.Recovery.RecoverNearestScout());if(AnimatedButton("ACTIVE CHECKPOINT",_button,GUILayout.Height(36)))Say(_plugin.Recovery.RecoverCheckpoint());GUILayout.EndHorizontal();
+                if(AnimatedButton("RETURN TO EXPEDITION START",_button,GUILayout.Height(36)))Say(_plugin.Recovery.RecoverStart());
+                GUILayout.BeginHorizontal();if(AnimatedButton("STOP FLIGHT + VELOCITY",_button,GUILayout.Height(36)))Say(_plugin.Recovery.StabilizeSelf());if(AnimatedButton("RESTORE SELF",_button,GUILayout.Height(36)))Say(_plugin.Recovery.RestoreSelf());GUILayout.EndHorizontal();
+                if(AnimatedButton("CLEAR LOCAL MOD EFFECTS",_danger,GUILayout.Height(38))){_plugin.Reset.ResetAll();Say("Cleared locally tracked troll effects and restored reversible state.");}
+                GUILayout.Label("Recovery can revive you when required and clears residual rigidbody velocity after moving.",_small);
+            });
+        }
+
         private void DrawSettings(Rect area)
         {
-            Card(new Rect(238, 218, 480, 380), "⚙  Interface & Safety", new Color(.35f, .65f, 1f), delegate
+            Card(new Rect(238, 178, 480, 500), "⚙  Interface, Accessibility & Safety", new Color(.35f, .65f, 1f), delegate
             {
                 GUILayout.Label("Menu key: " + _plugin.Settings.MenuKey.Value, _label); GUILayout.Label("UI scale " + _plugin.Settings.UiScale.Value.ToString("0.00"), _label); _plugin.Settings.UiScale.Value = GUILayout.HorizontalSlider(_plugin.Settings.UiScale.Value, .75f, 1.5f);
                 GUILayout.Label("Transparency " + _plugin.Settings.Transparency.Value.ToString("0.00"), _label); _plugin.Settings.Transparency.Value = GUILayout.HorizontalSlider(_plugin.Settings.Transparency.Value, .55f, 1f);
+                GUILayout.BeginHorizontal();GUILayout.Label("Text size  "+_plugin.Settings.TextScale.Value.ToString("0.00")+"x",_label);if(AnimatedButton("CYCLE",_button,GUILayout.Width(90),GUILayout.Height(28)))CycleTextScale();GUILayout.EndHorizontal();
+                _plugin.Settings.HighContrast.Value=GUILayout.Toggle(_plugin.Settings.HighContrast.Value,"High-contrast status colors");
+                GUILayout.Label("Camera shake  "+Mathf.RoundToInt(_plugin.Settings.CameraShakeScale.Value*100f)+"%",_label);_plugin.Settings.CameraShakeScale.Value=GUILayout.HorizontalSlider(_plugin.Settings.CameraShakeScale.Value,0f,1f);
+                _plugin.Settings.ReduceFlashingEffects.Value=GUILayout.Toggle(_plugin.Settings.ReduceFlashingEffects.Value,"Reduce repeated/flashing troll effects");
+                if(AnimatedButton("MENU INPUT: "+_plugin.Settings.MenuActivation.Value.ToString().ToUpperInvariant(),_button,GUILayout.Height(30)))_plugin.Settings.MenuActivation.Value=_plugin.Settings.MenuActivation.Value==MenuActivationMode.Toggle?MenuActivationMode.Hold:MenuActivationMode.Toggle;
+                GUILayout.Label("All menu, backpack, and spectator shortcuts can be changed on Mod Config.",_small);GUILayout.Space(8);
                 _plugin.Settings.ConfirmDestructive.Value = GUILayout.Toggle(_plugin.Settings.ConfirmDestructive.Value, "Confirm destructive actions"); _plugin.Settings.ExcludeSelf.Value = GUILayout.Toggle(_plugin.Settings.ExcludeSelf.Value, "Exclude self from random targets");
                 GUILayout.Label("Maximum tracked objects " + _plugin.Settings.MaxSpawnedObjects.Value, _label); _plugin.Settings.MaxSpawnedObjects.Value = Mathf.RoundToInt(GUILayout.HorizontalSlider(_plugin.Settings.MaxSpawnedObjects.Value, 4, 64));
                 GUILayout.Label("Maximum dynamite objects " + _plugin.Settings.MaxDynamiteObjects.Value, _label); _plugin.Settings.MaxDynamiteObjects.Value = Mathf.RoundToInt(GUILayout.HorizontalSlider(_plugin.Settings.MaxDynamiteObjects.Value, 8, 128));
                 GUILayout.Label("Maximum Item Storm objects " + _plugin.Settings.MaxItemStormObjects.Value, _label); _plugin.Settings.MaxItemStormObjects.Value = Mathf.RoundToInt(GUILayout.HorizontalSlider(_plugin.Settings.MaxItemStormObjects.Value, 8, 128));
             });
-            Card(new Rect(735, 218, 493, 380), "⌁  Diagnostics", new Color(.63f, .42f, 1f), delegate { _plugin.Settings.DebugLogging.Value = GUILayout.Toggle(_plugin.Settings.DebugLogging.Value, "Debug logging"); _plugin.Settings.NetworkDiagnostics.Value = GUILayout.Toggle(_plugin.Settings.NetworkDiagnostics.Value, "Network diagnostics"); _plugin.Settings.MirageDebug.Value = GUILayout.Toggle(_plugin.Settings.MirageDebug.Value, "Mirage debug info"); _plugin.Settings.FakeEnemyDebug.Value = GUILayout.Toggle(_plugin.Settings.FakeEnemyDebug.Value, "Fake Enemy debug info"); GUILayout.Space(12); if (AnimatedButton("REFRESH CAPABILITIES", _button, GUILayout.Height(40))) { _plugin.Capabilities.RefreshDynamic(); _plugin.Actions.RefreshItemCatalog(); Say("Runtime capabilities refreshed."); } GUILayout.Label("SpongePEAKLib: not used; Photon RaiseEvent provides the required validated mod channel.", _small); });
+            Card(new Rect(735, 178, 493, 500), "⌁  Diagnostics", new Color(.63f, .42f, 1f), delegate { _plugin.Settings.DebugLogging.Value = GUILayout.Toggle(_plugin.Settings.DebugLogging.Value, "Debug logging"); _plugin.Settings.NetworkDiagnostics.Value = GUILayout.Toggle(_plugin.Settings.NetworkDiagnostics.Value, "Network diagnostics"); _plugin.Settings.MirageDebug.Value = GUILayout.Toggle(_plugin.Settings.MirageDebug.Value, "Mirage debug info"); _plugin.Settings.FakeEnemyDebug.Value = GUILayout.Toggle(_plugin.Settings.FakeEnemyDebug.Value, "Fake Enemy debug info"); GUILayout.Space(12); if (AnimatedButton("REFRESH CAPABILITIES", _button, GUILayout.Height(40))) { _plugin.Capabilities.RefreshDynamic(); _plugin.Actions.RefreshItemCatalog(); _plugin.ModBrowser.Refresh(); Say("Runtime capabilities refreshed."); } GUILayout.Label("Camera shake scaling is applied at PEAK's final gamefeel rotation output, so it also covers native events.",_small);GUILayout.Label("Reduced flashing currently caps and slows repeated Phantom Pings and removes menu press pulses; it does not alter unrelated game cinematics.",_small);GUILayout.Label("SpongePEAKLib: not used; Photon RaiseEvent provides the required validated mod channel.", _small); });
         }
 
         private void DrawModConfig(Rect area)
@@ -467,7 +515,7 @@ namespace PeakTrollMod
         private void Owner(NetCommand command, object[] args) { if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Network.SendToOwner(command,list[i],args);Say(last==null?"No targets available.":"Applied to eligible lobby players. Last result: "+last.Message);return;} PlayerEntry t=Target(); if(t==null){Say("No target available.");return;} Say(_plugin.Network.SendToOwner(command,t,args)); }
         private void Broadcast(NetCommand command, object[] args) { if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;for(int i=0;i<list.Count;i++)_plugin.Network.SendToAll(command,list[i].ActorNumber,args);Say("Broadcast for all lobby players.");return;} PlayerEntry t=Target(); if(t==null){Say("No target available.");return;} Say(_plugin.Network.SendToAll(command,t.ActorNumber,args)); }
         private PlayerEntry Target() { IList<PlayerEntry> list=_plugin.Players.Entries; if(list.Count==0)return null; if(_targetIndex>=list.Count)_targetIndex=0; return list[_targetIndex]; }
-        private string CurrentTargetName() { if(_targetAll)return "Everyone";PlayerEntry t=Target(); return t==null?"No players":t.ToString(); }
+        private string CurrentTargetName() { if(_targetAll)return "Everyone";PlayerEntry t=Target(); return t==null?"No players":_plugin.PlayerPreferences.DisplayName(t)+(t.IsLocal?" (You)":""); }
         private void CycleTarget() { _targetAll=false;if(_plugin.Players.Entries.Count>0)_targetIndex=(_targetIndex+1)%_plugin.Players.Entries.Count; }
         private void SelectRandomTarget(){PlayerEntry r=_plugin.Players.Random(_plugin.Settings.ExcludeSelf.Value);if(r==null)return;_targetAll=false;for(int i=0;i<_plugin.Players.Entries.Count;i++)if(_plugin.Players.Entries[i].ActorNumber==r.ActorNumber){_targetIndex=i;break;}}
         private PlayerEntry PickPartner(PlayerEntry first){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count<2)return null;for(int offset=1;offset<=list.Count;offset++){PlayerEntry candidate=list[(_targetIndex+offset)%list.Count];if(first==null||candidate.ActorNumber!=first.ActorNumber)return candidate;}return null;}
@@ -480,26 +528,32 @@ namespace PeakTrollMod
         private void CycleSound() { if(_plugin.Audio.Clips.Count>0)_soundIndex=(_soundIndex+1)%_plugin.Audio.Clips.Count; }
         private void Say(ActionResult result) { Say(result.Message); }
         private void Say(string text) { _message=text; _messageUntil=Time.unscaledTime+6f; }
-        private string SubtitleForTab() { string[] s={"Session overview, capabilities, and emergency cleanup.","Target, manipulate, and mess with players in your lobby.","Host-authorized genuine enemy ambushes with strict tracking.","Harmless visual decoys, fake enemies, and ping placement.","Runtime-discovered 3D sound cues and voice capability status.","Cosmetic confusion without identity impersonation.","Controls for mod-spawned genuine enemies.","Environmental hazards separated from direct statuses.","Bounded randomized events with compatible-client validation.","Interface, safety limits, and diagnostics.","Toggle built-ins and safely edit loaded BepInEx mod settings."}; return s[_tab]; }
+        private string SubtitleForTab() { string[] s={"Session overview, capabilities, and emergency cleanup.","Target, manipulate, and mess with players in your lobby.","Host-authorized genuine enemy ambushes with strict tracking.","Harmless visual decoys, fake enemies, and ping placement.","Runtime-discovered 3D sound cues and voice capability status.","Cosmetic confusion without identity impersonation.","Controls for mod-spawned genuine enemies.","Environmental hazards separated from direct statuses.","Bounded randomized events with compatible-client validation.","Readiness, compatibility, persistent friend preferences, and recovery.","Interface, accessibility, safety limits, and diagnostics.","Toggle built-ins and safely edit loaded BepInEx mod settings."}; return s[_tab]; }
         private string HeadingForTab() { return _tab == 1 ? "PLAYER CONTROLS" : _tabNames[_tab].ToUpperInvariant(); }
         private void EmergencyReset(){for(int i=0;i<_plugin.Players.Entries.Count;i++)_plugin.Network.SendToAll(NetCommand.Reset,_plugin.Players.Entries[i].ActorNumber,new object[0]);if(_plugin.Players.Local!=null)_plugin.Network.SendToAll(NetCommand.ClearMirages,_plugin.Players.Local.ActorNumber,new object[0]);_plugin.Reset.ResetAll();Say("Cleanup and restoration completed on compatible clients.");}
+        private void EnsurePreferenceEditor(PlayerEntry entry){if(entry!=null&&_preferenceSteamId!=entry.SteamUserId)LoadPreferenceEditor(entry);}
+        private void LoadPreferenceEditor(PlayerEntry entry){PlayerPreference p=_plugin.PlayerPreferences.Get(entry);_preferenceSteamId=p.SteamId;_preferenceAlias=p.Alias;_preferenceVolume=p.VoiceVolume;_preferenceMuted=p.Muted;_preferenceExcluded=p.ExcludeFromRandom;_preferenceColor=p.Color;}
+        private ActionResult SavePreference(PlayerEntry entry){PlayerPreference p=new PlayerPreference{SteamId=entry.SteamUserId,Alias=_preferenceAlias,VoiceVolume=_preferenceVolume,Muted=_preferenceMuted,ExcludeFromRandom=_preferenceExcluded,Color=_preferenceColor};ActionResult result=_plugin.PlayerPreferences.Save(entry,p);if(result.Success)LoadPreferenceEditor(entry);return result;}
+        private void CycleTextScale(){float value=_plugin.Settings.TextScale.Value;_plugin.Settings.TextScale.Value=value<.9f?1f:value<1.05f?1.15f:value<1.2f?1.3f:.85f;}
 
         private void EnsureStyles()
         {
-            if (_pixel != null) return; _pixel = new Texture2D(1,1); _pixel.SetPixel(0,0,Color.white); _pixel.Apply();
-            _logo=Style(25,FontStyle.Bold,Color.white,TextAnchor.MiddleLeft); _title=Style(31,FontStyle.Bold,Color.white,TextAnchor.MiddleLeft); _subtitle=Style(13,FontStyle.Normal,new Color(.58f,.67f,.67f),TextAnchor.MiddleLeft);
-            _label=Style(14,FontStyle.Normal,new Color(.9f,.94f,.93f),TextAnchor.MiddleLeft); _small=Style(12,FontStyle.Normal,new Color(.58f,.67f,.66f),TextAnchor.MiddleLeft); _cardTitle=Style(18,FontStyle.Bold,Color.white,TextAnchor.MiddleLeft); _badge=Style(11,FontStyle.Bold,new Color(.72f,.78f,.76f),TextAnchor.MiddleLeft);
-            _nav=ButtonStyle(15,new Color(.65f,.72f,.71f),new Color(.025f,.035f,.038f,1f)); _nav.alignment=TextAnchor.MiddleLeft; _nav.padding=new RectOffset(18,8,0,0);
-            _navSelected=ButtonStyle(15,Color.white,new Color(.08f,.28f,.28f,.98f)); _navSelected.alignment=TextAnchor.MiddleLeft; _navSelected.padding=new RectOffset(18,8,0,0);
-            _button=ButtonStyle(13,new Color(.92f,.95f,.94f),new Color(.105f,.135f,.14f,1f)); _danger=ButtonStyle(13,Color.white,new Color(.55f,.20f,.16f,1f)); _success=ButtonStyle(13,Color.white,new Color(.10f,.38f,.36f,1f)); _disabled=ButtonStyle(13,new Color(.4f,.46f,.45f),new Color(.065f,.08f,.082f,1f));
+            float textScale=Mathf.Clamp(_plugin.Settings.TextScale.Value,.85f,1.3f);bool high=_plugin.Settings.HighContrast.Value;if(_pixel!=null&&Mathf.Abs(textScale-_styledTextScale)<.001f&&high==_styledHighContrast)return;if(_pixel==null){_pixel = new Texture2D(1,1); _pixel.SetPixel(0,0,Color.white); _pixel.Apply();}_styledTextScale=textScale;_styledHighContrast=high;
+            Color muted=high?new Color(.86f,.91f,.9f):new Color(.58f,.67f,.67f);Color body=high?Color.white:new Color(.9f,.94f,.93f);
+            _logo=Style(Scaled(25),FontStyle.Bold,Color.white,TextAnchor.MiddleLeft); _title=Style(Scaled(31),FontStyle.Bold,Color.white,TextAnchor.MiddleLeft); _subtitle=Style(Scaled(13),FontStyle.Normal,muted,TextAnchor.MiddleLeft);
+            _label=Style(Scaled(14),FontStyle.Normal,body,TextAnchor.MiddleLeft); _small=Style(Scaled(12),FontStyle.Normal,muted,TextAnchor.MiddleLeft); _cardTitle=Style(Scaled(18),FontStyle.Bold,Color.white,TextAnchor.MiddleLeft); _badge=Style(Scaled(11),FontStyle.Bold,high?Color.white:new Color(.72f,.78f,.76f),TextAnchor.MiddleLeft);
+            _nav=ButtonStyle(Scaled(15),high?Color.white:new Color(.65f,.72f,.71f),new Color(.025f,.035f,.038f,1f)); _nav.alignment=TextAnchor.MiddleLeft; _nav.padding=new RectOffset(18,8,0,0);
+            _navSelected=ButtonStyle(Scaled(15),Color.white,new Color(.08f,.28f,.28f,.98f)); _navSelected.alignment=TextAnchor.MiddleLeft; _navSelected.padding=new RectOffset(18,8,0,0);
+            _button=ButtonStyle(Scaled(13),body,new Color(.105f,.135f,.14f,1f)); _danger=ButtonStyle(Scaled(13),Color.white,new Color(high?.72f:.55f,.16f,.12f,1f)); _success=ButtonStyle(Scaled(13),Color.white,new Color(.08f,high?.55f:.38f,.34f,1f)); _disabled=ButtonStyle(Scaled(13),new Color(.4f,.46f,.45f),new Color(.065f,.08f,.082f,1f));
         }
+        private int Scaled(int value){return Mathf.RoundToInt(value*Mathf.Clamp(_plugin.Settings.TextScale.Value,.85f,1.3f));}
         private GUIStyle Style(int size, FontStyle font, Color color, TextAnchor align) { GUIStyle s=new GUIStyle(GUI.skin.label);s.fontSize=size;s.fontStyle=font;s.normal.textColor=color;s.alignment=align;s.wordWrap=true;return s; }
         private GUIStyle ButtonStyle(int size, Color textColor, Color bg) { GUIStyle s=new GUIStyle(GUI.skin.button);s.fontSize=size;s.fontStyle=FontStyle.Bold;s.normal.textColor=textColor;s.hover.textColor=Color.white;s.active.textColor=Color.white;s.normal.background=Tint(bg);s.hover.background=Tint(new Color(Mathf.Min(1f,bg.r+.09f),Mathf.Min(1f,bg.g+.16f),Mathf.Min(1f,bg.b+.15f),bg.a));s.active.background=Tint(new Color(Mathf.Min(1f,bg.r+.16f),Mathf.Min(1f,bg.g+.22f),Mathf.Min(1f,bg.b+.20f),bg.a));s.padding=new RectOffset(10,10,6,6);return s; }
         private bool AnimatedButton(string text, GUIStyle style, params GUILayoutOption[] options) { Rect rect=GUILayoutUtility.GetRect(new GUIContent(text),style,options);return AnimatedButton(rect,text,style); }
         private bool AnimatedButton(Rect rect, string text, GUIStyle style)
         {
             string key=_tab+"|"+text+"|"+Mathf.RoundToInt(rect.x)+"|"+Mathf.RoundToInt(rect.y);float hover;_buttonHover.TryGetValue(key,out hover);bool over=rect.Contains(Event.current.mousePosition)&&GUI.enabled;hover=Mathf.MoveTowards(hover,over?1f:0f,Time.unscaledDeltaTime*9f);_buttonHover[key]=hover;
-            float until;_buttonPulseUntil.TryGetValue(key,out until);float pulse=until>Time.unscaledTime?Mathf.Clamp01((until-Time.unscaledTime)/.16f):0f;float glow=Mathf.Max(hover,pulse);if(glow>.01f){float spread=1f+glow*3f;DrawPanel(new Rect(rect.x-spread,rect.y-spread,rect.width+spread*2f,rect.height+spread*2f),new Color(.12f,.48f,.45f,.10f*glow),new Color(.31f,.92f,.85f,.75f*glow),1f);}
+            float until;_buttonPulseUntil.TryGetValue(key,out until);float pulse=_plugin.Settings.ReduceFlashingEffects.Value?0f:(until>Time.unscaledTime?Mathf.Clamp01((until-Time.unscaledTime)/.16f):0f);float glow=Mathf.Max(hover,pulse);if(glow>.01f){float spread=1f+glow*3f;DrawPanel(new Rect(rect.x-spread,rect.y-spread,rect.width+spread*2f,rect.height+spread*2f),new Color(.12f,.48f,.45f,.10f*glow),new Color(.31f,.92f,.85f,.75f*glow),1f);}
             Rect animated=rect;if(pulse>0f){float inset=Mathf.Sin((1f-pulse)*Mathf.PI)*1.5f;animated=new Rect(rect.x+inset,rect.y+inset,rect.width-inset*2f,rect.height-inset*2f);}bool clicked=GUI.Button(animated,text,style);if(clicked)_buttonPulseUntil[key]=Time.unscaledTime+.16f;return clicked;
         }
         private Texture2D Tint(Color color) { Texture2D t=new Texture2D(1,1);t.SetPixel(0,0,color);t.Apply();return t; }

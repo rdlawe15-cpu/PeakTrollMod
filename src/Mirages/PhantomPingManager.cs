@@ -36,8 +36,10 @@ namespace PeakTrollMod
             _targetActor = target.ActorNumber;
             _pattern = (PhantomPingPattern)Mathf.Clamp((int)pattern, 0, 2);
             _total = Mathf.Clamp(count, 3, MaximumPings);
+            if (TrollModPlugin.Instance != null && TrollModPlugin.Instance.Settings.ReduceFlashingEffects.Value) _total = Mathf.Min(_total, 6);
             _remaining = _total;
             _interval = Mathf.Clamp(interval, .35f, 3f);
+            if (TrollModPlugin.Instance != null && TrollModPlugin.Instance.Settings.ReduceFlashingEffects.Value) _interval = Mathf.Max(_interval, 1f);
             _nextPing = Time.unscaledTime;
             return ActionResult.Ok("Started " + _pattern + " with " + _total + " bounded phantom pings.");
         }

@@ -17,6 +17,9 @@ Skip the spectator wait when joining an expedition in progress, monitor the team
 - **Team Status Panel** — Shows nearby scouts' stamina, distance, life state, and important conditions in a compact HUD.
 - **Quick Backpack** — Opens the equipped backpack wheel with a configurable hotkey (default **B**).
 - **Better Spectating** — Cycle scouts with configurable keys, inspect target altitude/state, use PEAK's native free camera, place ghost pings, or revive beside the spectated scout.
+- **Persistent Player Preferences** — Save local aliases, UI colors, voice volume/mute, and random-target exclusions by Steam player so they return with your friends.
+- **Lobby Readiness** — See loaded players, opt-in ready state, mod/version/protocol compatibility, current host and host changes, plus copy the Steam lobby code in one click.
+- **Accessibility Options** — Adjustable interface/text scale, high-contrast status colors, camera-shake scaling, reduced repeated visual effects, toggle/hold menu input, and configurable shortcuts.
 - **Mod Config** — Toggle PEAK Troll Mod modules, browse every loaded BepInEx plugin, soft-enable/disable plugin components for the current session, and edit their exposed settings with the owning config serializer.
 - **Resurrection Controls** — Revive the selected scout, yourself, or queue the whole fallen party at safe intervals through PEAK's native synchronized revive path; the caller does not need to be host and the target does not need the mod.
 - **Player Effects** — Reversible owner-controlled flight, ragdoll, knockout, launch, Horizontal Yeet, Sky High, Off Mountain, teleportation, status effects, and movement-speed controls.
@@ -46,7 +49,9 @@ For the best experience, have everyone install the same version before joining t
 
 ## Mod Config and Compatibility
 
-Open **Mod Config** from the F7 sidebar to control the built-in quality-of-life modules or edit settings exposed by other loaded BepInEx mods. Setting changes are written to each mod's own config file. Whether they apply immediately depends on that mod, so restart PEAK when a setting does not update live.
+Open **Lobby** from the F7 sidebar for readiness, compatibility, persistent friend preferences, and the expanded Emergency Recovery toolkit. Readiness is explicitly advertised between current compatible clients; unmodded players are shown as loaded/loading rather than being assigned a false ready state.
+
+Open **Mod Config** to control the built-in quality-of-life modules or edit settings exposed by other loaded BepInEx mods. Setting changes are written to each mod's own config file. Whether they apply immediately depends on that mod, so restart PEAK when a setting does not update live.
 
 Runtime component switches are session-only. They cannot guarantee that Harmony patches are removed, and some disabled components cannot initialize again until restart. PEAK Troll Mod therefore never offers to disable its own menu from inside the menu.
 

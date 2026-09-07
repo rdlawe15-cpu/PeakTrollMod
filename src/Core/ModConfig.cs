@@ -40,6 +40,12 @@ namespace PeakTrollMod
         public readonly ConfigEntry<bool> SpectateGhostPings;
         public readonly ConfigEntry<bool> SpectateOverlay;
         public readonly ConfigEntry<bool> PreferExternalQualityOfLifeMods;
+        public readonly ConfigEntry<string> PlayerPreferencesData;
+        public readonly ConfigEntry<float> TextScale;
+        public readonly ConfigEntry<bool> HighContrast;
+        public readonly ConfigEntry<float> CameraShakeScale;
+        public readonly ConfigEntry<bool> ReduceFlashingEffects;
+        public readonly ConfigEntry<MenuActivationMode> MenuActivation;
 
         public ModConfig(ConfigFile config)
         {
@@ -78,6 +84,12 @@ namespace PeakTrollMod
             SpectateGhostPings = config.Bind("Quality of Life", "SpectateGhostPings", true, "Allow normal point pings while fully passed out.");
             SpectateOverlay = config.Bind("Quality of Life", "SpectateOverlay", true, "Show the current spectator target, altitude, status, and shortcuts.");
             PreferExternalQualityOfLifeMods = config.Bind("Compatibility", "PreferExternalQualityOfLifeMods", true, "Yield duplicate built-in features to enabled PeakStatsEx and EasyBackpack components.");
+            PlayerPreferencesData = config.Bind("Player Preferences", "SavedPlayers", string.Empty, "Serialized per-Steam-player aliases, colors, voice settings, and random-target exclusions.");
+            TextScale = config.Bind("Accessibility", "TextScale", 1f, "Menu text scale (0.85-1.30).");
+            HighContrast = config.Bind("Accessibility", "HighContrastColors", false, "Use brighter text and stronger status contrast.");
+            CameraShakeScale = config.Bind("Accessibility", "CameraShakeScale", 1f, "Scale PEAK camera shake from 0 (off) to 1 (normal).");
+            ReduceFlashingEffects = config.Bind("Accessibility", "ReduceFlashingTrollEffects", false, "Slow and cap repeated visual troll effects such as Phantom Pings.");
+            MenuActivation = config.Bind("Accessibility", "MenuActivation", MenuActivationMode.Toggle, "Open F7 as a toggle or only while the shortcut is held.");
         }
     }
 }

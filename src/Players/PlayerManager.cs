@@ -13,6 +13,7 @@ namespace PeakTrollMod
         private float _nextRefresh;
         public IList<PlayerEntry> Entries { get { return _entries.AsReadOnly(); } }
         public PlayerEntry Local { get; private set; }
+        public Func<PlayerEntry, bool> ExcludeFromRandom;
 
         public PlayerManager(ManualLogSource log) { _log = log; }
 
@@ -39,6 +40,7 @@ namespace PeakTrollMod
                     entry.Character = c;
                     entry.ActorNumber = c.refs.view.OwnerActorNr;
                     entry.Name = string.IsNullOrEmpty(c.characterName) ? "Player " + entry.ActorNumber : c.characterName;
+                    entry.SteamUserId = c.data == null ? 0UL : c.data.userID;
                     entry.IsLocal = c.IsLocal;
                     _entries.Add(entry);
                     if (entry.IsLocal) Local = entry;
@@ -56,7 +58,7 @@ namespace PeakTrollMod
         public PlayerEntry Random(bool excludeSelf)
         {
             List<PlayerEntry> candidates = new List<PlayerEntry>();
-            for (int i = 0; i < _entries.Count; i++) if (!excludeSelf || !_entries[i].IsLocal) candidates.Add(_entries[i]);
+            for (int i = 0; i < _entries.Count; i++) if ((!excludeSelf || !_entries[i].IsLocal) && (ExcludeFromRandom == null || !ExcludeFromRandom(_entries[i]))) candidates.Add(_entries[i]);
             return candidates.Count == 0 ? null : candidates[UnityEngine.Random.Range(0, candidates.Count)];
         }
 

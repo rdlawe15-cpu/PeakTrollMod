@@ -30,6 +30,8 @@ namespace PeakTrollMod
         internal TeamStatusManager TeamStatus;
         internal QuickBackpackManager QuickBackpack;
         internal BetterSpectatingManager BetterSpectating;
+        internal PlayerPreferencesManager PlayerPreferences;
+        internal LobbyReadinessManager LobbyReadiness;
         internal SpawnManager Spawns;
         internal MirageManager Mirages;
         internal PingPlacementManager PingPlacement;
@@ -56,12 +58,14 @@ namespace PeakTrollMod
             Capabilities = new CapabilityRegistry(Logger); Capabilities.Discover();
             Players = new PlayerManager(Logger);
             Audio = new AudioManager(Logger);
+            PlayerPreferences = new PlayerPreferencesManager(Logger, Players, Audio, Settings);
+            LobbyReadiness = new LobbyReadinessManager(Players);
             Mirages = new MirageManager(Logger);
             Actions = new PlayerActions(Logger, Players, Capabilities, Audio);
             NoWait = new NoWaitManager(Logger, Players, Actions, Capabilities, Settings);
             Recovery = new RecoveryManager(Logger, Players, Actions);
             QuickReconnect = new QuickReconnectManager(Logger, Settings, Capabilities);
-            TeamStatus = new TeamStatusManager(Players, Settings, ModBrowser);
+            TeamStatus = new TeamStatusManager(Players, Settings, ModBrowser, PlayerPreferences);
             QuickBackpack = new QuickBackpackManager(Logger, Settings, ModBrowser);
             BetterSpectating = new BetterSpectatingManager(Logger, Players, Actions, Settings);
             Spawns = new SpawnManager(Logger, Players, Capabilities);
@@ -85,8 +89,8 @@ namespace PeakTrollMod
 
         private void Update()
         {
-            if (Settings.MenuKey.Value.IsDown()) Ui.Toggle();
-            Players.Tick(); QuickReconnect.Tick(); Network.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); QuickBackpack.Tick(Ui.IsOpen); BetterSpectating.Tick(Ui.IsOpen); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
+            if (Settings.MenuActivation.Value == MenuActivationMode.Toggle) { if (Settings.MenuKey.Value.IsDown()) Ui.Toggle(); } else Ui.SetOpen(Settings.MenuKey.Value.IsPressed());
+            Players.Tick(); PlayerPreferences.Tick(); LobbyReadiness.Tick(); QuickReconnect.Tick(); Network.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); QuickBackpack.Tick(Ui.IsOpen); BetterSpectating.Tick(Ui.IsOpen); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
 
             bool inRoom = PhotonNetwork.InRoom;
             if (_wasInRoom && !inRoom) Reset.ResetAll();
@@ -131,6 +135,15 @@ namespace PeakTrollMod
         }
 
         internal void DebugLog(string message) { if (Settings != null && Settings.DebugLogging.Value) Logger.LogInfo("[PTM] " + message); }
+    }
+
+    [HarmonyPatch(typeof(GamefeelHandler), "GetRotation")]
+    internal static class AccessibleCameraShakePatch
+    {
+        private static void Postfix(ref Vector3 __result)
+        {
+            TrollModPlugin plugin=TrollModPlugin.Instance;if(plugin==null||plugin.Settings==null)return;__result*=Mathf.Clamp01(plugin.Settings.CameraShakeScale.Value);
+        }
     }
 
     [HarmonyPatch(typeof(PointPinger), "get_canPing")]

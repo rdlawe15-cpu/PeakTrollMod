@@ -6,9 +6,9 @@ namespace PeakTrollMod
 {
     internal sealed class TeamStatusManager
     {
-        private readonly PlayerManager _players; private readonly ModConfig _settings; private readonly ModConfigBrowser _mods;
+        private readonly PlayerManager _players; private readonly ModConfig _settings; private readonly ModConfigBrowser _mods; private readonly PlayerPreferencesManager _preferences;
         private GUIStyle _name, _detail; private Texture2D _pixel;
-        public TeamStatusManager(PlayerManager players, ModConfig settings, ModConfigBrowser mods) { _players = players; _settings = settings; _mods = mods; }
+        public TeamStatusManager(PlayerManager players, ModConfig settings, ModConfigBrowser mods, PlayerPreferencesManager preferences) { _players = players; _settings = settings; _mods = mods; _preferences = preferences; }
         public bool SuppressedByExternal { get { return _settings.PreferExternalQualityOfLifeMods.Value && _mods.HasEnabledBool("com.github.LengSword.PeakStatsEx", "DisplayTeammateStaminaBars"); } }
 
         public void Draw(bool menuOpen)
@@ -32,7 +32,7 @@ namespace PeakTrollMod
         {
             Character c = entry.Character; CharacterData data = c.data; DrawRect(rect, new Color(.025f, .04f, .043f, .88f)); DrawRect(new Rect(rect.x, rect.y, 4f, rect.height), StateColor(data));
             string state = data.dead ? "DEAD" : data.fullyPassedOut ? "DOWN" : data.zombified ? "ZOMBIE" : "ACTIVE";
-            GUI.Label(new Rect(12f, rect.y + 6f, 205f, 22f), entry.Name, _name); GUI.Label(new Rect(218f, rect.y + 7f, 100f, 20f), state + "  " + distance.ToString("0") + "m", _detail);
+            GUIStyle playerName=new GUIStyle(_name);playerName.normal.textColor=_settings.HighContrast.Value?Color.white:_preferences.DisplayColor(entry);GUI.Label(new Rect(12f, rect.y + 6f, 205f, 22f), _preferences.DisplayName(entry), playerName); GUI.Label(new Rect(218f, rect.y + 7f, 100f, 20f), state + "  " + distance.ToString("0") + "m", _detail);
             float stamina = Mathf.Clamp01(data.TotalStamina); DrawRect(new Rect(12f, rect.y + 33f, 132f, 8f), new Color(.12f, .16f, .16f, 1f)); DrawRect(new Rect(12f, rect.y + 33f, 132f * stamina, 8f), new Color(.26f, .82f, .7f, 1f));
             GUI.Label(new Rect(151f, rect.y + 26f, 168f, 24f), "STA " + Mathf.RoundToInt(stamina * 100f) + "%  " + Conditions(c), _detail);
         }
@@ -44,7 +44,7 @@ namespace PeakTrollMod
             for (int i = 0; i < types.Length && count < 2; i++) if (c.refs.afflictions.GetCurrentStatus(types[i]) >= .08f) { if (count > 0) result += ", "; result += types[i].ToString(); count++; }
             return result.Length == 0 ? "OK" : result;
         }
-        private Color StateColor(CharacterData data) { return data.dead ? new Color(.8f,.18f,.18f,1f) : data.fullyPassedOut ? new Color(1f,.55f,.15f,1f) : data.zombified ? new Color(.5f,.82f,.25f,1f) : new Color(.2f,.75f,.7f,1f); }
+        private Color StateColor(CharacterData data) { bool high=_settings.HighContrast.Value;return data.dead ? new Color(high?1f:.8f,.12f,.12f,1f) : data.fullyPassedOut ? new Color(1f,high?.75f:.55f,.08f,1f) : data.zombified ? new Color(high?.65f:.5f,1f,.15f,1f) : new Color(.1f,high?1f:.75f,high?.9f:.7f,1f); }
         private void EnsureStyles() { if (_pixel != null) return; _pixel = new Texture2D(1,1); _pixel.SetPixel(0,0,Color.white); _pixel.Apply(); _name = new GUIStyle(GUI.skin.label); _name.fontSize=14; _name.fontStyle=FontStyle.Bold; _name.normal.textColor=Color.white; _detail=new GUIStyle(GUI.skin.label);_detail.fontSize=11;_detail.alignment=TextAnchor.MiddleRight;_detail.normal.textColor=new Color(.72f,.8f,.79f); }
         private void DrawRect(Rect rect, Color color) { Color old=GUI.color; GUI.color=color; GUI.DrawTexture(rect,_pixel); GUI.color=old; }
     }

@@ -81,6 +81,13 @@ namespace PeakTrollMod
             return MoveLocalTo(checkpoint, "the active checkpoint");
         }
 
+        public ActionResult RecoverStart()
+        {
+            Vector3 start;
+            if (!_actions.TryGetStartEnd(false, out start)) return ActionResult.Fail("The expedition start reference is unavailable.");
+            return MoveLocalTo(start, "the expedition start");
+        }
+
         public ActionResult StabilizeSelf()
         {
             PlayerEntry local = _players.Local;

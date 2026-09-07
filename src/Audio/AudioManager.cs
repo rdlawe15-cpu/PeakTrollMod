@@ -71,6 +71,19 @@ namespace PeakTrollMod
             return ActionResult.Ok("Restored incoming voice for " + target.Name + ".");
         }
 
+        public ActionResult SetIncomingVoicePreference(PlayerEntry target, float volume, bool muted)
+        {
+            if (target == null || target.Character == null || target.Character.refs == null || target.Character.refs.voice == null) return ActionResult.Fail("Voice source is not ready.");
+            AudioSource source = GetVoiceSource(target.Character.refs.voice); if (source == null) return ActionResult.Fail("Incoming Photon Voice source is not ready.");
+            VoiceState state;
+            if (!_voiceStates.TryGetValue(target.ActorNumber, out state) || state.Source != source)
+            {
+                state = new VoiceState(); state.Source = source; state.Volume = source.volume; _voiceStates[target.ActorNumber] = state;
+            }
+            source.volume = muted ? 0f : Mathf.Clamp01(volume);
+            return ActionResult.Ok("Applied saved voice preference for " + target.Name + ".");
+        }
+
         public void RestoreVoice(int actor) { VoiceState state;if(_voiceStates.TryGetValue(actor,out state)){if(state.Source!=null)state.Source.volume=state.Volume;_voiceStates.Remove(actor);} }
         public void RestoreAllVoice() { foreach(KeyValuePair<int,VoiceState> pair in _voiceStates)if(pair.Value.Source!=null)pair.Value.Source.volume=pair.Value.Volume;_voiceStates.Clear(); }
         private AudioSource GetVoiceSource(CharacterVoiceHandler voice) { AudioSource source=_voiceAudioSource==null?null:_voiceAudioSource.GetValue(voice) as AudioSource;return source!=null?source:(_voiceSourceFallback==null?null:_voiceSourceFallback.GetValue(voice) as AudioSource); }

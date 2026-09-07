@@ -2,6 +2,11 @@
 
 ## Unreleased (0.4.0)
 
+- Added Persistent Player Preferences keyed by Steam user ID, including local alias/color, voice volume, mute, and exclusion from random troll targeting.
+- Added a Lobby Readiness page with explicit compatible-client ready state, loaded/loading fallback for unmodded players, mod/version/protocol status, host identity and migration count, player count, and one-click lobby-code copying.
+- Expanded Emergency Recovery with return-to-expedition-start and local-only tracked-effect cleanup alongside safe-ground, scout, checkpoint, physics, and self-restoration controls.
+- Added accessibility controls for menu text size, high-contrast status colors, final-output camera-shake scaling, reduced repeated Phantom Pings/menu pulses, toggle-or-hold menu behavior, and configurable shortcuts.
+- Extended the existing protocol-v6 Hello metadata without adding a new packet type, preserving protocol compatibility while current clients exchange readiness and exact version information.
 - Added a compact Team Status Panel with nearby scout stamina, distance, life state, and prominent conditions.
 - Added Quick Backpack with a configurable hotkey and the native equipped-backpack wheel.
 - Added Better Spectating with configurable player cycling, target altitude/state overlay, PEAK's native free camera, cooldown-respecting ghost pings, and revive-beside-spectated controls.

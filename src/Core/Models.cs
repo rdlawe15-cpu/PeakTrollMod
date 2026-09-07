@@ -31,6 +31,7 @@ namespace PeakTrollMod
     internal enum MirageBehavior { StandStill, StandAndStare, FollowAtDistance, ApproachSlowly, ChargeTarget, WalkAcross, RunAway, VanishWhenClose }
     internal enum PhantomPingPattern { BreadcrumbTrail, Circle, BehindYou }
     internal enum NoWaitDestination { NearestLiving, LowestLiving, Checkpoint }
+    internal enum MenuActivationMode { Toggle, Hold }
 
     internal sealed class ActionResult
     {
@@ -45,6 +46,7 @@ namespace PeakTrollMod
     {
         public int ActorNumber;
         public string Name;
+        public ulong SteamUserId;
         public Character Character;
         public bool IsLocal;
         public override string ToString() { return Name + (IsLocal ? " (You)" : ""); }

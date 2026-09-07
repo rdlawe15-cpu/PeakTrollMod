@@ -18,6 +18,10 @@ namespace PeakTrollMod
         private readonly MirageManager _mirages;
         private readonly AudioManager _audio;
         private readonly HashSet<int> _compatible = new HashSet<int>();
+        private readonly Dictionary<int, int> _advertisedProtocols = new Dictionary<int, int>();
+        private readonly Dictionary<int, string> _advertisedVersions = new Dictionary<int, string>();
+        private readonly Dictionary<int, bool> _advertisedReady = new Dictionary<int, bool>();
+        private bool _localReady;
         private float _nextHello;
         private bool _registered;
         public int CompatibleCount { get { return _compatible.Count; } }
@@ -31,12 +35,25 @@ namespace PeakTrollMod
 
         public void Tick()
         {
-            if (!PhotonNetwork.InRoom) { _compatible.Clear(); return; }
-            if (PhotonNetwork.LocalPlayer != null) _compatible.Add(PhotonNetwork.LocalPlayer.ActorNumber);
-            if (Time.unscaledTime >= _nextHello) { _nextHello = Time.unscaledTime + 5f; Broadcast(NetCommand.Hello, Pack(NetCommand.Hello, PhotonNetwork.LocalPlayer.ActorNumber, new object[] { ProtocolVersion, TrollModPlugin.Version }), true); }
+            if (!PhotonNetwork.InRoom) { _compatible.Clear(); _advertisedProtocols.Clear(); _advertisedVersions.Clear(); _advertisedReady.Clear(); _localReady=false; return; }
+            if (PhotonNetwork.LocalPlayer != null) { int actor=PhotonNetwork.LocalPlayer.ActorNumber; _compatible.Add(actor); _advertisedProtocols[actor]=ProtocolVersion; _advertisedVersions[actor]=TrollModPlugin.Version; _advertisedReady[actor]=_localReady; }
+            if (Time.unscaledTime >= _nextHello) { _nextHello = Time.unscaledTime + 5f; Broadcast(NetCommand.Hello, Pack(NetCommand.Hello, PhotonNetwork.LocalPlayer.ActorNumber, new object[] { ProtocolVersion, TrollModPlugin.Version, _localReady }), true); }
         }
 
         public bool IsCompatible(int actor) { return _compatible.Contains(actor); }
+        public bool HasAdvertisement(int actor) { return _advertisedProtocols.ContainsKey(actor); }
+        public bool IsReady(int actor) { bool ready; return _advertisedReady.TryGetValue(actor,out ready)&&ready; }
+        public bool LocalReady { get { return _localReady; } }
+        public void SetLocalReady(bool ready) { _localReady=ready;_nextHello=0f; }
+        public string CompatibilityStatus(int actor)
+        {
+            int protocol; string version;
+            if (!_advertisedProtocols.TryGetValue(actor, out protocol)) return "No mod detected";
+            _advertisedVersions.TryGetValue(actor, out version);
+            if (protocol != ProtocolVersion) return "Protocol v" + protocol + " — needs v" + ProtocolVersion;
+            if (!string.IsNullOrEmpty(version) && version != TrollModPlugin.Version) return "v" + version + " — version differs";
+            return "Compatible v" + (string.IsNullOrEmpty(version) ? TrollModPlugin.Version : version);
+        }
 
         public ActionResult SendToOwner(NetCommand command, PlayerEntry target, object[] args)
         {
@@ -160,12 +177,21 @@ namespace PeakTrollMod
             if (sender == null) { _log.LogWarning("Rejected troll packet from unknown actor."); return; }
             object[] packet = photonEvent.CustomData as object[];
             if (packet == null || packet.Length != 4 || !(packet[0] is int) || !(packet[1] is byte) || !(packet[2] is int) || !(packet[3] is object[])) { _log.LogWarning("Rejected malformed troll packet from " + photonEvent.Sender); return; }
-            if ((int)packet[0] != ProtocolVersion) return;
+            int protocol = (int)packet[0];
             NetCommand command = (NetCommand)(byte)packet[1];
             if (!Enum.IsDefined(typeof(NetCommand), command)) { _log.LogWarning("Rejected unknown troll command."); return; }
             int targetActor = (int)packet[2];
             object[] args = (object[])packet[3];
-            if (command == NetCommand.Hello) { _compatible.Add(photonEvent.Sender); return; }
+            if (command == NetCommand.Hello)
+            {
+                _advertisedProtocols[photonEvent.Sender] = protocol;
+                string version = args.Length > 1 && args[1] is string ? (string)args[1] : string.Empty;
+                _advertisedVersions[photonEvent.Sender] = version.Length > 32 ? version.Substring(0,32) : version;
+                _advertisedReady[photonEvent.Sender] = args.Length > 2 && args[2] is bool && (bool)args[2];
+                if (protocol == ProtocolVersion) _compatible.Add(photonEvent.Sender); else _compatible.Remove(photonEvent.Sender);
+                return;
+            }
+            if (protocol != ProtocolVersion) return;
             _compatible.Add(photonEvent.Sender);
             try { Execute(command, targetActor, args, photonEvent.Sender); }
             catch (Exception ex) { _log.LogWarning("Troll packet failed safely: " + ex.Message); }
