@@ -6,7 +6,7 @@ A private-lobby trolling and chaos toolkit for **PEAK**, controlled through an i
 
 Skip the spectator wait when joining an expedition in progress, monitor the team, open your backpack instantly, use an upgraded spectator mode, resurrect fallen scouts, fly around the mountain, launch friends into the sky, summon enemy ambushes, create unsettling mirages, or combine multiple effects into custom chaos sequences.
 
-Version 0.4.5 is currently in development. It adds a dedicated searchable item-spawner page, safe effect previews, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The scheduled GitHub build will be a prerelease.
+Version 0.4.5 is currently in development. It adds a dedicated searchable item-spawner page, held-item stamina forecasts, safe troll-effect cards, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The scheduled GitHub build will be a prerelease.
 
 > Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
 
@@ -26,7 +26,9 @@ Version 0.4.5 is currently in development. It adds a dedicated searchable item-s
 ## Features
 
 - **Clean Item Spawner** — Search the live PEAK item catalog, choose quantities, give items to a selected scout or yourself, place tracked world items near a scout, and refresh the catalog without leaving the menu.
-- **Safe Effect Preview** — Inspect an effect's target, authority, current strength/count/timing, cleanup behavior, and a small non-executing animation before opening its controls.
+- **Held-item Stamina Preview** — Hold a usable item to see its predicted stamina capacity, condition changes, extra stamina, and pass-out risk before consuming it. This local overlay automatically yields to the standalone Effect Preview mod when installed.
+- **Immortality & Infinite Stamina** — Independently prevent the local scout from dying or fully passing out and continuously refill usable stamina; both toggles live in Player → Health & Status and return to normal instantly when disabled.
+- **Safe Troll Effect Cards** — Inspect a troll effect's target, authority, current strength/count/timing, cleanup behavior, and a small non-executing animation before opening its controls.
 - **Unlimited Lobby** — Optionally raise newly hosted rooms from four to 4–30 players and scale campfire food/backpacks for extra and late-joining scouts. Automatically yields when the standalone PEAK Unlimited mod is installed.
 - **Favorites & Recent Actions** — Persist quick-access item and effect shortcuts locally so common actions are easy to find again.
 - **Phantom Pings** — Target one player with Breadcrumb Trail, Circle, or Behind You ping patterns.
@@ -74,7 +76,7 @@ Open **Mod Config** to control the built-in quality-of-life modules or edit sett
 
 Runtime component switches are session-only. They cannot guarantee that Harmony patches are removed, and some disabled components cannot initialize again until restart. PEAK Troll Mod therefore never offers to disable its own menu from inside the menu.
 
-When **Prefer enabled external QoL mods** is on, the built-in Team Status Panel yields to PeakStatsEx's enabled teammate-stamina display, and Quick Backpack yields to EasyBackpack. Turn the preference off if you intentionally want the built-in versions.
+When **Prefer enabled external QoL mods** is on, the built-in Team Status Panel yields to PeakStatsEx's enabled teammate-stamina display, and Quick Backpack yields to EasyBackpack. The held-item stamina forecast always yields to the standalone Effect Preview mod to prevent duplicate overlays. Turn the preference off if you intentionally want the other built-in versions.
 
 ## Installation
 

@@ -2,6 +2,9 @@
 
 ## Unreleased (0.4.5)
 
+- Added a fully client-side held-item stamina preview that forecasts condition-bar capacity, individual affliction changes, extra stamina, and pass-out risk before consumption.
+- Added automatic overlap protection that yields the built-in stamina forecast whenever the standalone Effect Preview plugin is enabled.
+- Added independent self-only Immortality and Infinite Stamina toggles under Player → Health & Status, with immediate opt-out and no permanent stat changes.
 - Added a dedicated searchable Item Spawner page backed by PEAK's live runtime catalog, with quantity selection, give-to-target/self actions, tracked ground spawning, refresh controls, and no bundled game assets.
 - Added safe Effect Preview cards that show the selected target, authority context, live effect parameters, and a non-executing animation before routing to the real controls.
 - Added an optional Unlimited Lobby mode for newly hosted 4–30 player rooms, plus host-owned campfire food and backpack scaling for extra and late-joining scouts.

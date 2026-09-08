@@ -48,6 +48,10 @@ namespace PeakTrollMod
         public readonly ConfigEntry<MenuActivationMode> MenuActivation;
         public readonly ConfigEntry<bool> ItemSpawnerEnabled;
         public readonly ConfigEntry<bool> EffectPreviewEnabled;
+        public readonly ConfigEntry<bool> StaminaEffectPreviewEnabled;
+        public readonly ConfigEntry<bool> StaminaEffectPreviewDetails;
+        public readonly ConfigEntry<bool> ImmortalityEnabled;
+        public readonly ConfigEntry<bool> InfiniteStaminaEnabled;
         public readonly ConfigEntry<bool> FavoritesAndRecentsEnabled;
         public readonly ConfigEntry<string> FavoriteItemsData;
         public readonly ConfigEntry<string> RecentItemsData;
@@ -104,6 +108,10 @@ namespace PeakTrollMod
             MenuActivation = config.Bind("Accessibility", "MenuActivation", MenuActivationMode.Toggle, "Open F7 as a toggle or only while the shortcut is held.");
             ItemSpawnerEnabled = config.Bind("Quality of Life", "ItemSpawner", true, "Show the searchable item spawner page in the F7 menu.");
             EffectPreviewEnabled = config.Bind("Quality of Life", "EffectPreview", true, "Show safe, non-executing effect previews before use.");
+            StaminaEffectPreviewEnabled = config.Bind("Quality of Life", "StaminaEffectPreview", true, "Preview a held consumable's stamina and condition-bar changes before using it. Automatically yields to the standalone Effect Preview mod.");
+            StaminaEffectPreviewDetails = config.Bind("Quality of Life", "StaminaEffectPreviewDetails", true, "Show individual condition changes beneath the held-item stamina forecast.");
+            ImmortalityEnabled = config.Bind("Player", "Immortality", false, "Prevent death and full pass-out for the local scout while enabled.");
+            InfiniteStaminaEnabled = config.Bind("Player", "InfiniteStamina", false, "Continuously refill the local scout's available stamina while enabled.");
             FavoritesAndRecentsEnabled = config.Bind("Quality of Life", "FavoritesAndRecentActions", true, "Remember favorite and recently used items/effect previews.");
             FavoriteItemsData = config.Bind("Quick Access", "FavoriteItems", string.Empty, "Newline-separated favorite runtime item names.");
             RecentItemsData = config.Bind("Quick Access", "RecentItems", string.Empty, "Newline-separated recently used runtime item names.");

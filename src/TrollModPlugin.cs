@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -34,6 +35,8 @@ namespace PeakTrollMod
         internal LobbyReadinessManager LobbyReadiness;
         internal ActionShortcutManager Shortcuts;
         internal UnlimitedLobbyManager UnlimitedLobby;
+        internal StaminaEffectPreviewManager StaminaEffectPreview;
+        internal SurvivalAssistManager SurvivalAssist;
         internal SpawnManager Spawns;
         internal MirageManager Mirages;
         internal PingPlacementManager PingPlacement;
@@ -73,6 +76,8 @@ namespace PeakTrollMod
             Spawns = new SpawnManager(Logger, Players, Capabilities);
             Shortcuts = new ActionShortcutManager(Settings);
             UnlimitedLobby = new UnlimitedLobbyManager(Logger, Settings, Actions, Spawns);
+            StaminaEffectPreview = new StaminaEffectPreviewManager(Settings, Logger);
+            SurvivalAssist = new SurvivalAssistManager(Settings);
             Network = new TrollNetworkManager(Logger, Players, Actions, Mirages, Audio);
             PingPlacement = new PingPlacementManager(Logger, Mirages, Players, Network);
             PhantomPings = new PhantomPingManager(Logger, Players);
@@ -94,7 +99,7 @@ namespace PeakTrollMod
         private void Update()
         {
             if (Settings.MenuActivation.Value == MenuActivationMode.Toggle) { if (Settings.MenuKey.Value.IsDown()) Ui.Toggle(); } else Ui.SetOpen(Settings.MenuKey.Value.IsPressed());
-            Players.Tick(); PlayerPreferences.Tick(); LobbyReadiness.Tick(); QuickReconnect.Tick(); Network.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); QuickBackpack.Tick(Ui.IsOpen); BetterSpectating.Tick(Ui.IsOpen); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); UnlimitedLobby.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
+            Players.Tick(); PlayerPreferences.Tick(); LobbyReadiness.Tick(); QuickReconnect.Tick(); Network.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); QuickBackpack.Tick(Ui.IsOpen); BetterSpectating.Tick(Ui.IsOpen); StaminaEffectPreview.Tick(); SurvivalAssist.Tick(); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); UnlimitedLobby.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
 
             bool inRoom = PhotonNetwork.InRoom;
             if (_wasInRoom && !inRoom) Reset.ResetAll();
@@ -106,7 +111,7 @@ namespace PeakTrollMod
             }
         }
 
-        private void OnGUI() { if (TeamStatus != null) TeamStatus.Draw(Ui != null && Ui.IsOpen); if (BetterSpectating != null) BetterSpectating.Draw(Ui != null && Ui.IsOpen); if (Ui != null) Ui.Draw(); }
+        private void OnGUI() { bool menuOpen=Ui!=null&&Ui.IsOpen; if (TeamStatus != null) TeamStatus.Draw(menuOpen); if (BetterSpectating != null) BetterSpectating.Draw(menuOpen); if (StaminaEffectPreview != null) StaminaEffectPreview.Draw(menuOpen); if (Ui != null) Ui.Draw(); }
 
         private void FixedUpdate() { if (Actions != null) Actions.FixedTick(); }
 
@@ -120,6 +125,8 @@ namespace PeakTrollMod
             if (Recovery != null) Recovery.OnSceneLoaded();
             if (BetterSpectating != null) BetterSpectating.OnSceneLoaded();
             if (UnlimitedLobby != null) UnlimitedLobby.ResetScene();
+            if (StaminaEffectPreview != null) StaminaEffectPreview.ResetScene();
+            if (SurvivalAssist != null) SurvivalAssist.ResetScene();
             if (Ui != null) Ui.ResetVisualAssets();
             if (CampfireTroll != null) CampfireTroll.ResetScene();
             if (HelicopterTroll != null) HelicopterTroll.ResetScene();
@@ -142,6 +149,26 @@ namespace PeakTrollMod
 
         internal void DebugLog(string message) { if (Settings != null && Settings.DebugLogging.Value) Logger.LogInfo("[PTM] " + message); }
         internal void Warn(string message) { Logger.LogWarning("[PTM] " + message); }
+    }
+
+    [HarmonyPatch]
+    internal static class ImmortalityPatch
+    {
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            string[] names = { "Die", "DieInstantly", "DieInstantlyLocal", "RPCA_SetDead", "RPCA_Die", "PassOut", "RPCA_PassOut", "PassOutInstantly" };
+            for (int i = 0; i < names.Length; i++)
+            {
+                MethodInfo method = AccessTools.Method(typeof(Character), names[i], new Type[0]);
+                if (method != null) yield return method;
+            }
+        }
+
+        private static bool Prefix(Character __instance)
+        {
+            TrollModPlugin plugin = TrollModPlugin.Instance;
+            return plugin == null || plugin.SurvivalAssist == null || !plugin.SurvivalAssist.Immortality || __instance == null || !__instance.IsLocal;
+        }
     }
 
     [HarmonyPatch(typeof(GamefeelHandler), "GetRotation")]

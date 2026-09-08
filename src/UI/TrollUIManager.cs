@@ -266,7 +266,12 @@ namespace PeakTrollMod
             });
             Card(new Rect(730, 144, 498, 364), "♥  Health & Status", new Color(.83f, .48f, .38f), delegate
             {
-                Badge(PermissionKind.Anyone); GUILayout.Label("Native revive, knockout, and elimination work without the target mod or host.", _small);
+                Badge(PermissionKind.Anyone);
+                GUILayout.BeginHorizontal();
+                if (AnimatedButton(_plugin.SurvivalAssist.Immortality ? "IMMORTALITY: ON" : "IMMORTALITY: OFF", _plugin.SurvivalAssist.Immortality ? _success : _button, GUILayout.Height(34))) { _plugin.SurvivalAssist.Immortality = !_plugin.SurvivalAssist.Immortality; Say("Immortality " + (_plugin.SurvivalAssist.Immortality ? "enabled." : "disabled.")); }
+                if (AnimatedButton(_plugin.SurvivalAssist.InfiniteStamina ? "INFINITE STAMINA: ON" : "INFINITE STAMINA: OFF", _plugin.SurvivalAssist.InfiniteStamina ? _success : _button, GUILayout.Height(34))) { _plugin.SurvivalAssist.InfiniteStamina = !_plugin.SurvivalAssist.InfiniteStamina; Say("Infinite Stamina " + (_plugin.SurvivalAssist.InfiniteStamina ? "enabled." : "disabled.")); }
+                GUILayout.EndHorizontal();
+                GUILayout.Label("Self-only survival options; switch off to restore normal rules immediately.", _small);
                 GUILayout.BeginHorizontal();
                 if (CapabilityButton(_plugin.NoWait.Enabled ? "NO WAIT: ON" : "NO WAIT: OFF", FeatureCapability.Resurrect, _plugin.NoWait.Enabled ? _success : _button, 38)) { _plugin.NoWait.Enabled = !_plugin.NoWait.Enabled; Say("No Wait " + (_plugin.NoWait.Enabled ? "enabled." : "disabled.")); }
                 if (CapabilityButton("RESURRECT SELF", FeatureCapability.Resurrect, _success, 38)) ResurrectSelf();
@@ -525,9 +530,13 @@ namespace PeakTrollMod
                 GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.Settings.BetterSpectatingEnabled.Value = GUILayout.Toggle(_plugin.Settings.BetterSpectatingEnabled.Value, "Better Spectating"); _plugin.Settings.SpectateGhostPings.Value = GUILayout.Toggle(_plugin.Settings.SpectateGhostPings.Value, "Ghost pings"); GUILayout.EndVertical();
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal();
-                GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.Settings.ItemSpawnerEnabled.Value = GUILayout.Toggle(_plugin.Settings.ItemSpawnerEnabled.Value, "Item Spawner"); _plugin.Settings.EffectPreviewEnabled.Value = GUILayout.Toggle(_plugin.Settings.EffectPreviewEnabled.Value, "Safe Effect Preview"); GUILayout.EndVertical();
+                GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.Settings.ItemSpawnerEnabled.Value = GUILayout.Toggle(_plugin.Settings.ItemSpawnerEnabled.Value, "Item Spawner"); _plugin.Settings.EffectPreviewEnabled.Value = GUILayout.Toggle(_plugin.Settings.EffectPreviewEnabled.Value, "Safe Troll Effect Cards"); GUILayout.EndVertical();
                 GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.Settings.FavoritesAndRecentsEnabled.Value = GUILayout.Toggle(_plugin.Settings.FavoritesAndRecentsEnabled.Value, "Favorites & Recents"); GUILayout.Label("Persistent local quick access", _small); GUILayout.EndVertical();
                 GUILayout.BeginVertical(GUILayout.Width(300)); GUI.enabled=!Photon.Pun.PhotonNetwork.InRoom&&!_plugin.UnlimitedLobby.StandaloneDetected; _plugin.Settings.UnlimitedLobbyEnabled.Value = GUILayout.Toggle(_plugin.Settings.UnlimitedLobbyEnabled.Value, "Unlimited Lobby"); GUI.enabled=true; GUILayout.Label(_plugin.UnlimitedLobby.Status, _small); GUILayout.EndVertical();
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUILayout.BeginVertical(GUILayout.Width(300)); GUI.enabled=!_plugin.StaminaEffectPreview.StandaloneDetected; _plugin.Settings.StaminaEffectPreviewEnabled.Value=GUILayout.Toggle(_plugin.Settings.StaminaEffectPreviewEnabled.Value,"Held-item Stamina Preview"); GUI.enabled=true; GUILayout.Label(_plugin.StaminaEffectPreview.Status,_small); GUILayout.EndVertical();
+                GUILayout.BeginVertical(GUILayout.Width(300)); GUI.enabled=_plugin.Settings.StaminaEffectPreviewEnabled.Value&&!_plugin.StaminaEffectPreview.StandaloneDetected; _plugin.Settings.StaminaEffectPreviewDetails.Value=GUILayout.Toggle(_plugin.Settings.StaminaEffectPreviewDetails.Value,"Detailed condition changes"); GUI.enabled=true; GUILayout.Label("Shows the result before consumption",_small); GUILayout.EndVertical();
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal(); GUI.enabled=!Photon.Pun.PhotonNetwork.InRoom&&!_plugin.UnlimitedLobby.StandaloneDetected; GUILayout.Label("Unlimited lobby cap  " + _plugin.UnlimitedLobby.MaxPlayers, _small, GUILayout.Width(155)); _plugin.Settings.UnlimitedLobbyMaxPlayers.Value=Mathf.RoundToInt(GUILayout.HorizontalSlider(_plugin.Settings.UnlimitedLobbyMaxPlayers.Value,4,30,GUILayout.Width(220))); GUI.enabled=true; _plugin.Settings.UnlimitedLobbyScaleSupplies.Value=GUILayout.Toggle(_plugin.Settings.UnlimitedLobbyScaleSupplies.Value,"Scale food + backpacks"); GUILayout.EndHorizontal();
                 _plugin.Settings.PreferExternalQualityOfLifeMods.Value = GUILayout.Toggle(_plugin.Settings.PreferExternalQualityOfLifeMods.Value, "Prefer enabled external QoL mods when features overlap");
