@@ -275,8 +275,8 @@ namespace PeakTrollMod
         private void EnsureAssets()
         {
             if (_pixel == null) { _pixel = new Texture2D(1, 1); _pixel.SetPixel(0, 0, Color.white); _pixel.Apply(); }
-            if (_title == null) { _title = new GUIStyle(GUI.skin.label); _title.fontSize = 12; _title.fontStyle = FontStyle.Bold; _title.normal.textColor = new Color(.82f, 1f, .96f); }
-            if (_small == null) { _small = new GUIStyle(GUI.skin.label); _small.fontSize = 11; _small.normal.textColor = _wouldPassOut ? new Color(1f, .58f, .5f) : new Color(.8f, .88f, .87f); }
+            if (_title == null) { _title = new GUIStyle(GUI.skin.label); _title.font = UiFontManager.DisplayFont; _title.fontSize = 12; _title.fontStyle = FontStyle.Bold; _title.normal.textColor = new Color(.82f, 1f, .96f); }
+            if (_small == null) { _small = new GUIStyle(GUI.skin.label); _small.font = UiFontManager.BodyFont; _small.fontSize = 11; _small.normal.textColor = _wouldPassOut ? new Color(1f, .58f, .5f) : new Color(.8f, .88f, .87f); }
         }
 
         private void DrawRect(Rect rect, Color color) { Color old = GUI.color; GUI.color = color; GUI.DrawTexture(rect, _pixel); GUI.color = old; }

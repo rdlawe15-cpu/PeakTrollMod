@@ -45,7 +45,7 @@ namespace PeakTrollMod
             return result.Length == 0 ? "OK" : result;
         }
         private Color StateColor(CharacterData data) { bool high=_settings.HighContrast.Value;return data.dead ? new Color(high?1f:.8f,.12f,.12f,1f) : data.fullyPassedOut ? new Color(1f,high?.75f:.55f,.08f,1f) : data.zombified ? new Color(high?.65f:.5f,1f,.15f,1f) : new Color(.1f,high?1f:.75f,high?.9f:.7f,1f); }
-        private void EnsureStyles() { if (_pixel != null) return; _pixel = new Texture2D(1,1); _pixel.SetPixel(0,0,Color.white); _pixel.Apply(); _name = new GUIStyle(GUI.skin.label); _name.fontSize=14; _name.fontStyle=FontStyle.Bold; _name.normal.textColor=Color.white; _detail=new GUIStyle(GUI.skin.label);_detail.fontSize=11;_detail.alignment=TextAnchor.MiddleRight;_detail.normal.textColor=new Color(.72f,.8f,.79f); }
+        private void EnsureStyles() { if (_pixel != null) return; _pixel = new Texture2D(1,1); _pixel.SetPixel(0,0,Color.white); _pixel.Apply(); _name = new GUIStyle(GUI.skin.label); _name.font=UiFontManager.DisplayFont; _name.fontSize=14; _name.fontStyle=FontStyle.Bold; _name.normal.textColor=Color.white; _detail=new GUIStyle(GUI.skin.label);_detail.font=UiFontManager.BodyFont;_detail.fontSize=11;_detail.alignment=TextAnchor.MiddleRight;_detail.normal.textColor=new Color(.72f,.8f,.79f); }
         private void DrawRect(Rect rect, Color color) { Color old=GUI.color; GUI.color=color; GUI.DrawTexture(rect,_pixel); GUI.color=old; }
     }
 }

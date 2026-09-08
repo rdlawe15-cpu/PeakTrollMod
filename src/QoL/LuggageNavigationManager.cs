@@ -197,8 +197,8 @@ namespace PeakTrollMod
         {
             if (_pixel != null) return;
             _pixel = new Texture2D(1, 1); _pixel.name = "PTM_LUGGAGE_NAV_PIXEL"; _pixel.hideFlags = HideFlags.HideAndDontSave; _pixel.SetPixel(0, 0, Color.white); _pixel.Apply();
-            _title = new GUIStyle(GUI.skin.label); _title.fontSize = 14; _title.fontStyle = FontStyle.Bold; _title.alignment = TextAnchor.MiddleCenter; _title.normal.textColor = new Color(.45f, 1f, .88f);
-            _detail = new GUIStyle(GUI.skin.label); _detail.fontSize = 11; _detail.alignment = TextAnchor.MiddleCenter; _detail.normal.textColor = new Color(.76f, .84f, .83f);
+            _title = new GUIStyle(GUI.skin.label); _title.font = UiFontManager.DisplayFont; _title.fontSize = 14; _title.fontStyle = FontStyle.Bold; _title.alignment = TextAnchor.MiddleCenter; _title.normal.textColor = new Color(.45f, 1f, .88f);
+            _detail = new GUIStyle(GUI.skin.label); _detail.font = UiFontManager.BodyFont; _detail.fontSize = 11; _detail.alignment = TextAnchor.MiddleCenter; _detail.normal.textColor = new Color(.76f, .84f, .83f);
         }
 
         private void DrawRect(Rect rect, Color color) { Color old = GUI.color; GUI.color = color; GUI.DrawTexture(rect, _pixel); GUI.color = old; }

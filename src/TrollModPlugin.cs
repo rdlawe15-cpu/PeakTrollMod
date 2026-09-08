@@ -50,6 +50,7 @@ namespace PeakTrollMod
         internal ChaosManager Chaos;
         internal ResetManager Reset;
         internal TrollUIManager Ui;
+        internal UiFontManager UiFonts;
 
         private Harmony _harmony;
         private float _nextDynamicRefresh;
@@ -60,6 +61,7 @@ namespace PeakTrollMod
         {
             Instance = this;
             Settings = new ModConfig(base.Config);
+            UiFonts = new UiFontManager(Logger); UiFonts.Load();
             ModBrowser = new ModConfigBrowser(); ModBrowser.Refresh();
             Capabilities = new CapabilityRegistry(Logger); Capabilities.Discover();
             Players = new PlayerManager(Logger);
@@ -149,6 +151,7 @@ namespace PeakTrollMod
             if (Reset != null) Reset.ResetAll();
             if (Network != null) Network.Dispose();
             if (_harmony != null) _harmony.UnpatchSelf();
+            if (UiFonts != null) UiFonts.Dispose();
             Instance = null;
         }
 

@@ -53,6 +53,6 @@ namespace PeakTrollMod
             GUI.Label(new Rect(rect.x+16f,rect.y+8f,488f,26f),"SPECTATING  " + name,_title);
             GUI.Label(new Rect(rect.x+16f,rect.y+35f,488f,42f),"Altitude " + target.Center.y.ToString("0") + "m  •  " + status + "\n" + _settings.SpectatePreviousKey.Value + "/" + _settings.SpectateNextKey.Value + " cycle  •  " + _settings.SpectateFreeCameraKey.Value + " free cam  •  F7 revive controls",_text);
         }
-        private void EnsureStyles() { if(_pixel!=null)return;_pixel=new Texture2D(1,1);_pixel.SetPixel(0,0,Color.white);_pixel.Apply();_title=new GUIStyle(GUI.skin.label);_title.fontSize=15;_title.fontStyle=FontStyle.Bold;_title.normal.textColor=new Color(.4f,.95f,.86f);_text=new GUIStyle(GUI.skin.label);_text.fontSize=12;_text.normal.textColor=new Color(.82f,.88f,.87f); }
+        private void EnsureStyles() { if(_pixel!=null)return;_pixel=new Texture2D(1,1);_pixel.SetPixel(0,0,Color.white);_pixel.Apply();_title=new GUIStyle(GUI.skin.label);_title.font=UiFontManager.DisplayFont;_title.fontSize=15;_title.fontStyle=FontStyle.Bold;_title.normal.textColor=new Color(.4f,.95f,.86f);_text=new GUIStyle(GUI.skin.label);_text.font=UiFontManager.BodyFont;_text.fontSize=12;_text.normal.textColor=new Color(.82f,.88f,.87f); }
     }
 }

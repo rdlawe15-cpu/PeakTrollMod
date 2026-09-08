@@ -16,6 +16,14 @@ New-Item -ItemType Directory -Path $pluginFolder -Force | Out-Null
 New-Item -ItemType Directory -Path $artifacts -Force | Out-Null
 
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'bin\Release\PeakTrollMod.dll') -Destination $pluginFolder
+$fontSource = Join-Path $PSScriptRoot 'assets\fonts'
+$fontDestination = Join-Path $pluginFolder 'Fonts'
+if (-not (Test-Path -LiteralPath $fontSource)) { throw 'Bundled font assets are missing.' }
+New-Item -ItemType Directory -Path $fontDestination -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $fontSource 'Exo2-Variable.ttf') -Destination $fontDestination
+Copy-Item -LiteralPath (Join-Path $fontSource 'Inter-Variable.ttf') -Destination $fontDestination
+Copy-Item -LiteralPath (Join-Path $fontSource 'OFL-Exo2.txt') -Destination $fontDestination
+Copy-Item -LiteralPath (Join-Path $fontSource 'OFL-Inter.txt') -Destination $fontDestination
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'manifest.json') -Destination $staging
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'README.md') -Destination $staging
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'CHANGELOG.md') -Destination $staging
