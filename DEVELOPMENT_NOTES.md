@@ -105,6 +105,13 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 - Campfire supply scaling runs only for the Photon master client, uses runtime-discovered Marshmallow and Backpack item prefabs, accounts only for players above the vanilla four-player baseline, and adds food as late joiners increase the room count.
 - The built-in implementation scans loaded BepInEx plugin identity and assembly names and yields completely when the standalone PEAK Unlimited plugin is present, preventing competing room-option or provision patches.
 
+### Luggage navigation and Mesa mirages
+
+- `Luggage.ALL_LUGGAGE` is PEAK's public live `List<Luggage>` registry, and `Luggage.IsOpen` identifies already-used containers. Real Luggage Directions searches this registry at a bounded interval and never scans or guesses prefab names.
+- False native containers carry the verified `MirageLuggage` component; broader biome illusions carry `Mirage`. The luggage search rejects either component in the candidate's parent/child hierarchy. PEAK Troll Mod's own luggage mirages are renderer-only objects without a `Luggage` component and are therefore naturally absent from the real-luggage registry.
+- `MapHandler.GetCurrentBiome()` returns the verified `Biome.BiomeType` enum, which includes `Mesa`. Anti-Mirages activates only when the current value is `Mesa`.
+- Anti-Mirages caches and disables renderer state referenced by live scene `MirageLuggage` and `Mirage` components. Small postfixes reapply suppression after PEAK's native mirage updates; disabling the option, leaving the Mesa, changing scenes, or shutting down restores only those cached renderer states.
+
 ## Network validation
 
 - Custom Photon event code 197, exact protocol 6 / mod version `0.4.5` development.

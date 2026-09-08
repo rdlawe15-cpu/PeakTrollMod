@@ -52,6 +52,9 @@ namespace PeakTrollMod
         public readonly ConfigEntry<bool> StaminaEffectPreviewDetails;
         public readonly ConfigEntry<bool> ImmortalityEnabled;
         public readonly ConfigEntry<bool> InfiniteStaminaEnabled;
+        public readonly ConfigEntry<bool> RealLuggageDirectionsEnabled;
+        public readonly ConfigEntry<float> RealLuggageMaximumDistance;
+        public readonly ConfigEntry<bool> MesaAntiMiragesEnabled;
         public readonly ConfigEntry<bool> FavoritesAndRecentsEnabled;
         public readonly ConfigEntry<string> FavoriteItemsData;
         public readonly ConfigEntry<string> RecentItemsData;
@@ -112,6 +115,9 @@ namespace PeakTrollMod
             StaminaEffectPreviewDetails = config.Bind("Quality of Life", "StaminaEffectPreviewDetails", true, "Show individual condition changes beneath the held-item stamina forecast.");
             ImmortalityEnabled = config.Bind("Player", "Immortality", false, "Prevent death and full pass-out for the local scout while enabled.");
             InfiniteStaminaEnabled = config.Bind("Player", "InfiniteStamina", false, "Continuously refill the local scout's available stamina while enabled.");
+            RealLuggageDirectionsEnabled = config.Bind("Quality of Life", "RealLuggageDirections", false, "Show direction and distance to the nearest unopened genuine luggage while ignoring native and mod-created mirages.");
+            RealLuggageMaximumDistance = config.Bind("Quality of Life", "RealLuggageMaximumDistance", 750f, "Maximum real-luggage search distance in metres (25-2000).");
+            MesaAntiMiragesEnabled = config.Bind("Quality of Life", "MesaAntiMirages", false, "Locally hide native Mirage and MirageLuggage renderers while the current biome is the Mesa.");
             FavoritesAndRecentsEnabled = config.Bind("Quality of Life", "FavoritesAndRecentActions", true, "Remember favorite and recently used items/effect previews.");
             FavoriteItemsData = config.Bind("Quick Access", "FavoriteItems", string.Empty, "Newline-separated favorite runtime item names.");
             RecentItemsData = config.Bind("Quick Access", "RecentItems", string.Empty, "Newline-separated recently used runtime item names.");

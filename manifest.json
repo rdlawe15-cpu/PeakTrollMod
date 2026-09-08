@@ -2,7 +2,7 @@
   "name": "PEAK_Troll_Mod",
   "version_number": "0.4.5",
   "website_url": "https://github.com/rdlawe15-cpu/PeakTrollMod",
-  "description": "Private-lobby F7 toolkit with item spawning, stamina previews, immortality, infinite stamina, unlimited lobbies, No Wait, flight, Phantom Pings, and Chaos Mode.",
+  "description": "Private-lobby F7 toolkit with item spawning, stamina previews, real-luggage guidance, Mesa clarity, survival tools, unlimited lobbies, flight, mirages, and chaos.",
   "dependencies": [
     "BepInEx-BepInExPack_PEAK-5.4.75301"
   ]

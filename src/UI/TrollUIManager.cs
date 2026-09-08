@@ -77,15 +77,20 @@ namespace PeakTrollMod
         private readonly Dictionary<string, Vector2> _cardScroll = new Dictionary<string, Vector2>();
         private readonly Dictionary<string, float> _buttonHover = new Dictionary<string, float>();
         private readonly Dictionary<string, float> _buttonPulseUntil = new Dictionary<string, float>();
+        private int _textFieldIndex;
+        private bool _textFieldClicked;
+        private bool _isTyping;
+        private bool _clearTextFocus;
         public bool IsOpen { get; private set; }
+        public bool IsTyping { get { return IsOpen && _isTyping; } }
 
         public TrollUIManager(TrollModPlugin plugin) { _plugin = plugin; }
 
         public void Toggle() { if (IsOpen) ForceClose(); else Open(); }
         public void SetOpen(bool open) { if(open&&!IsOpen)Open();else if(!open&&IsOpen)ForceClose(); }
-        private void Open() { _oldLock = Cursor.lockState; _oldCursor = Cursor.visible; IsOpen = true; Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
-        public void ForceClose() { if (!IsOpen) return; IsOpen = false; Cursor.lockState = _oldLock; Cursor.visible = _oldCursor; _confirmEliminate = false; }
-        public void Tick() { if (IsOpen) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; } }
+        private void Open() { _oldLock = Cursor.lockState; _oldCursor = Cursor.visible; IsOpen = true; _isTyping = false; _clearTextFocus = true; Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
+        public void ForceClose() { if (!IsOpen) return; IsOpen = false; _isTyping = false; _clearTextFocus = true; Cursor.lockState = _oldLock; Cursor.visible = _oldCursor; _confirmEliminate = false; }
+        public void Tick() { if (IsOpen) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; if (_isTyping && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))) { _clearTextFocus = true; _isTyping = false; } } }
 
         public void ResetVisualAssets()
         {
@@ -103,17 +108,17 @@ namespace PeakTrollMod
             Matrix4x4 oldMatrix=GUI.matrix;Color oldColor=GUI.color;bool oldEnabled=GUI.enabled;int oldDepth=GUI.depth;
             try
             {
-                GUI.enabled=true;GUI.color=Color.white;GUI.depth=-10000;Cursor.lockState=CursorLockMode.None;Cursor.visible=true;EnsureStyles();
+                _textFieldIndex=0;_textFieldClicked=false;GUI.enabled=true;GUI.color=Color.white;GUI.depth=-10000;if(_clearTextFocus){GUI.FocusControl(null);_clearTextFocus=false;}Cursor.lockState=CursorLockMode.None;Cursor.visible=true;EnsureStyles();
                 float scale = Mathf.Min(Screen.width / DesignWidth, Screen.height / DesignHeight) * Mathf.Clamp(_plugin.Settings.UiScale.Value, .75f, 1.5f);
                 float x = (Screen.width - DesignWidth * scale) * .5f; float y = (Screen.height - DesignHeight * scale) * .5f;
                 DrawRect(new Rect(0, 0, Screen.width, Screen.height), new Color(.01f, .016f, .018f, .76f));
                 GUI.matrix = Matrix4x4.TRS(new Vector3(x, y, 0f), Quaternion.identity, new Vector3(scale, scale, 1f));
                 DrawPanel(new Rect(10, 10, 1260, 830), new Color(.035f, .047f, .05f, Mathf.Clamp(_plugin.Settings.Transparency.Value, .55f, 1f)), new Color(.25f, .34f, .35f, 1f), 2f);
-                DrawHeader(); DrawSidebar(); DrawContent(); DrawStatusBar();
+                DrawHeader(); DrawSidebar(); DrawContent(); DrawStatusBar(); UpdateTextFocus();
             }
             catch(Exception ex)
             {
-                ResetVisualAssets();_message="Menu visuals were reloaded after a UI asset error.";_messageUntil=Time.unscaledTime+8f;
+                _isTyping=false;ResetVisualAssets();_message="Menu visuals were reloaded after a UI asset error.";_messageUntil=Time.unscaledTime+8f;
                 if(Time.unscaledTime>=_nextDrawErrorLog){_nextDrawErrorLog=Time.unscaledTime+5f;_plugin.Warn("Menu draw recovered from: "+ex);}
             }
             finally { GUI.matrix=oldMatrix;GUI.color=oldColor;GUI.enabled=oldEnabled;GUI.depth=oldDepth; }
@@ -157,7 +162,7 @@ namespace PeakTrollMod
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Search", _label, GUILayout.Width(58));
-                _itemSearch = GUILayout.TextField(_itemSearch, _button, GUILayout.Height(30));
+                _itemSearch = TextField(_itemSearch, _button, GUILayout.Height(30));
                 if (AnimatedButton("CLEAR", _button, GUILayout.Width(72), GUILayout.Height(30))) { _itemSearch = string.Empty; _itemIndex = 0; }
                 if (AnimatedButton("REFRESH", _button, GUILayout.Width(88), GUILayout.Height(30))) { _plugin.Actions.RefreshItemCatalog(); _itemIndex = 0; Say("Runtime item catalog refreshed."); }
                 GUILayout.EndHorizontal();
@@ -305,7 +310,7 @@ namespace PeakTrollMod
             });
             Card(new Rect(902, 522, 326, 168), "▣  Inventory & Reset", new Color(.86f, .62f, .25f), delegate
             {
-                Badge(PermissionKind.Anyone); _itemSearch=GUILayout.TextField(_itemSearch, _button, GUILayout.Height(28)); string item = CurrentItemName(); if (AnimatedButton(item + "   ▾", _button, GUILayout.Height(30))) CycleItem();
+                Badge(PermissionKind.Anyone); _itemSearch=TextField(_itemSearch, _button, GUILayout.Height(28)); string item = CurrentItemName(); if (AnimatedButton(item + "   ▾", _button, GUILayout.Height(30))) CycleItem();
                 GUILayout.BeginHorizontal(); if (CapabilityButton("GIVE ITEM", FeatureCapability.GiveItem, _button, 32)) Owner(NetCommand.GiveItem, new object[] { item }); if (AnimatedButton("RESET PLAYER", _danger, GUILayout.Height(32))) Broadcast(NetCommand.Reset, new object[0]); GUILayout.EndHorizontal();
             });
         }
@@ -391,7 +396,7 @@ namespace PeakTrollMod
         private void DrawEnemies(Rect area) { UnsupportedPage("Enemy targeting", "Target controls are implemented only at spawn time for mod-spawned Scoutmasters and Mushroom Zombies. Persistent AI overrides are disabled to avoid fighting host authority."); }
         private void DrawWorld(Rect area)
         {
-            Card(new Rect(238,220,480,390),"✹  Dynamite Shower",new Color(1f,.42f,.2f),delegate
+            Card(new Rect(238,150,480,360),"✹  Dynamite Shower",new Color(1f,.42f,.2f),delegate
             {
                 Badge(PermissionKind.Anyone);GUILayout.Label("Real networked PEAK dynamite; target needs no mod.",_small);
                 GUILayout.Label("Count  "+_dynamiteCount,_label);_dynamiteCount=Mathf.RoundToInt(GUILayout.HorizontalSlider(_dynamiteCount,1,64));
@@ -403,7 +408,7 @@ namespace PeakTrollMod
                 if(AnimatedButton("CANCEL + CLEAR MY DYNAMITE",_button,GUILayout.Height(34)))Say("Removed "+_plugin.Spawns.ClearLocalDynamite()+" tracked dynamite.");
                 GUILayout.Label("Active tracked dynamite: "+_plugin.Spawns.DynamiteCount,_small);
             });
-            Card(new Rect(735,220,493,390),"☂  Item Storm",new Color(.35f,.68f,1f),delegate
+            Card(new Rect(735,150,493,360),"☂  Item Storm",new Color(.35f,.68f,1f),delegate
             {
                 Badge(PermissionKind.Anyone);GUILayout.Label("Real networked PEAK items; target needs no mod.",_small);
                 _itemStormRandom=GUILayout.Toggle(_itemStormRandom,"Random item from the loaded catalog");
@@ -418,13 +423,21 @@ namespace PeakTrollMod
                 GUILayout.Label("Active tracked storm items: "+_plugin.Spawns.ItemStormCount,_small);
                 GUILayout.Label("Poison/Spore clouds remain unsupported; use direct statuses on Player.",_small);
             });
-            Card(new Rect(238,625,480,110),"⌂  Campfire Reset Trap",new Color(.3f,1f,.55f),delegate
+            Card(new Rect(238,525,480,210),"⌖  Navigation & Campfire",new Color(.3f,1f,.55f),delegate
             {
+                Badge(PermissionKind.Anyone);GUILayout.Label("Nearest unopened genuine luggage; native and mod mirages are ignored.",_small);
+                if(AnimatedButton(_plugin.LuggageNavigation.DirectionsEnabled?"REAL LUGGAGE DIRECTIONS: ON":"REAL LUGGAGE DIRECTIONS: OFF",_plugin.LuggageNavigation.DirectionsEnabled?_success:_button,GUILayout.Height(34))){_plugin.LuggageNavigation.DirectionsEnabled=!_plugin.LuggageNavigation.DirectionsEnabled;Say("Real luggage directions "+(_plugin.LuggageNavigation.DirectionsEnabled?"enabled.":"disabled."));}
+                GUILayout.Label(_plugin.LuggageNavigation.LuggageStatus,_small);
+                GUILayout.Label("Search range  "+Mathf.RoundToInt(_plugin.Settings.RealLuggageMaximumDistance.Value)+" m",_small);_plugin.Settings.RealLuggageMaximumDistance.Value=GUILayout.HorizontalSlider(_plugin.Settings.RealLuggageMaximumDistance.Value,25f,2000f);
+                GUILayout.Space(8);
                 Badge(PermissionKind.Anyone);GUILayout.Label("Lighting a campfire returns the lobby to the start.",_small);
                 if(CapabilityButton(_plugin.CampfireTroll.Enabled?"ENABLED — CLICK TO DISABLE":"ENABLE CAMPFIRE TRAP",FeatureCapability.CampfireReset,_plugin.CampfireTroll.Enabled?_success:_danger,34)){_plugin.CampfireTroll.Enabled=!_plugin.CampfireTroll.Enabled;Say("Campfire reset trap "+(_plugin.CampfireTroll.Enabled?"enabled.":"disabled."));}
             });
-            Card(new Rect(735,625,493,110),"🚁  No Rescue Helicopter",new Color(1f,.65f,.22f),delegate
+            Card(new Rect(735,525,493,210),"◉  Mesa Clarity & Rescue",new Color(1f,.65f,.22f),delegate
             {
+                Badge(PermissionKind.Anyone);GUILayout.Label("Locally hides native Mesa mirage visuals and restores them outside the biome.",_small);
+                if(AnimatedButton(_plugin.LuggageNavigation.AntiMiragesEnabled?"ANTI-MIRAGES: ON":"ANTI-MIRAGES: OFF",_plugin.LuggageNavigation.AntiMiragesEnabled?_success:_button,GUILayout.Height(34))){_plugin.LuggageNavigation.AntiMiragesEnabled=!_plugin.LuggageNavigation.AntiMiragesEnabled;Say("Mesa Anti-Mirages "+(_plugin.LuggageNavigation.AntiMiragesEnabled?"enabled.":"disabled."));}
+                GUILayout.Label(_plugin.LuggageNavigation.MirageStatus,_small);GUILayout.Space(8);
                 Badge(PermissionKind.EveryoneNeedsMod);GUILayout.Label("Suppresses the summit rescue on compatible clients; the host must be compatible to stop completion.",_small);
                 if(CapabilityButton(_plugin.HelicopterTroll.LocalEnabled?"SUPPRESSION ENABLED":"SUPPRESS SUMMIT HELICOPTER",FeatureCapability.HelicopterSuppression,_plugin.HelicopterTroll.LocalEnabled?_success:_danger,34))Say(_plugin.HelicopterTroll.SetLocalEnabled(!_plugin.HelicopterTroll.LocalEnabled));
             });
@@ -483,7 +496,7 @@ namespace PeakTrollMod
             Card(new Rect(238, 360, 480, 360), "♥  Persistent Player Preferences", new Color(.72f,.48f,1f), delegate
             {
                 PlayerEntry target=Target();if(target==null){GUILayout.Label("Select a player from the roster.",_label);return;}EnsurePreferenceEditor(target);GUILayout.Label("Editing: "+target.Name,_label);GUILayout.Label("Saved locally by Steam ID; aliases and colors appear only in this mod.",_small);
-                GUILayout.Label("Preferred display name",_small);_preferenceAlias=GUILayout.TextField(_preferenceAlias,_button,GUILayout.Height(30));
+                GUILayout.Label("Preferred display name",_small);_preferenceAlias=TextField(_preferenceAlias,_button,GUILayout.Height(30));
                 GUILayout.Label("Voice volume  "+Mathf.RoundToInt(_preferenceVolume*100f)+"%",_label);_preferenceVolume=GUILayout.HorizontalSlider(_preferenceVolume,0f,1f);_preferenceMuted=GUILayout.Toggle(_preferenceMuted,"Always mute locally");_preferenceExcluded=GUILayout.Toggle(_preferenceExcluded,"Exclude from random troll targeting");
                 GUILayout.Label("UI name color",_small);GUILayout.Label("Red",_small);_preferenceColor.r=GUILayout.HorizontalSlider(_preferenceColor.r,0f,1f);GUILayout.Label("Green",_small);_preferenceColor.g=GUILayout.HorizontalSlider(_preferenceColor.g,0f,1f);GUILayout.Label("Blue",_small);_preferenceColor.b=GUILayout.HorizontalSlider(_preferenceColor.b,0f,1f);
                 GUILayout.BeginHorizontal();if(AnimatedButton("SAVE PREFERENCE",_success,GUILayout.Height(34)))Say(SavePreference(target));if(AnimatedButton("RESET",_button,GUILayout.Height(34))){Say(_plugin.PlayerPreferences.Reset(target));LoadPreferenceEditor(target);}GUILayout.EndHorizontal();
@@ -537,6 +550,7 @@ namespace PeakTrollMod
                 GUILayout.BeginHorizontal();
                 GUILayout.BeginVertical(GUILayout.Width(300)); GUI.enabled=!_plugin.StaminaEffectPreview.StandaloneDetected; _plugin.Settings.StaminaEffectPreviewEnabled.Value=GUILayout.Toggle(_plugin.Settings.StaminaEffectPreviewEnabled.Value,"Held-item Stamina Preview"); GUI.enabled=true; GUILayout.Label(_plugin.StaminaEffectPreview.Status,_small); GUILayout.EndVertical();
                 GUILayout.BeginVertical(GUILayout.Width(300)); GUI.enabled=_plugin.Settings.StaminaEffectPreviewEnabled.Value&&!_plugin.StaminaEffectPreview.StandaloneDetected; _plugin.Settings.StaminaEffectPreviewDetails.Value=GUILayout.Toggle(_plugin.Settings.StaminaEffectPreviewDetails.Value,"Detailed condition changes"); GUI.enabled=true; GUILayout.Label("Shows the result before consumption",_small); GUILayout.EndVertical();
+                GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.LuggageNavigation.DirectionsEnabled=GUILayout.Toggle(_plugin.LuggageNavigation.DirectionsEnabled,"Real Luggage Directions"); _plugin.LuggageNavigation.AntiMiragesEnabled=GUILayout.Toggle(_plugin.LuggageNavigation.AntiMiragesEnabled,"Mesa Anti-Mirages"); GUILayout.EndVertical();
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal(); GUI.enabled=!Photon.Pun.PhotonNetwork.InRoom&&!_plugin.UnlimitedLobby.StandaloneDetected; GUILayout.Label("Unlimited lobby cap  " + _plugin.UnlimitedLobby.MaxPlayers, _small, GUILayout.Width(155)); _plugin.Settings.UnlimitedLobbyMaxPlayers.Value=Mathf.RoundToInt(GUILayout.HorizontalSlider(_plugin.Settings.UnlimitedLobbyMaxPlayers.Value,4,30,GUILayout.Width(220))); GUI.enabled=true; _plugin.Settings.UnlimitedLobbyScaleSupplies.Value=GUILayout.Toggle(_plugin.Settings.UnlimitedLobbyScaleSupplies.Value,"Scale food + backpacks"); GUILayout.EndHorizontal();
                 _plugin.Settings.PreferExternalQualityOfLifeMods.Value = GUILayout.Toggle(_plugin.Settings.PreferExternalQualityOfLifeMods.Value, "Prefer enabled external QoL mods when features overlap");
@@ -559,7 +573,7 @@ namespace PeakTrollMod
                 ConfigEntryBase entry=entries[_configIndex]; string key=info.Metadata.GUID+"|"+entry.Definition.Section+"|"+entry.Definition.Key; if(_configEditKey!=key){_configEditKey=key;_configEdit=entry.GetSerializedValue();}
                 GUILayout.Label(entry.Definition.Section+"  /  "+entry.Definition.Key,_label); if(!string.IsNullOrEmpty(entry.Description.Description))GUILayout.Label(entry.Description.Description,_small);
                 if(entry.SettingType==typeof(bool)){bool value=(bool)entry.BoxedValue;if(AnimatedButton(value?"ON — CLICK TO TURN OFF":"OFF — CLICK TO TURN ON",value?_success:_button,GUILayout.Height(34))){Say(_plugin.ModBrowser.SetValue(entry,(!value).ToString()));_configEdit=entry.GetSerializedValue();}}
-                else { GUILayout.BeginHorizontal(); _configEdit=GUILayout.TextField(_configEdit,_button,GUILayout.Height(32)); if(AnimatedButton("APPLY",_success,GUILayout.Width(80),GUILayout.Height(32))){Say(_plugin.ModBrowser.SetValue(entry,_configEdit));_configEdit=entry.GetSerializedValue();} GUILayout.EndHorizontal(); }
+                else { GUILayout.BeginHorizontal(); _configEdit=TextField(_configEdit,_button,GUILayout.Height(32)); if(AnimatedButton("APPLY",_success,GUILayout.Width(80),GUILayout.Height(32))){Say(_plugin.ModBrowser.SetValue(entry,_configEdit));_configEdit=entry.GetSerializedValue();} GUILayout.EndHorizontal(); }
                 GUILayout.BeginHorizontal(); GUILayout.Label("Current: "+entry.GetSerializedValue(),_small); if(AnimatedButton("RESET DEFAULT",_button,GUILayout.Width(125),GUILayout.Height(27))){Say(_plugin.ModBrowser.ResetValue(entry));_configEdit=entry.GetSerializedValue();} GUILayout.EndHorizontal();
                 GUILayout.Label("Changes are saved to the owning mod's config. Live application depends on that mod; restart PEAK when in doubt.",_small);
             });
@@ -738,6 +752,19 @@ namespace PeakTrollMod
         private ActionResult SavePreference(PlayerEntry entry){PlayerPreference p=new PlayerPreference{SteamId=entry.SteamUserId,Alias=_preferenceAlias,VoiceVolume=_preferenceVolume,Muted=_preferenceMuted,ExcludeFromRandom=_preferenceExcluded,Color=_preferenceColor};ActionResult result=_plugin.PlayerPreferences.Save(entry,p);if(result.Success)LoadPreferenceEditor(entry);return result;}
         private void CycleTextScale(){float value=_plugin.Settings.TextScale.Value;_plugin.Settings.TextScale.Value=value<.9f?1f:value<1.05f?1.15f:value<1.2f?1.3f:.85f;}
 
+        private string TextField(string value, GUIStyle style, params GUILayoutOption[] options)
+        {
+            Rect rect=GUILayoutUtility.GetRect(new GUIContent(value??string.Empty),style,options);string name="PTM.Text."+_textFieldIndex++;GUI.SetNextControlName(name);string result=GUI.TextField(rect,value??string.Empty,style);
+            if(Event.current.type==EventType.MouseDown&&rect.Contains(Event.current.mousePosition))_textFieldClicked=true;
+            return result;
+        }
+
+        private void UpdateTextFocus()
+        {
+            if(Event.current.type==EventType.MouseDown&&!_textFieldClicked)GUI.FocusControl(null);
+            string focused=GUI.GetNameOfFocusedControl();_isTyping=!string.IsNullOrEmpty(focused)&&focused.StartsWith("PTM.Text.",StringComparison.Ordinal);
+        }
+
         private void EnsureStyles()
         {
             float textScale=Mathf.Clamp(_plugin.Settings.TextScale.Value,.85f,1.3f);bool high=_plugin.Settings.HighContrast.Value;bool ready=_pixel!=null&&_title!=null&&_nav!=null&&_button!=null&&_danger!=null&&_success!=null;if(ready&&Mathf.Abs(textScale-_styledTextScale)<.001f&&high==_styledHighContrast)return;ResetVisualAssets();_pixel = new Texture2D(1,1);_pixel.name="PTM_UI_PIXEL";_pixel.hideFlags=HideFlags.HideAndDontSave;_pixel.SetPixel(0,0,Color.white);_pixel.Apply();_styledTextScale=textScale;_styledHighContrast=high;
@@ -757,7 +784,7 @@ namespace PeakTrollMod
             string key=_tab+"|"+text+"|"+Mathf.RoundToInt(rect.x)+"|"+Mathf.RoundToInt(rect.y);float hover;_buttonHover.TryGetValue(key,out hover);bool over=rect.Contains(Event.current.mousePosition)&&GUI.enabled;hover=Mathf.MoveTowards(hover,over?1f:0f,Time.unscaledDeltaTime*9f);_buttonHover[key]=hover;
             float until;_buttonPulseUntil.TryGetValue(key,out until);float pulse=_plugin.Settings.ReduceFlashingEffects.Value?0f:(until>Time.unscaledTime?Mathf.Clamp01((until-Time.unscaledTime)/.16f):0f);float glow=Mathf.Max(hover,pulse);if(glow>.01f){float spread=1f+glow*3f;DrawPanel(new Rect(rect.x-spread,rect.y-spread,rect.width+spread*2f,rect.height+spread*2f),new Color(.12f,.48f,.45f,.10f*glow),new Color(.31f,.92f,.85f,.75f*glow),1f);}
             Color outline=!GUI.enabled?new Color(.18f,.22f,.22f,.9f):style==_danger?new Color(.72f,.28f,.22f,.95f):style==_success||style==_navSelected?new Color(.25f,.72f,.67f,.95f):new Color(.25f,.36f,.37f,.95f);if(over)outline=Color.Lerp(outline,new Color(.42f,1f,.91f,1f),.72f);Outline(rect,outline,1f);
-            Rect animated=rect;if(pulse>0f){float inset=Mathf.Sin((1f-pulse)*Mathf.PI)*1.5f;animated=new Rect(rect.x+inset,rect.y+inset,rect.width-inset*2f,rect.height-inset*2f);}bool clicked=GUI.Button(animated,text,style);if(clicked)_buttonPulseUntil[key]=Time.unscaledTime+.16f;return clicked;
+            Rect animated=rect;if(pulse>0f){float inset=Mathf.Sin((1f-pulse)*Mathf.PI)*1.5f;animated=new Rect(rect.x+inset,rect.y+inset,rect.width-inset*2f,rect.height-inset*2f);}bool clicked=GUI.Button(animated,text,style);if(clicked){_buttonPulseUntil[key]=Time.unscaledTime+.16f;GUI.FocusControl(null);_isTyping=false;}return clicked;
         }
         private Texture2D Tint(Color color) { Texture2D t=new Texture2D(1,1);t.name="PTM_UI_STYLE";t.hideFlags=HideFlags.HideAndDontSave;t.SetPixel(0,0,color);t.Apply();_styleTextures.Add(t);return t; }
         private void DrawPanel(Rect rect, Color fill, Color border, float width) { DrawRect(rect,border);DrawRect(new Rect(rect.x+width,rect.y+width,rect.width-width*2,rect.height-width*2),fill); }

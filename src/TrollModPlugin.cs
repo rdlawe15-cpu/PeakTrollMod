@@ -37,6 +37,7 @@ namespace PeakTrollMod
         internal UnlimitedLobbyManager UnlimitedLobby;
         internal StaminaEffectPreviewManager StaminaEffectPreview;
         internal SurvivalAssistManager SurvivalAssist;
+        internal LuggageNavigationManager LuggageNavigation;
         internal SpawnManager Spawns;
         internal MirageManager Mirages;
         internal PingPlacementManager PingPlacement;
@@ -78,6 +79,7 @@ namespace PeakTrollMod
             UnlimitedLobby = new UnlimitedLobbyManager(Logger, Settings, Actions, Spawns);
             StaminaEffectPreview = new StaminaEffectPreviewManager(Settings, Logger);
             SurvivalAssist = new SurvivalAssistManager(Settings);
+            LuggageNavigation = new LuggageNavigationManager(Settings, Logger);
             Network = new TrollNetworkManager(Logger, Players, Actions, Mirages, Audio);
             PingPlacement = new PingPlacementManager(Logger, Mirages, Players, Network);
             PhantomPings = new PhantomPingManager(Logger, Players);
@@ -98,8 +100,9 @@ namespace PeakTrollMod
 
         private void Update()
         {
+            if (Ui.IsOpen && Input.GetKeyDown(KeyCode.Escape)) Ui.ForceClose();
             if (Settings.MenuActivation.Value == MenuActivationMode.Toggle) { if (Settings.MenuKey.Value.IsDown()) Ui.Toggle(); } else Ui.SetOpen(Settings.MenuKey.Value.IsPressed());
-            Players.Tick(); PlayerPreferences.Tick(); LobbyReadiness.Tick(); QuickReconnect.Tick(); Network.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); QuickBackpack.Tick(Ui.IsOpen); BetterSpectating.Tick(Ui.IsOpen); StaminaEffectPreview.Tick(); SurvivalAssist.Tick(); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); UnlimitedLobby.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
+            Players.Tick(); PlayerPreferences.Tick(); LobbyReadiness.Tick(); QuickReconnect.Tick(); Network.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); QuickBackpack.Tick(Ui.IsOpen); BetterSpectating.Tick(Ui.IsOpen); StaminaEffectPreview.Tick(); SurvivalAssist.Tick(); LuggageNavigation.Tick(); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); UnlimitedLobby.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
 
             bool inRoom = PhotonNetwork.InRoom;
             if (_wasInRoom && !inRoom) Reset.ResetAll();
@@ -111,7 +114,7 @@ namespace PeakTrollMod
             }
         }
 
-        private void OnGUI() { bool menuOpen=Ui!=null&&Ui.IsOpen; if (TeamStatus != null) TeamStatus.Draw(menuOpen); if (BetterSpectating != null) BetterSpectating.Draw(menuOpen); if (StaminaEffectPreview != null) StaminaEffectPreview.Draw(menuOpen); if (Ui != null) Ui.Draw(); }
+        private void OnGUI() { bool menuOpen=Ui!=null&&Ui.IsOpen; if (TeamStatus != null) TeamStatus.Draw(menuOpen); if (BetterSpectating != null) BetterSpectating.Draw(menuOpen); if (StaminaEffectPreview != null) StaminaEffectPreview.Draw(menuOpen); if (LuggageNavigation != null) LuggageNavigation.Draw(menuOpen); if (Ui != null) Ui.Draw(); }
 
         private void FixedUpdate() { if (Actions != null) Actions.FixedTick(); }
 
@@ -127,6 +130,7 @@ namespace PeakTrollMod
             if (UnlimitedLobby != null) UnlimitedLobby.ResetScene();
             if (StaminaEffectPreview != null) StaminaEffectPreview.ResetScene();
             if (SurvivalAssist != null) SurvivalAssist.ResetScene();
+            if (LuggageNavigation != null) LuggageNavigation.ResetScene();
             if (Ui != null) Ui.ResetVisualAssets();
             if (CampfireTroll != null) CampfireTroll.ResetScene();
             if (HelicopterTroll != null) HelicopterTroll.ResetScene();
@@ -141,6 +145,7 @@ namespace PeakTrollMod
             if (_shutdown) return; _shutdown = true;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             if (Ui != null) Ui.ForceClose();
+            if (LuggageNavigation != null) LuggageNavigation.ResetScene();
             if (Reset != null) Reset.ResetAll();
             if (Network != null) Network.Dispose();
             if (_harmony != null) _harmony.UnpatchSelf();
@@ -212,7 +217,7 @@ namespace PeakTrollMod
         private static void Postfix(Character __instance, ref bool __result)
         {
             TrollModPlugin plugin = TrollModPlugin.Instance;
-            if (plugin != null && plugin.Ui != null && plugin.Ui.IsOpen && __instance != null && __instance.IsLocal) __result = false;
+            if (plugin != null && plugin.Ui != null && plugin.Ui.IsTyping && __instance != null && __instance.IsLocal) __result = false;
         }
     }
 
@@ -250,8 +255,28 @@ namespace PeakTrollMod
             TrollModPlugin plugin = TrollModPlugin.Instance;
             if (plugin == null || plugin.Ui == null || !plugin.Ui.IsOpen || __instance == null) return;
             if (ShowingCursor != null) ShowingCursor.SetValue(__instance, true);
-            if (BlockingInput != null) BlockingInput.SetValue(__instance, true);
-            if (LastBlockedInput != null) LastBlockedInput.SetValue(__instance, Time.frameCount);
+            if (BlockingInput != null) BlockingInput.SetValue(__instance, plugin.Ui.IsTyping);
+            if (LastBlockedInput != null && plugin.Ui.IsTyping) LastBlockedInput.SetValue(__instance, Time.frameCount);
+        }
+    }
+
+    [HarmonyPatch(typeof(MirageLuggage), "Update")]
+    internal static class MesaMirageLuggagePatch
+    {
+        private static void Postfix(MirageLuggage __instance)
+        {
+            TrollModPlugin plugin = TrollModPlugin.Instance;
+            if (plugin != null && plugin.LuggageNavigation != null) plugin.LuggageNavigation.SuppressNativeMirage(__instance);
+        }
+    }
+
+    [HarmonyPatch(typeof(global::Mirage), "Update")]
+    internal static class MesaMiragePatch
+    {
+        private static void Postfix(global::Mirage __instance)
+        {
+            TrollModPlugin plugin = TrollModPlugin.Instance;
+            if (plugin != null && plugin.LuggageNavigation != null) plugin.LuggageNavigation.SuppressNativeMirage(__instance);
         }
     }
 }

@@ -236,7 +236,7 @@ namespace PeakTrollMod
 
                 Vector3 direction = Vector3.zero;
                 TrollModPlugin plugin = TrollModPlugin.Instance;
-                if (plugin == null || plugin.Ui == null || !plugin.Ui.IsOpen)
+                if (plugin == null || plugin.Ui == null || !plugin.Ui.IsTyping)
                 {
                     Vector3 forward = target.Character.data.lookDirection_Flat; forward.y = 0f;
                     Vector3 right = target.Character.data.lookDirection_Right; right.y = 0f;

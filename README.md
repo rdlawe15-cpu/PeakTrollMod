@@ -6,7 +6,7 @@ A private-lobby trolling and chaos toolkit for **PEAK**, controlled through an i
 
 Skip the spectator wait when joining an expedition in progress, monitor the team, open your backpack instantly, use an upgraded spectator mode, resurrect fallen scouts, fly around the mountain, launch friends into the sky, summon enemy ambushes, create unsettling mirages, or combine multiple effects into custom chaos sequences.
 
-Version 0.4.5 is currently in development. It adds a dedicated searchable item-spawner page, held-item stamina forecasts, safe troll-effect cards, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The scheduled GitHub build will be a prerelease.
+Version 0.4.5 is currently in development. It adds a dedicated searchable item-spawner page, held-item stamina forecasts, real-luggage navigation, Mesa anti-mirage assistance, safe troll-effect cards, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The scheduled GitHub build will be a prerelease.
 
 > Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
 
@@ -28,6 +28,9 @@ Version 0.4.5 is currently in development. It adds a dedicated searchable item-s
 - **Clean Item Spawner** — Search the live PEAK item catalog, choose quantities, give items to a selected scout or yourself, place tracked world items near a scout, and refresh the catalog without leaving the menu.
 - **Held-item Stamina Preview** — Hold a usable item to see its predicted stamina capacity, condition changes, extra stamina, and pass-out risk before consuming it. This local overlay automatically yields to the standalone Effect Preview mod when installed.
 - **Immortality & Infinite Stamina** — Independently prevent the local scout from dying or fully passing out and continuously refill usable stamina; both toggles live in Player → Health & Status and return to normal instantly when disabled.
+- **Real Luggage Directions** — Follow a compact direction-and-distance HUD to the nearest unopened genuine luggage. The search uses PEAK's live luggage registry and rejects native `MirageLuggage`, native `Mirage`, and renderer-only mirages created by this mod.
+- **Mesa Anti-Mirages** — Optionally hide native Mesa mirage renderers on the installing client. Original renderer states are cached and restored when disabled, when leaving the Mesa, during scene changes, or on shutdown.
+- **Non-Modal F7 Menu** — Continue moving while the menu is visible. Movement pauses only while a named text field has keyboard focus; Enter, clicking away, or closing the menu releases that focus. Opening PEAK's pause menu with Escape closes F7 automatically.
 - **Safe Troll Effect Cards** — Inspect a troll effect's target, authority, current strength/count/timing, cleanup behavior, and a small non-executing animation before opening its controls.
 - **Unlimited Lobby** — Optionally raise newly hosted rooms from four to 4–30 players and scale campfire food/backpacks for extra and late-joining scouts. Automatically yields when the standalone PEAK Unlimited mod is installed.
 - **Favorites & Recent Actions** — Persist quick-access item and effect shortcuts locally so common actions are easy to find again.
