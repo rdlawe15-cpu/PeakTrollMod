@@ -35,6 +35,7 @@ namespace PeakTrollMod
         private float _lifetime = 12f;
         private float _volume = .8f;
         private float _skyHeight = 150f;
+        private float _horizonDistance = 200f;
         private int _dynamiteCount = 6;
         private float _dynamiteHeight = 18f;
         private float _dynamiteSpread = 5f;
@@ -73,6 +74,7 @@ namespace PeakTrollMod
         private readonly List<Texture2D> _styleTextures = new List<Texture2D>();
         private float _styledTextScale;
         private bool _styledHighContrast;
+        private int _styledFontRevision = -1;
         private float _nextDrawErrorLog;
         private readonly Dictionary<string, Vector2> _cardScroll = new Dictionary<string, Vector2>();
         private readonly Dictionary<string, float> _buttonHover = new Dictionary<string, float>();
@@ -105,10 +107,10 @@ namespace PeakTrollMod
         public void Draw()
         {
             if (!IsOpen) return;
-            Matrix4x4 oldMatrix=GUI.matrix;Color oldColor=GUI.color;bool oldEnabled=GUI.enabled;int oldDepth=GUI.depth;
+            Matrix4x4 oldMatrix=GUI.matrix;Color oldColor=GUI.color;Color oldContentColor=GUI.contentColor;Color oldBackgroundColor=GUI.backgroundColor;bool oldEnabled=GUI.enabled;int oldDepth=GUI.depth;
             try
             {
-                _textFieldIndex=0;_textFieldClicked=false;GUI.enabled=true;GUI.color=Color.white;GUI.depth=-10000;if(_clearTextFocus){GUI.FocusControl(null);_clearTextFocus=false;}Cursor.lockState=CursorLockMode.None;Cursor.visible=true;EnsureStyles();
+                _textFieldIndex=0;_textFieldClicked=false;GUI.enabled=true;GUI.color=Color.white;GUI.contentColor=Color.white;GUI.backgroundColor=Color.white;GUI.depth=-10000;if(_clearTextFocus){GUI.FocusControl(null);_clearTextFocus=false;}Cursor.lockState=CursorLockMode.None;Cursor.visible=true;_plugin.UiFonts.PrepareForRendering();EnsureStyles();
                 float scale = Mathf.Min(Screen.width / DesignWidth, Screen.height / DesignHeight) * Mathf.Clamp(_plugin.Settings.UiScale.Value, .75f, 1.5f);
                 float x = (Screen.width - DesignWidth * scale) * .5f; float y = (Screen.height - DesignHeight * scale) * .5f;
                 DrawRect(new Rect(0, 0, Screen.width, Screen.height), new Color(.01f, .016f, .018f, .76f));
@@ -121,7 +123,7 @@ namespace PeakTrollMod
                 _isTyping=false;ResetVisualAssets();_message="Menu visuals were reloaded after a UI asset error.";_messageUntil=Time.unscaledTime+8f;
                 if(Time.unscaledTime>=_nextDrawErrorLog){_nextDrawErrorLog=Time.unscaledTime+5f;_plugin.Warn("Menu draw recovered from: "+ex);}
             }
-            finally { GUI.matrix=oldMatrix;GUI.color=oldColor;GUI.enabled=oldEnabled;GUI.depth=oldDepth; }
+            finally { GUI.matrix=oldMatrix;GUI.color=oldColor;GUI.contentColor=oldContentColor;GUI.backgroundColor=oldBackgroundColor;GUI.enabled=oldEnabled;GUI.depth=oldDepth; }
         }
 
         private void DrawHeader()
@@ -173,8 +175,8 @@ namespace PeakTrollMod
                 _plugin.InfiniteRescueClaw.Enabled = GUILayout.Toggle(_plugin.InfiniteRescueClaw.Enabled, "Effectively unlimited local claw reach"); GUI.enabled = true;
                 GUILayout.Label(_plugin.InfiniteRescueClaw.Status, _label);
                 GUILayout.Space(8);
-                GUILayout.Label("Applies only while you hold a Rescue Claw. Both normal and downward targeting become map-wide; original values return when dropped, disabled, or leaving the scene.", _small);
-                GUILayout.Label("Pull force, uses, RPC behavior, and other players' claws are unchanged.", _small);
+                GUILayout.Label("Applies only while you hold a Rescue Claw. Distant wall hits zip your scout toward the anchor at a capped 45 m/s and stop near the surface instead of timing out mid-rope.", _small);
+                GUILayout.Label("Friend/item rescues, empty shots, uses, and other players' claws are unchanged. Physics and timeout values restore on arrival, drop, disable, or scene exit.", _small);
             });
             Card(new Rect(238, 406, 480, 316), "▣  Party Supply Advisor", new Color(.35f, .65f, 1f), delegate
             {
@@ -310,8 +312,9 @@ namespace PeakTrollMod
                 GUILayout.Label("[W] [A] [S] [D] move   [SPACE] up   [CTRL] down   [SHIFT] boost", _small);
                 GUILayout.Space(12); Badge(PermissionKind.Anyone); GUILayout.Label("Launch strength  " + _launchStrength.ToString("0"), _label); _launchStrength = GUILayout.HorizontalSlider(_launchStrength, 5f, 120f);
                 GUILayout.BeginHorizontal(); _randomLaunch = GUILayout.Toggle(_randomLaunch, "Random direction"); _ragdollLaunch = GUILayout.Toggle(_ragdollLaunch, "Ragdoll"); GUILayout.EndHorizontal();
-                GUILayout.BeginHorizontal(); if (CapabilityButton("LAUNCH", FeatureCapability.Launch, _button, 34)) { Vector3 d = _randomLaunch ? new Vector3(UnityEngine.Random.Range(-.5f,.5f),1f,UnityEngine.Random.Range(-.5f,.5f)).normalized : Vector3.up; Owner(NetCommand.Launch, new object[] { d.x, d.y, d.z, _launchStrength, _ragdollLaunch }); } if(CapabilityButton("SKY HIGH",FeatureCapability.SkyLaunch,_danger,34))SkyLaunch(); GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal(); if (CapabilityButton("LAUNCH", FeatureCapability.Launch, _button, 34)) { Vector3 d = _randomLaunch ? new Vector3(UnityEngine.Random.Range(-.5f,.5f),1f,UnityEngine.Random.Range(-.5f,.5f)).normalized : Vector3.up; Owner(NetCommand.Launch, new object[] { d.x, d.y, d.z, _launchStrength, _ragdollLaunch }); } if(CapabilityButton("SKY HIGH",FeatureCapability.SkyLaunch,_danger,34))SkyLaunch(); if(CapabilityButton("FAR HORIZON",FeatureCapability.HorizonLaunch,_danger,34))HorizonLaunch(); GUILayout.EndHorizontal();
                 GUILayout.Label("Sky height  " + _skyHeight.ToString("0") + "m", _small); _skyHeight=GUILayout.HorizontalSlider(_skyHeight,25f,300f);
+                GUILayout.Label("Far Horizon distance  " + _horizonDistance.ToString("0") + "m", _small); _horizonDistance=GUILayout.HorizontalSlider(_horizonDistance,25f,300f);
                 GUILayout.Label("Ragdoll strength  " + _ragdollStrength.ToString("0"), _label); _ragdollStrength = GUILayout.HorizontalSlider(_ragdollStrength, 1f, 75f);
                 GUILayout.BeginHorizontal(); if (CapabilityButton("RAGDOLL", FeatureCapability.Ragdoll, _button, 30)) { Vector3 d = new Vector3(UnityEngine.Random.Range(-.5f,.5f), .5f, UnityEngine.Random.Range(-.5f,.5f)).normalized; Owner(NetCommand.Ragdoll, new object[] { d.x,d.y,d.z,_ragdollStrength,1.5f }); } if (CapabilityButton("OFF MOUNTAIN", FeatureCapability.Ragdoll, _danger, 30)) RagdollOffMountain(); GUILayout.EndHorizontal();
                 GUILayout.Label("Horizontal Yeet strength  "+_horizontalRagdollStrength.ToString("0"),_label);_horizontalRagdollStrength=GUILayout.HorizontalSlider(_horizontalRagdollStrength,25f,150f);if(CapabilityButton("HORIZONTAL YEET",FeatureCapability.Ragdoll,_danger,32))HorizontalRagdoll();
@@ -323,7 +326,7 @@ namespace PeakTrollMod
                 if (AnimatedButton(_plugin.SurvivalAssist.Immortality ? "IMMORTALITY: ON" : "IMMORTALITY: OFF", _plugin.SurvivalAssist.Immortality ? _success : _button, GUILayout.Height(34))) { _plugin.SurvivalAssist.Immortality = !_plugin.SurvivalAssist.Immortality; Say("Immortality " + (_plugin.SurvivalAssist.Immortality ? "enabled." : "disabled.")); }
                 if (AnimatedButton(_plugin.SurvivalAssist.InfiniteStamina ? "INFINITE STAMINA: ON" : "INFINITE STAMINA: OFF", _plugin.SurvivalAssist.InfiniteStamina ? _success : _button, GUILayout.Height(34))) { _plugin.SurvivalAssist.InfiniteStamina = !_plugin.SurvivalAssist.InfiniteStamina; Say("Infinite Stamina " + (_plugin.SurvivalAssist.InfiniteStamina ? "enabled." : "disabled.")); }
                 GUILayout.EndHorizontal();
-                GUILayout.Label("Self-only survival options; switch off to restore normal rules immediately.", _small);
+                GUILayout.Label("Immortality blocks death/pass-out and clears every negative stamina-bar condition, including carried weight. Infinite Stamina refills usable stamina. Both are self-only.", _small);
                 GUILayout.BeginHorizontal();
                 if (CapabilityButton(_plugin.NoWait.Enabled ? "NO WAIT: ON" : "NO WAIT: OFF", FeatureCapability.Resurrect, _plugin.NoWait.Enabled ? _success : _button, 38)) { _plugin.NoWait.Enabled = !_plugin.NoWait.Enabled; Say("No Wait " + (_plugin.NoWait.Enabled ? "enabled." : "disabled.")); }
                 if (CapabilityButton("RESURRECT SELF", FeatureCapability.Resurrect, _success, 38)) ResurrectSelf();
@@ -756,6 +759,7 @@ namespace PeakTrollMod
         private void RagdollOffMountain(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Network.RagdollOffMountain(list[i],_ragdollStrength);Say(last==null?"No targets available.":"Ragdolled lobby players toward nearby drops. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.RagdollOffMountain(target,_ragdollStrength));}
         private void HorizontalRagdoll(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Network.HorizontalRagdoll(list[i],_horizontalRagdollStrength);Say(last==null?"No targets available.":"Applied horizontal yeet to lobby players. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.HorizontalRagdoll(target,_horizontalRagdollStrength));}
         private void SkyLaunch(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Network.SkyLaunch(list[i],_skyHeight);Say(last==null?"No targets available.":"Sent lobby players sky high. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.SkyLaunch(target,_skyHeight));}
+        private void HorizonLaunch(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Network.HorizonLaunch(list[i],_horizonDistance);Say(last==null?"No targets available.":"Sent lobby players toward the far horizon. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.HorizonLaunch(target,_horizonDistance));}
         private void ClearStatuses(){if(_targetAll){IList<PlayerEntry> list=_plugin.Players.Entries;if(list.Count==0){Say("No targets available.");return;}ActionResult last=null;for(int i=0;i<list.Count;i++)last=_plugin.Network.ClearStatuses(list[i]);Say(last==null?"No targets available.":"Cleared tracked statuses for eligible players. Last result: "+last.Message);return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.ClearStatuses(target));}
         private void ResurrectSelected(){if(_targetAll){Say(_plugin.NoWait.QueueResurrectAll());return;}PlayerEntry target=Target();if(target==null){Say("No target available.");return;}Say(_plugin.Network.Resurrect(target));}
         private void ResurrectSelf(){PlayerEntry local=_plugin.Players.Local;if(local==null){Say("Local player unavailable.");return;}Say(_plugin.Network.Resurrect(local));}
@@ -814,7 +818,7 @@ namespace PeakTrollMod
 
         private void EnsureStyles()
         {
-            float textScale=Mathf.Clamp(_plugin.Settings.TextScale.Value,.85f,1.3f);bool high=_plugin.Settings.HighContrast.Value;bool ready=_pixel!=null&&_title!=null&&_nav!=null&&_button!=null&&_danger!=null&&_success!=null;if(ready&&Mathf.Abs(textScale-_styledTextScale)<.001f&&high==_styledHighContrast)return;ResetVisualAssets();_pixel = new Texture2D(1,1);_pixel.name="PTM_UI_PIXEL";_pixel.hideFlags=HideFlags.HideAndDontSave;_pixel.SetPixel(0,0,Color.white);_pixel.Apply();_styledTextScale=textScale;_styledHighContrast=high;
+            float textScale=Mathf.Clamp(_plugin.Settings.TextScale.Value,.85f,1.3f);bool high=_plugin.Settings.HighContrast.Value;int fontRevision=_plugin.UiFonts.Revision;bool ready=_pixel!=null&&_title!=null&&_nav!=null&&_button!=null&&_danger!=null&&_success!=null;if(ready&&Mathf.Abs(textScale-_styledTextScale)<.001f&&high==_styledHighContrast&&fontRevision==_styledFontRevision)return;ResetVisualAssets();_pixel = new Texture2D(1,1);_pixel.name="PTM_UI_PIXEL";_pixel.hideFlags=HideFlags.HideAndDontSave;_pixel.SetPixel(0,0,Color.white);_pixel.Apply();_styledTextScale=textScale;_styledHighContrast=high;_styledFontRevision=fontRevision;
             Color muted=high?new Color(.86f,.91f,.9f):new Color(.58f,.67f,.67f);Color body=high?Color.white:new Color(.9f,.94f,.93f);
             _logo=Style(Scaled(25),FontStyle.Bold,Color.white,TextAnchor.MiddleLeft,UiFontManager.DisplayFont); _title=Style(Scaled(31),FontStyle.Bold,Color.white,TextAnchor.MiddleLeft,UiFontManager.DisplayFont); _subtitle=Style(Scaled(13),FontStyle.Normal,muted,TextAnchor.MiddleLeft,UiFontManager.BodyFont);
             _label=Style(Scaled(14),FontStyle.Normal,body,TextAnchor.MiddleLeft,UiFontManager.DisplayFont); _small=Style(Scaled(12),FontStyle.Normal,muted,TextAnchor.MiddleLeft,UiFontManager.BodyFont); _cardTitle=Style(Scaled(18),FontStyle.Bold,Color.white,TextAnchor.MiddleLeft,UiFontManager.DisplayFont); _badge=Style(Scaled(11),FontStyle.Bold,high?Color.white:new Color(.72f,.78f,.76f),TextAnchor.MiddleLeft,UiFontManager.BodyFont);

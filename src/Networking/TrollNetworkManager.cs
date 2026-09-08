@@ -98,6 +98,11 @@ namespace PeakTrollMod
             return _actions.SkyLaunchLocal(target, Mathf.Clamp(height, 25f, 300f));
         }
 
+        public ActionResult HorizonLaunch(PlayerEntry target, float distance)
+        {
+            return _actions.HorizonLaunchLocal(target, Mathf.Clamp(distance, 25f, 300f));
+        }
+
         public ActionResult Resurrect(PlayerEntry target)
         {
             return _actions.ResurrectAtLastLivingPosition(target);

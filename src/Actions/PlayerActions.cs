@@ -361,6 +361,37 @@ namespace PeakTrollMod
             catch (Exception ex) { return Error("Sky launch", ex); }
         }
 
+        public ActionResult HorizonLaunchLocal(PlayerEntry target, float distance)
+        {
+            if (!_capabilities.Available(FeatureCapability.HorizonLaunch)) return Missing(FeatureCapability.HorizonLaunch);
+            if (target == null || target.Character == null || target.Character.refs == null || target.Character.refs.view == null) return ActionResult.Fail("Target view unavailable.");
+            distance = Mathf.Clamp(distance, 25f, 300f);
+            Vector3 direction = DirectionAwayFromRoute(target.Character.Center); direction.y = 0f;
+            if (direction.sqrMagnitude < .01f) direction = Vector3.forward;
+            direction.Normalize();
+            Vector3 destination;
+            if (!TryClearHorizonDestination(target.Character.Center + direction * distance, out destination)) return ActionResult.Fail("No clear endpoint was found in the outward direction.");
+            try
+            {
+                ReflectionHelpers.Invoke(target.Character, _fall, 6f, 0f);
+                ReflectionHelpers.Invoke(target.Character, _addForceAtPosition, (direction + Vector3.up * .08f).normalized * 24f, target.Character.Center, 4f);
+                target.Character.refs.view.RPC("WarpPlayerRPC", RpcTarget.All, new object[] { destination, true });
+                return ActionResult.Ok("Sent " + target.Name + " " + distance.ToString("0") + "m toward the far horizon through PEAK's native RPCs.");
+            }
+            catch (Exception ex) { return Error("Far Horizon", ex); }
+        }
+
+        private static bool TryClearHorizonDestination(Vector3 desired, out Vector3 destination)
+        {
+            for (int i = 0; i < 9; i++)
+            {
+                Vector3 candidate = desired + Vector3.up * (8f + i * 5f);
+                if (!Physics.CheckSphere(candidate, .8f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)) { destination = candidate; return true; }
+            }
+            destination = Vector3.zero;
+            return false;
+        }
+
         public ActionResult SetSpeedLocal(PlayerEntry target, float multiplier)
         {
             if (!_capabilities.Available(FeatureCapability.Speed)) return Missing(FeatureCapability.Speed);

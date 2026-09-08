@@ -120,7 +120,7 @@ namespace PeakTrollMod
             EffectPreviewEnabled = config.Bind("Quality of Life", "EffectPreview", true, "Show safe, non-executing effect previews before use.");
             StaminaEffectPreviewEnabled = config.Bind("Quality of Life", "StaminaEffectPreview", true, "Preview a held consumable's stamina and condition-bar changes before using it. Automatically yields to the standalone Effect Preview mod.");
             StaminaEffectPreviewDetails = config.Bind("Quality of Life", "StaminaEffectPreviewDetails", true, "Show individual condition changes beneath the held-item stamina forecast.");
-            ImmortalityEnabled = config.Bind("Player", "Immortality", false, "Prevent death and full pass-out for the local scout while enabled.");
+            ImmortalityEnabled = config.Bind("Player", "Immortality", false, "Prevent local death and full pass-out and continuously clear every negative stamina-bar condition, including carried-weight encumbrance, while enabled.");
             InfiniteStaminaEnabled = config.Bind("Player", "InfiniteStamina", false, "Continuously refill the local scout's available stamina while enabled.");
             RealLuggageDirectionsEnabled = config.Bind("Quality of Life", "RealLuggageDirections", false, "Show direction and distance to the nearest unopened genuine luggage while ignoring native and mod-created mirages.");
             RealLuggageMaximumDistance = config.Bind("Quality of Life", "RealLuggageMaximumDistance", 750f, "Maximum real-luggage search distance in metres (25-2000).");
@@ -141,7 +141,7 @@ namespace PeakTrollMod
             PartySupplyAdvisorEnabled = config.Bind("Smart Quality of Life", "PartySupplyAdvisor", true, "Summarize synchronized party supplies and highlight practical loadout gaps without moving items.");
             PartySupplyIncludeBackpacks = config.Bind("Smart Quality of Life", "PartySupplyIncludeBackpacks", true, "Include already-synchronized equipped-backpack contents in party supply analysis.");
             HotkeyConflictDoctorEnabled = config.Bind("Smart Quality of Life", "HotkeyConflictDoctor", true, "Detect exact duplicate BepInEx KeyboardShortcut and KeyCode bindings across enabled plugins.");
-            InfiniteRescueClawReachEnabled = config.Bind("Quality of Life", "InfiniteRescueClawReach", false, "Give the locally held Rescue Claw effectively unlimited upward and downward targeting range. Yields to a standalone infinite-range rescue-hook mod.");
+            InfiniteRescueClawReachEnabled = config.Bind("Quality of Life", "InfiniteRescueClawReach", false, "Give the locally held Rescue Claw map-wide targeting and zip the local scout toward distant wall anchors. Yields to a standalone infinite-range rescue-hook mod.");
         }
     }
 }

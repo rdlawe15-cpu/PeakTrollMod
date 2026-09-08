@@ -15,7 +15,13 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 - Smart Climb Forecast reads `CharacterData.lookDirection`, local reach/climb state, `CharacterClimbing.climbSpeed`, `climbSpeedMod`, `maxStaminaUsage`, PEAK's verified angle-cost curve, `CharacterData.staminaMod`, optional `ClimbModifierSurface` speed/stamina/static-cost flags, and `Ascents.climbStaminaMultiplier`. Its physics probes are advisory and never invoke climb or movement methods.
 - Party Supply Advisor reads public synchronized `Player.itemSlots` and uses `ItemInstanceData.TryGetDataEntry<BackpackData>(DataEntryKey.BackpackData, out ...)` for already-present equipped-backpack data. It deliberately avoids `BackpackReference.GetData()`, whose missing-data path registers a new entry.
 - Hotkey Conflict Doctor reads only enabled plugins' BepInEx `KeyboardShortcut` and Unity `KeyCode` config entries. It writes one suggested value only after an explicit menu click and saves through that entry's owning `ConfigFile`.
-- `RescueHook.GetHit(out Vector3)` assigns `curRange` from public `range` or `rangeDownward` before its `Physics.RaycastAll`. Infinite Rescue Claw Reach therefore changes only those two fields on the locally held component, uses a bounded 5,000 m effective range, and restores both original values on drop, disable, overlap, reset, scene change, or shutdown.
+- `RescueHook.GetHit(out Vector3)` assigns `curRange` from public `range` or `rangeDownward` before its `Physics.RaycastAll`. `RPCA_RescueWall` stores the actual `targetPos`, marks `isPulling`, clears any climb handle, and starts the self-pull; `FixedUpdate` releases wall pulls at `stopPullDistance` or after `maxWallHookTime` (one second by default). Infinite Rescue Claw Reach identifies only distant, genuine wall pulls (`isPulling && !hitNothing && targetPlayer == null && targetRig == null`), temporarily extends that timeout, drives the local registered ragdoll bodies toward the anchor at a 45 m/s cap, and restores gravity/velocity limits plus original hook fields on arrival or every cancellation path.
+- Immortality uses the verified owner-only `CharacterAfflictions.SetStatus` and one final `PushStatuses` to clear current and incremental values for every stamina-bar status, including `Weight`. It also calls the native `RemoveAllThorns` when physical thorns exist so the thorn status is not immediately reconstructed. Positive extra stamina remains untouched.
+
+### UI font resilience
+
+- PEAK's legacy IMGUI path corrupts the shared text command buffer when a `Font.CreateDynamicFontFromOSFont` font comes from process-private TTF registration. The failure can repeat the current tab's final sentence across every control or draw every caption blank while still reporting valid glyphs, so glyph validation is not sufficient. All GUI styles intentionally leave `font` null and inherit Unity's native IMGUI font.
+- The menu explicitly sets `GUI.contentColor` and `GUI.backgroundColor` to white for its draw and restores both previous values afterward. This prevents another IMGUI callback's global color state from silently making all captions transparent.
 
 ### Players and character state
 
@@ -37,7 +43,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 - `Character.WarpPlayerRPC(Vector3,bool)` is the game RPC used for teleportation. The installed `SimpleTeleport` mod independently invokes this RPC on the moving character's `PhotonView`, corroborating the call shape.
 - `MapHandler.segments` contains `MapHandler.MapSegment.reconnectSpawnPos`; the first and final loaded segments are used for start/end destinations instead of hard-coded coordinates.
 - Safe teleport probes ground with `Physics.Raycast` and tests body clearance with `Physics.CheckSphere` before sending the warp.
-- `[PunRPC] Character.WarpPlayerRPC(Vector3,bool)` delegates to PEAK's local-owner warp routine and has no caller/host gate. Sky High combines the verified fall/force calls with this RPC and clamps requested height to 25–300 m.
+- `[PunRPC] Character.WarpPlayerRPC(Vector3,bool)` delegates to PEAK's local-owner warp routine and has no caller/host gate. Sky High combines the verified fall/force calls with this RPC and clamps requested height to 25–300 m. Far Horizon uses the same calls, clamps horizontal travel to 25–300 m, selects a direction away from loaded segment reconnect points, and requires a clear 0.8 m endpoint sphere at an 8–48 m vertical clearance offset before sending the warp.
 
 ### Status effects
 

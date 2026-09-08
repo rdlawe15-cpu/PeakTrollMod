@@ -84,7 +84,7 @@ namespace PeakTrollMod
             Shortcuts = new ActionShortcutManager(Settings);
             UnlimitedLobby = new UnlimitedLobbyManager(Logger, Settings, Actions, Spawns);
             StaminaEffectPreview = new StaminaEffectPreviewManager(Settings, Logger);
-            SurvivalAssist = new SurvivalAssistManager(Settings);
+            SurvivalAssist = new SurvivalAssistManager(Settings, Logger);
             LuggageNavigation = new LuggageNavigationManager(Settings, Logger);
             ClimbForecast = new ClimbForecastManager(Settings, Logger);
             PartySupplyAdvisor = new PartySupplyAdvisorManager(Players, Settings, Logger);
@@ -126,7 +126,7 @@ namespace PeakTrollMod
 
         private void OnGUI() { bool menuOpen=Ui!=null&&Ui.IsOpen; if (TeamStatus != null) TeamStatus.Draw(menuOpen); if (BetterSpectating != null) BetterSpectating.Draw(menuOpen); if (StaminaEffectPreview != null) StaminaEffectPreview.Draw(menuOpen); if (LuggageNavigation != null) LuggageNavigation.Draw(menuOpen); if (ClimbForecast != null) ClimbForecast.Draw(menuOpen); if (Ui != null) Ui.Draw(); }
 
-        private void FixedUpdate() { if (Actions != null) Actions.FixedTick(); }
+        private void FixedUpdate() { if (Actions != null) Actions.FixedTick(); if (InfiniteRescueClaw != null) InfiniteRescueClaw.FixedTick(); }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {

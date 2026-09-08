@@ -34,6 +34,7 @@ namespace PeakTrollMod
             Need(FeatureCapability.StatusEffects, typeof(CharacterAfflictions).GetMethod("AddStatus") != null, "CharacterAfflictions.AddStatus missing");
             Need(FeatureCapability.GiveItem, ReflectionHelpers.HasMethod(typeof(CharacterItems), "SpawnItemInHand", typeof(string)), "CharacterItems.SpawnItemInHand missing");
             Need(FeatureCapability.SkyLaunch, typeof(Character).GetMethod("WarpPlayerRPC") != null && Available(FeatureCapability.Ragdoll), "native warp/ragdoll RPC paths missing");
+            Need(FeatureCapability.HorizonLaunch, typeof(Character).GetMethod("WarpPlayerRPC") != null && Available(FeatureCapability.Ragdoll), "native warp/ragdoll RPC paths missing");
             Need(FeatureCapability.DynamiteShower, HasLoaded(typeof(Dynamite)) && typeof(Dynamite).GetMethod("LightFlare") != null, "no loaded Dynamite item prefab or fuse API");
             Need(FeatureCapability.ItemStorm, HasLoaded(typeof(Item)) && typeof(Item).GetMethod("SetKinematicNetworked") != null, "no loaded network item prefab or physics API");
             Need(FeatureCapability.WrongMountain, Available(FeatureCapability.Teleport) && Available(FeatureCapability.Ragdoll) && Available(FeatureCapability.GiveItem), "native warp, ragdoll, or item RPC path missing");

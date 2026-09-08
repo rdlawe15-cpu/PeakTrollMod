@@ -1,12 +1,16 @@
 # Changelog
 
-## Unreleased (0.4.5)
+## 0.4.5 Prerelease — 2026-09-08
 
+- Added **Far Horizon**, a selectable 25–300 m horizontal counterpart to Sky High that chooses an outward route direction, finds a clear endpoint offset, and combines PEAK's native ragdoll, force, and warp RPCs.
+- Upgraded Infinite Rescue Claw Reach with a local, bounded distant-wall zip that extends the one-second wall timeout only while travelling, releases near the anchor, ignores friend/item/empty hits, and restores cached ragdoll physics on every exit path.
+- Expanded Immortality to continuously clear every negative stamina-bar condition, including carried-weight encumbrance, incremental status buildup, and physical thorns, while preserving the separate Infinite Stamina toggle.
+- Fixed PEAK's dynamic-font text-buffer corruption that could repeat the current tab's final sentence across every control or leave every caption blank. The F7 menu now uses Unity's reliable native IMGUI font and normalizes/restores all global GUI color state.
 - Added Smart Climb Forecast, a read-only local ledge probe that estimates climb height, time, stamina cost, remaining reserve, and blocked/unsafe outcomes from PEAK's live climb and surface values.
 - Added Party Supply Advisor with synchronized pocket/backpack summaries and recommendations for missing recovery, food, climbing, mobility, antidote, distribution, and single-carrier risks.
 - Added Hotkey Conflict Doctor for exact enabled-plugin `KeyboardShortcut`/`KeyCode` collisions, with explicit-click reassignment to an unused suggested key through the owning configuration.
 - Added reversible Infinite Rescue Claw Reach for the locally held claw, including upward/downward range restoration and automatic yielding to recognized standalone infinite-range rescue-hook mods.
-- Added bundled Exo 2 typography for branding, headings, labels, navigation, and buttons, paired with Inter for descriptions and compact HUD/status text; fixed Regular/Bold faces avoid variable-font corruption in PEAK's legacy IMGUI renderer, with process-private loading and a safe Unity-font fallback.
+- Added the Exo 2 and Inter font assets for future Unity-native font packaging; PEAK's current legacy IMGUI path uses its native font because runtime TTF registration corrupts shared text rendering.
 - Added a fully client-side held-item stamina preview that forecasts condition-bar capacity, individual affliction changes, extra stamina, and pass-out risk before consumption.
 - Added automatic overlap protection that yields the built-in stamina forecast whenever the standalone Effect Preview plugin is enabled.
 - Added independent self-only Immortality and Infinite Stamina toggles under Player → Health & Status, with immediate opt-out and no permanent stat changes.

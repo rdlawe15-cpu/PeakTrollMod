@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Runtime.InteropServices;
 using BepInEx.Logging;
 using UnityEngine;
 
@@ -9,56 +5,26 @@ namespace PeakTrollMod
 {
     internal sealed class UiFontManager
     {
-        private const uint PrivateFont = 0x10;
         private readonly ManualLogSource _log;
-        private readonly List<string> _registeredFiles = new List<string>();
-        public static Font DisplayFont { get; private set; }
-        public static Font BodyFont { get; private set; }
+        private int _revision;
 
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern int AddFontResourceEx(string fileName, uint flags, IntPtr reserved);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern bool RemoveFontResourceEx(string fileName, uint flags, IntPtr reserved);
+        // A null GUIStyle font intentionally inherits PEAK/Unity's native IMGUI font.
+        // Dynamic fonts created from process-private TTF registrations corrupt IMGUI's
+        // shared text buffer in this PEAK build, causing every control to repeat the
+        // final string drawn in the current tab or to render no text at all.
+        public static Font DisplayFont { get { return null; } }
+        public static Font BodyFont { get { return null; } }
+        public int Revision { get { return _revision; } }
 
         public UiFontManager(ManualLogSource log) { _log = log; }
 
         public void Load()
         {
-            string assemblyFolder = Path.GetDirectoryName(typeof(TrollModPlugin).Assembly.Location);
-            string fontFolder = Path.Combine(assemblyFolder ?? string.Empty, "Fonts");
-            DisplayFont = LoadFontFamily(fontFolder, new[] { "Exo2-Regular.ttf", "Exo2-Bold.ttf" }, new[] { "Exo 2", "Exo2" }, "Exo 2");
-            BodyFont = LoadFontFamily(fontFolder, new[] { "Inter-Regular.ttf", "Inter-Bold.ttf" }, new[] { "Inter" }, "Inter");
-            if (DisplayFont == null || BodyFont == null) _log.LogWarning("[PTM] One or more bundled UI fonts were unavailable; affected styles will use Unity's default font.");
-            else _log.LogInfo("Bundled Exo 2 and Inter UI fonts loaded.");
+            _revision++;
+            _log.LogInfo("Using Unity's native IMGUI font for reliable menu text rendering.");
         }
 
-        public void Dispose()
-        {
-            if (DisplayFont != null) UnityEngine.Object.Destroy(DisplayFont);
-            if (BodyFont != null && BodyFont != DisplayFont) UnityEngine.Object.Destroy(BodyFont);
-            DisplayFont = null; BodyFont = null;
-            if (IsWindows()) for (int i = _registeredFiles.Count - 1; i >= 0; i--) RemoveFontResourceEx(_registeredFiles[i], PrivateFont, IntPtr.Zero);
-            _registeredFiles.Clear();
-        }
-
-        private Font LoadFontFamily(string folder, string[] fileNames, string[] familyNames, string label)
-        {
-            try
-            {
-                for (int i = 0; i < fileNames.Length; i++)
-                {
-                    string path = Path.Combine(folder, fileNames[i]);
-                    if (!File.Exists(path)) { _log.LogWarning("[PTM] Bundled " + label + " file was not found at " + path); return null; }
-                    if (IsWindows() && AddFontResourceEx(path, PrivateFont, IntPtr.Zero) > 0) _registeredFiles.Add(path);
-                }
-                Font font = Font.CreateDynamicFontFromOSFont(familyNames, 16);
-                if (font != null) font.hideFlags = HideFlags.HideAndDontSave;
-                return font;
-            }
-            catch (Exception ex) { _log.LogWarning("[PTM] Failed to load bundled " + label + ": " + ex.Message); return null; }
-        }
-
-        private static bool IsWindows() { return Environment.OSVersion.Platform == PlatformID.Win32NT; }
+        public void PrepareForRendering() { }
+        public void Dispose() { }
     }
 }

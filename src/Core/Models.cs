@@ -10,7 +10,7 @@ namespace PeakTrollMod
         LookerSpawn, Mandrake, PingPlacement, MirageLuggage, MirageStatue, MirageCapybara,
         MirageScout, FakeEnemyScoutmaster, FakeEnemyZombie, FakeEnemyLooker, FakeAudio,
         AppearanceSwap, VoiceSwap, IncomingVoiceMute, TalkWhileKnockedOut, PoisonCloud, SporeCloud, ZombieTargeting,
-        DynamiteShower, ItemStorm, SkyLaunch, WrongMountain, CosmeticUnlocks, BadgeUnlocks,
+        DynamiteShower, ItemStorm, SkyLaunch, HorizonLaunch, WrongMountain, CosmeticUnlocks, BadgeUnlocks,
         PositionRoulette, OneLiveOne, ComboBuilder, CampfireReset, HelicopterSuppression, PhantomPings
     }
 
