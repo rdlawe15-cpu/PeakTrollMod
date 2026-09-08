@@ -2,6 +2,10 @@
 
 ## Unreleased (0.4.5)
 
+- Added Smart Climb Forecast, a read-only local ledge probe that estimates climb height, time, stamina cost, remaining reserve, and blocked/unsafe outcomes from PEAK's live climb and surface values.
+- Added Party Supply Advisor with synchronized pocket/backpack summaries and recommendations for missing recovery, food, climbing, mobility, antidote, distribution, and single-carrier risks.
+- Added Hotkey Conflict Doctor for exact enabled-plugin `KeyboardShortcut`/`KeyCode` collisions, with explicit-click reassignment to an unused suggested key through the owning configuration.
+- Added reversible Infinite Rescue Claw Reach for the locally held claw, including upward/downward range restoration and automatic yielding to recognized standalone infinite-range rescue-hook mods.
 - Added bundled Exo 2 typography for branding, headings, labels, navigation, and buttons, paired with Inter for descriptions and compact HUD/status text; fixed Regular/Bold faces avoid variable-font corruption in PEAK's legacy IMGUI renderer, with process-private loading and a safe Unity-font fallback.
 - Added a fully client-side held-item stamina preview that forecasts condition-bar capacity, individual affliction changes, extra stamina, and pass-out risk before consumption.
 - Added automatic overlap protection that yields the built-in stamina forecast whenever the standalone Effect Preview plugin is enabled.

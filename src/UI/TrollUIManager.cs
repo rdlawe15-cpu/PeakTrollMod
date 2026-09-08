@@ -11,8 +11,8 @@ namespace PeakTrollMod
         private const float DesignWidth = 1280f;
         private const float DesignHeight = 850f;
         private readonly TrollModPlugin _plugin;
-        private readonly string[] _tabs = { "⌂  Home", "♟  Player", "▣  Spawning", "✦  Mirage", "♪  Audio", "●  Appearance", "☠  Enemies", "▲  World", "◈  Chaos", "◎  Lobby", "⚙  Settings", "☷  Mod Config", "▦  Items" };
-        private readonly string[] _tabNames = { "Home", "Player", "Spawning", "Mirage", "Audio", "Appearance", "Enemies", "World", "Chaos Mode", "Lobby Readiness", "Settings", "Mod Config", "Item Spawner" };
+        private readonly string[] _tabs = { "⌂  Home", "♟  Player", "▣  Spawning", "✦  Mirage", "♪  Audio", "●  Appearance", "☠  Enemies", "▲  World", "◈  Chaos", "◎  Lobby", "⚙  Settings", "◇  Smart QoL", "☷  Mod Config", "▦  Items" };
+        private readonly string[] _tabNames = { "Home", "Player", "Spawning", "Mirage", "Audio", "Appearance", "Enemies", "World", "Chaos Mode", "Lobby Readiness", "Settings", "Smart Quality of Life", "Mod Config", "Item Spawner" };
         private readonly string[] _previewEffects = { "Launch", "Ragdoll", "Flight", "Status Effect", "Phantom Pings", "Fake Enemy", "Item Storm" };
         private int _tab;
         private int _targetIndex;
@@ -130,7 +130,7 @@ namespace PeakTrollMod
             GUIStyle brandSub = new GUIStyle(_logo); brandSub.fontSize = 21; GUI.Label(new Rect(42, 50, 150, 54), "TROLL\nMOD", brandSub);
             GUI.Label(new Rect(238, 29, 520, 44), HeadingForTab(), _title);
             GUI.Label(new Rect(240, 74, 570, 24), SubtitleForTab(), _subtitle);
-            if (_tab != 0 && (_tab < 9 || _tab == 12))
+            if (_tab != 0 && (_tab < 9 || _tab == 13))
             {
                 GUI.Label(new Rect(826, 41, 72, 30), "Target", _label);
                 if (AnimatedButton(new Rect(895, 32, 235, 44), CurrentTargetName() + "   ▾", _button)) CycleTarget();
@@ -145,15 +145,62 @@ namespace PeakTrollMod
         private void DrawSidebar()
         {
             DrawPanel(new Rect(18, 120, 192, 690), new Color(.025f, .035f, .038f, .96f), new Color(.13f, .2f, .21f, 1f), 1f);
-            for (int i = 0; i < _tabs.Length; i++) if (AnimatedButton(new Rect(24, 132 + i * 47, 180, 41), _tabs[i], i == _tab ? _navSelected : _nav)) _tab = i;
+            for (int i = 0; i < _tabs.Length; i++) if (AnimatedButton(new Rect(24, 132 + i * 44, 180, 38), _tabs[i], i == _tab ? _navSelected : _nav)) _tab = i;
             GUI.Label(new Rect(35, 752, 165, 24), "Version " + TrollModPlugin.Version, _small);
         }
 
         private void DrawContent()
         {
             Rect area = new Rect(220, 128, 1030, 622);
-            if (_tab == 0) DrawHome(area); else if (_tab == 1) DrawPlayer(area); else if (_tab == 2) DrawSpawning(area); else if (_tab == 3) DrawMirage(area); else if (_tab == 4) DrawAudio(area); else if (_tab == 5) DrawAppearance(area); else if (_tab == 6) DrawEnemies(area); else if (_tab == 7) DrawWorld(area); else if (_tab == 8) DrawChaos(area); else if (_tab == 9) DrawLobby(area); else if (_tab == 10) DrawSettings(area); else if (_tab == 11) DrawModConfig(area); else DrawItems(area);
+            if (_tab == 0) DrawHome(area); else if (_tab == 1) DrawPlayer(area); else if (_tab == 2) DrawSpawning(area); else if (_tab == 3) DrawMirage(area); else if (_tab == 4) DrawAudio(area); else if (_tab == 5) DrawAppearance(area); else if (_tab == 6) DrawEnemies(area); else if (_tab == 7) DrawWorld(area); else if (_tab == 8) DrawChaos(area); else if (_tab == 9) DrawLobby(area); else if (_tab == 10) DrawSettings(area); else if (_tab == 11) DrawSmartQualityOfLife(area); else if (_tab == 12) DrawModConfig(area); else DrawItems(area);
         }
+
+        private void DrawSmartQualityOfLife(Rect area)
+        {
+            Card(new Rect(238, 142, 480, 250), "△  Smart Climb Forecast", new Color(.25f, .78f, .72f), delegate
+            {
+                _plugin.ClimbForecast.Enabled = GUILayout.Toggle(_plugin.ClimbForecast.Enabled, "Enable climb feasibility overlay");
+                GUILayout.Label(_plugin.ClimbForecast.Status, _small);
+                GUILayout.Label("Scan height  " + _plugin.ClimbForecast.MaximumHeight.ToString("0") + "m", _label);
+                _plugin.ClimbForecast.MaximumHeight = GUILayout.HorizontalSlider(_plugin.ClimbForecast.MaximumHeight, 3f, 20f);
+                GUILayout.Label("Safe reserve  " + Mathf.RoundToInt(_plugin.ClimbForecast.SafetyReserve * 100f) + "%", _label);
+                _plugin.ClimbForecast.SafetyReserve = GUILayout.HorizontalSlider(_plugin.ClimbForecast.SafetyReserve, 0f, .5f);
+                GUILayout.Label("Hold reach toward a steep surface. The estimate uses PEAK's live climb speed, stamina, surface angle/modifiers, and ascent multiplier.", _small);
+            });
+            Card(new Rect(735, 142, 493, 250), "↗  Infinite Rescue Claw Reach", new Color(.62f, .42f, 1f), delegate
+            {
+                bool available = !_plugin.InfiniteRescueClaw.StandaloneDetected; GUI.enabled = available;
+                _plugin.InfiniteRescueClaw.Enabled = GUILayout.Toggle(_plugin.InfiniteRescueClaw.Enabled, "Effectively unlimited local claw reach"); GUI.enabled = true;
+                GUILayout.Label(_plugin.InfiniteRescueClaw.Status, _label);
+                GUILayout.Space(8);
+                GUILayout.Label("Applies only while you hold a Rescue Claw. Both normal and downward targeting become map-wide; original values return when dropped, disabled, or leaving the scene.", _small);
+                GUILayout.Label("Pull force, uses, RPC behavior, and other players' claws are unchanged.", _small);
+            });
+            Card(new Rect(238, 406, 480, 316), "▣  Party Supply Advisor", new Color(.35f, .65f, 1f), delegate
+            {
+                _plugin.PartySupplyAdvisor.Enabled = GUILayout.Toggle(_plugin.PartySupplyAdvisor.Enabled, "Analyze synchronized party supplies");
+                _plugin.PartySupplyAdvisor.IncludeBackpacks = GUILayout.Toggle(_plugin.PartySupplyAdvisor.IncludeBackpacks, "Include equipped backpacks");
+                GUILayout.BeginHorizontal(); GUILayout.Label(_plugin.PartySupplyAdvisor.Status, _small); if (AnimatedButton("REFRESH", _button, GUILayout.Width(82), GUILayout.Height(26))) _plugin.PartySupplyAdvisor.Refresh(); GUILayout.EndHorizontal();
+                IList<PartySupplyPlayerSummary> scouts = _plugin.PartySupplyAdvisor.Players;
+                for (int i = 0; i < scouts.Count; i++) { PartySupplyPlayerSummary scout = scouts[i]; GUILayout.Label(scout.Name + "  •  " + scout.TotalItems + " items  | food " + scout.Food + "  med " + scout.Medical + "  climb " + scout.Climbing + "  mobility " + scout.Mobility, _small); }
+                GUILayout.Space(6); IList<string> advice = _plugin.PartySupplyAdvisor.Recommendations;
+                for (int i = 0; i < advice.Count; i++) GUILayout.Label("• " + advice[i], _label);
+            });
+            Card(new Rect(735, 406, 493, 316), "⌨  Hotkey Conflict Doctor", new Color(.86f, .62f, .25f), delegate
+            {
+                _plugin.HotkeyDoctor.Enabled = GUILayout.Toggle(_plugin.HotkeyDoctor.Enabled, "Scan enabled BepInEx plugins");
+                GUILayout.BeginHorizontal(); GUILayout.Label(_plugin.HotkeyDoctor.Status, _small); if (AnimatedButton("SCAN", _button, GUILayout.Width(70), GUILayout.Height(26))) _plugin.HotkeyDoctor.Refresh(); GUILayout.EndHorizontal();
+                IList<HotkeyConflictRecord> conflicts = _plugin.HotkeyDoctor.Conflicts;
+                for (int i = 0; i < conflicts.Count; i++)
+                {
+                    HotkeyConflictRecord conflict = conflicts[i]; GUILayout.Label(conflict.Shortcut + "  •  " + ConflictLabels(conflict), _label);
+                    if (conflict.SuggestedTarget != null && conflict.SuggestedKey != KeyCode.None && AnimatedButton("REASSIGN " + conflict.SuggestedTarget.Label + " → " + conflict.SuggestedShortcut, _button, GUILayout.Height(28))) Say(_plugin.HotkeyDoctor.ApplySuggestion(conflict));
+                }
+                GUILayout.Label("Only exact KeyboardShortcut/KeyCode duplicates are reported. Reassignment happens only when you click and is saved through the owning mod's config.", _small);
+            });
+        }
+
+        private static string ConflictLabels(HotkeyConflictRecord conflict) { string text = string.Empty; for (int i = 0; i < conflict.Bindings.Count; i++) { if (i > 0) text += " ↔ "; text += conflict.Bindings[i].Label; } return text; }
 
         private void DrawItems(Rect area)
         {
@@ -639,7 +686,7 @@ namespace PeakTrollMod
 
         private void SelectEffect(string effect)
         {
-            if (effect == "Give Item" || effect == "Spawn Item") { _tab = 12; Say("Opened Item Spawner for " + effect + "."); return; }
+            if (effect == "Give Item" || effect == "Spawn Item") { _tab = 13; Say("Opened Item Spawner for " + effect + "."); return; }
             for (int i = 0; i < _previewEffects.Length; i++) if (string.Equals(_previewEffects[i], effect, StringComparison.OrdinalIgnoreCase)) { _effectPreviewIndex = i; PreviewEffect(effect); return; }
         }
 
@@ -744,7 +791,7 @@ namespace PeakTrollMod
         private void CycleSound() { if(_plugin.Audio.Clips.Count>0)_soundIndex=(_soundIndex+1)%_plugin.Audio.Clips.Count; }
         private void Say(ActionResult result) { Say(result.Message); }
         private void Say(string text) { _message=text; _messageUntil=Time.unscaledTime+6f; }
-        private string SubtitleForTab() { string[] s={"Session overview, capabilities, and emergency cleanup.","Target, manipulate, and mess with players in your lobby.","Host-authorized genuine enemy ambushes with strict tracking.","Harmless visual decoys, fake enemies, and ping placement.","Runtime-discovered 3D sound cues and voice capability status.","Cosmetic confusion without identity impersonation.","Controls for mod-spawned genuine enemies.","Environmental hazards separated from direct statuses.","Bounded randomized events with compatible-client validation.","Readiness, compatibility, persistent friend preferences, and recovery.","Interface, accessibility, safety limits, and diagnostics.","Toggle built-ins and safely edit loaded BepInEx mod settings.","Search, preview, favorite, give, or place runtime-discovered PEAK items."}; return s[_tab]; }
+        private string SubtitleForTab() { string[] s={"Session overview, capabilities, and emergency cleanup.","Target, manipulate, and mess with players in your lobby.","Host-authorized genuine enemy ambushes with strict tracking.","Harmless visual decoys, fake enemies, and ping placement.","Runtime-discovered 3D sound cues and voice capability status.","Cosmetic confusion without identity impersonation.","Controls for mod-spawned genuine enemies.","Environmental hazards separated from direct statuses.","Bounded randomized events with compatible-client validation.","Readiness, compatibility, persistent friend preferences, and recovery.","Interface, accessibility, safety limits, and diagnostics.","Predict climbs, audit party supplies, and diagnose conflicting shortcuts.","Toggle built-ins and safely edit loaded BepInEx mod settings.","Search, preview, favorite, give, or place runtime-discovered PEAK items."}; return s[_tab]; }
         private string HeadingForTab() { return _tab == 1 ? "PLAYER CONTROLS" : _tabNames[_tab].ToUpperInvariant(); }
         private void EmergencyReset(){for(int i=0;i<_plugin.Players.Entries.Count;i++)_plugin.Network.SendToAll(NetCommand.Reset,_plugin.Players.Entries[i].ActorNumber,new object[0]);if(_plugin.Players.Local!=null)_plugin.Network.SendToAll(NetCommand.ClearMirages,_plugin.Players.Local.ActorNumber,new object[0]);_plugin.Reset.ResetAll();Say("Cleanup and restoration completed on compatible clients.");}
         private void EnsurePreferenceEditor(PlayerEntry entry){if(entry!=null&&_preferenceSteamId!=entry.SteamUserId)LoadPreferenceEditor(entry);}

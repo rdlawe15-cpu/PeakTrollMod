@@ -6,7 +6,7 @@ A private-lobby trolling and chaos toolkit for **PEAK**, controlled through an i
 
 Skip the spectator wait when joining an expedition in progress, monitor the team, open your backpack instantly, use an upgraded spectator mode, resurrect fallen scouts, fly around the mountain, launch friends into the sky, summon enemy ambushes, create unsettling mirages, or combine multiple effects into custom chaos sequences.
 
-Version 0.4.5 is currently in development. It adds a dedicated searchable item-spawner page, held-item stamina forecasts, real-luggage navigation, Mesa anti-mirage assistance, safe troll-effect cards, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The scheduled GitHub build will be a prerelease.
+Version 0.4.5 is currently in development. It adds a dedicated searchable item-spawner page, held-item and climb stamina forecasts, party supply advice, hotkey conflict diagnosis, effectively unlimited local Rescue Claw reach, real-luggage navigation, Mesa anti-mirage assistance, safe troll-effect cards, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The scheduled GitHub build will be a prerelease.
 
 > Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
 
@@ -25,6 +25,10 @@ Version 0.4.5 is currently in development. It adds a dedicated searchable item-s
 
 ## Features
 
+- **Smart Climb Forecast** — Hold reach toward a steep surface to find its next standable ledge and estimate height, climb time, stamina cost, remaining stamina, and a configurable safety reserve using PEAK's live climb and surface modifiers.
+- **Party Supply Advisor** — Audits synchronized pocket and optional equipped-backpack contents without moving items, summarizes each scout's food, recovery, climbing, and mobility coverage, and flags shortages or dangerously concentrated supplies.
+- **Hotkey Conflict Doctor** — Finds exact duplicate `KeyboardShortcut` and `KeyCode` bindings across enabled BepInEx plugins and offers an unused replacement that is applied only when explicitly clicked.
+- **Infinite Rescue Claw Reach** — Gives the locally held Rescue Claw an effectively map-wide 5,000 m normal and downward targeting range while preserving its uses, force, and RPC behavior. Original values are restored when dropped or disabled, and the built-in yields to a recognized standalone equivalent.
 - **Clean Item Spawner** — Search the live PEAK item catalog, choose quantities, give items to a selected scout or yourself, place tracked world items near a scout, and refresh the catalog without leaving the menu.
 - **Held-item Stamina Preview** — Hold a usable item to see its predicted stamina capacity, condition changes, extra stamina, and pass-out risk before consuming it. This local overlay automatically yields to the standalone Effect Preview mod when installed.
 - **Immortality & Infinite Stamina** — Independently prevent the local scout from dying or fully passing out and continuously refill usable stamina; both toggles live in Player → Health & Status and return to normal instantly when disabled.

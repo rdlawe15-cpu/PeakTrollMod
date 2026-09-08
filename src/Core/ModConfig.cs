@@ -65,6 +65,13 @@ namespace PeakTrollMod
         public readonly ConfigEntry<bool> UnlimitedLobbyScaleSupplies;
         public readonly ConfigEntry<bool> UnlimitedLobbyExtraFood;
         public readonly ConfigEntry<bool> UnlimitedLobbyExtraBackpacks;
+        public readonly ConfigEntry<bool> ClimbForecastEnabled;
+        public readonly ConfigEntry<float> ClimbForecastMaximumHeight;
+        public readonly ConfigEntry<float> ClimbForecastSafetyReserve;
+        public readonly ConfigEntry<bool> PartySupplyAdvisorEnabled;
+        public readonly ConfigEntry<bool> PartySupplyIncludeBackpacks;
+        public readonly ConfigEntry<bool> HotkeyConflictDoctorEnabled;
+        public readonly ConfigEntry<bool> InfiniteRescueClawReachEnabled;
 
         public ModConfig(ConfigFile config)
         {
@@ -128,6 +135,13 @@ namespace PeakTrollMod
             UnlimitedLobbyScaleSupplies = config.Bind("Unlimited Lobby", "ScaleCampfireSupplies", true, "Scale campfire food and backpack spawns for players above the vanilla four-player count.");
             UnlimitedLobbyExtraFood = config.Bind("Unlimited Lobby", "ExtraCampfireFood", true, "Spawn one additional marshmallow per player above four, including late joiners.");
             UnlimitedLobbyExtraBackpacks = config.Bind("Unlimited Lobby", "ExtraBackpacks", true, "Spawn roughly one additional backpack per four players above the vanilla cap.");
+            ClimbForecastEnabled = config.Bind("Smart Quality of Life", "ClimbForecast", true, "While reaching toward a steep surface, estimate the climb time, stamina cost, and safety reserve to its next standable ledge.");
+            ClimbForecastMaximumHeight = config.Bind("Smart Quality of Life", "ClimbForecastMaximumHeight", 12f, "Maximum vertical height scanned for a standable ledge (3-20 metres).");
+            ClimbForecastSafetyReserve = config.Bind("Smart Quality of Life", "ClimbForecastSafetyReserve", .2f, "Stamina reserve required for a climb to be rated safe (0-50 percent).");
+            PartySupplyAdvisorEnabled = config.Bind("Smart Quality of Life", "PartySupplyAdvisor", true, "Summarize synchronized party supplies and highlight practical loadout gaps without moving items.");
+            PartySupplyIncludeBackpacks = config.Bind("Smart Quality of Life", "PartySupplyIncludeBackpacks", true, "Include already-synchronized equipped-backpack contents in party supply analysis.");
+            HotkeyConflictDoctorEnabled = config.Bind("Smart Quality of Life", "HotkeyConflictDoctor", true, "Detect exact duplicate BepInEx KeyboardShortcut and KeyCode bindings across enabled plugins.");
+            InfiniteRescueClawReachEnabled = config.Bind("Quality of Life", "InfiniteRescueClawReach", false, "Give the locally held Rescue Claw effectively unlimited upward and downward targeting range. Yields to a standalone infinite-range rescue-hook mod.");
         }
     }
 }

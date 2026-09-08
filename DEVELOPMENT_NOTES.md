@@ -10,6 +10,13 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 
 ## Verified runtime APIs
 
+### Smart quality of life
+
+- Smart Climb Forecast reads `CharacterData.lookDirection`, local reach/climb state, `CharacterClimbing.climbSpeed`, `climbSpeedMod`, `maxStaminaUsage`, PEAK's verified angle-cost curve, `CharacterData.staminaMod`, optional `ClimbModifierSurface` speed/stamina/static-cost flags, and `Ascents.climbStaminaMultiplier`. Its physics probes are advisory and never invoke climb or movement methods.
+- Party Supply Advisor reads public synchronized `Player.itemSlots` and uses `ItemInstanceData.TryGetDataEntry<BackpackData>(DataEntryKey.BackpackData, out ...)` for already-present equipped-backpack data. It deliberately avoids `BackpackReference.GetData()`, whose missing-data path registers a new entry.
+- Hotkey Conflict Doctor reads only enabled plugins' BepInEx `KeyboardShortcut` and Unity `KeyCode` config entries. It writes one suggested value only after an explicit menu click and saves through that entry's owning `ConfigFile`.
+- `RescueHook.GetHit(out Vector3)` assigns `curRange` from public `range` or `rangeDownward` before its `Physics.RaycastAll`. Infinite Rescue Claw Reach therefore changes only those two fields on the locally held component, uses a bounded 5,000 m effective range, and restores both original values on drop, disable, overlap, reset, scene change, or shutdown.
+
 ### Players and character state
 
 - `PlayerHandler.GetAllPlayerCharacters()` is the static player-character source. `PlayerHandler` also exposes actor/player lookup methods.
