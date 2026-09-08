@@ -27,8 +27,8 @@ namespace PeakTrollMod
         {
             string assemblyFolder = Path.GetDirectoryName(typeof(TrollModPlugin).Assembly.Location);
             string fontFolder = Path.Combine(assemblyFolder ?? string.Empty, "Fonts");
-            DisplayFont = LoadFont(Path.Combine(fontFolder, "Exo2-Variable.ttf"), new[] { "Exo 2", "Exo2" }, "Exo 2");
-            BodyFont = LoadFont(Path.Combine(fontFolder, "Inter-Variable.ttf"), new[] { "Inter", "Inter Variable" }, "Inter");
+            DisplayFont = LoadFontFamily(fontFolder, new[] { "Exo2-Regular.ttf", "Exo2-Bold.ttf" }, new[] { "Exo 2", "Exo2" }, "Exo 2");
+            BodyFont = LoadFontFamily(fontFolder, new[] { "Inter-Regular.ttf", "Inter-Bold.ttf" }, new[] { "Inter" }, "Inter");
             if (DisplayFont == null || BodyFont == null) _log.LogWarning("[PTM] One or more bundled UI fonts were unavailable; affected styles will use Unity's default font.");
             else _log.LogInfo("Bundled Exo 2 and Inter UI fonts loaded.");
         }
@@ -42,14 +42,18 @@ namespace PeakTrollMod
             _registeredFiles.Clear();
         }
 
-        private Font LoadFont(string path, string[] familyNames, string label)
+        private Font LoadFontFamily(string folder, string[] fileNames, string[] familyNames, string label)
         {
-            if (!File.Exists(path)) { _log.LogWarning("[PTM] Bundled " + label + " file was not found at " + path); return null; }
             try
             {
-                if (IsWindows() && AddFontResourceEx(path, PrivateFont, IntPtr.Zero) > 0) _registeredFiles.Add(path);
+                for (int i = 0; i < fileNames.Length; i++)
+                {
+                    string path = Path.Combine(folder, fileNames[i]);
+                    if (!File.Exists(path)) { _log.LogWarning("[PTM] Bundled " + label + " file was not found at " + path); return null; }
+                    if (IsWindows() && AddFontResourceEx(path, PrivateFont, IntPtr.Zero) > 0) _registeredFiles.Add(path);
+                }
                 Font font = Font.CreateDynamicFontFromOSFont(familyNames, 16);
-                if (font != null) { font.name = "PTM_" + label.Replace(" ", string.Empty); font.hideFlags = HideFlags.HideAndDontSave; }
+                if (font != null) font.hideFlags = HideFlags.HideAndDontSave;
                 return font;
             }
             catch (Exception ex) { _log.LogWarning("[PTM] Failed to load bundled " + label + ": " + ex.Message); return null; }

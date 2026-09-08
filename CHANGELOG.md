@@ -2,7 +2,7 @@
 
 ## Unreleased (0.4.5)
 
-- Added bundled Exo 2 typography for branding, headings, labels, navigation, and buttons, paired with Inter for descriptions and compact HUD/status text; both use process-private loading with a safe Unity-font fallback.
+- Added bundled Exo 2 typography for branding, headings, labels, navigation, and buttons, paired with Inter for descriptions and compact HUD/status text; fixed Regular/Bold faces avoid variable-font corruption in PEAK's legacy IMGUI renderer, with process-private loading and a safe Unity-font fallback.
 - Added a fully client-side held-item stamina preview that forecasts condition-bar capacity, individual affliction changes, extra stamina, and pass-out risk before consumption.
 - Added automatic overlap protection that yields the built-in stamina forecast whenever the standalone Effect Preview plugin is enabled.
 - Added independent self-only Immortality and Infinite Stamina toggles under Player → Health & Status, with immediate opt-out and no permanent stat changes.
