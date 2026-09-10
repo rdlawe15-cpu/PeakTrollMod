@@ -46,6 +46,7 @@ namespace PeakTrollMod
         private readonly MethodInfo _die;
         private readonly MethodInfo _spawnItem;
         private readonly MethodInfo _hostApplyStatuses;
+        private readonly MethodInfo _dropItemFromSlot;
         private readonly FieldInfo _ragdollRigidbodies;
         public IList<Item> Items { get { return _items.AsReadOnly(); } }
 
@@ -57,6 +58,7 @@ namespace PeakTrollMod
             _die = ReflectionHelpers.Method(typeof(Character), "DieInstantly", Type.EmptyTypes);
             _spawnItem = ReflectionHelpers.Method(typeof(CharacterItems), "SpawnItemInHand", new Type[] { typeof(string) });
             _hostApplyStatuses = ReflectionHelpers.Method(typeof(CharacterAfflictions), "RPC_ApplyStatusesFromFloatArray", new Type[] { typeof(float[]), typeof(PhotonMessageInfo) });
+            _dropItemFromSlot = ReflectionHelpers.Method(typeof(CharacterItems), "DropItemFromSlotRPC", new Type[] { typeof(byte), typeof(Vector3) });
             _ragdollRigidbodies = ReflectionHelpers.Field(typeof(CharacterRagdoll), "rigidbodies");
             RefreshItemCatalog();
         }
@@ -592,6 +594,23 @@ namespace PeakTrollMod
             if (match == null) return ActionResult.Fail("Item is not in the runtime catalog.");
             try { ReflectionHelpers.Invoke(target.Character.refs.items, _spawnItem, match.name); return ActionResult.Ok("Requested " + match.name + " in " + target.Name + "'s hands."); }
             catch (Exception ex) { return Error("Give item", ex); }
+        }
+
+        public ActionResult DropHeldItemLocal(PlayerEntry target)
+        {
+            if (!_capabilities.Available(FeatureCapability.DropHeldItem)) return Missing(FeatureCapability.DropHeldItem);
+            if (target == null || target.Character == null || target.Character.data == null || target.Character.refs == null || target.Character.refs.items == null || target.Character.refs.items.photonView == null) return ActionResult.Fail("Target item state is unavailable.");
+            if (target.Character.data.currentItem == null || !target.Character.refs.items.currentSelectedSlot.IsSome) return ActionResult.Fail(target.Name + " is not holding a droppable slot item.");
+            try
+            {
+                byte slot = target.Character.refs.items.currentSelectedSlot.Value;
+                Vector3 direction = target.Character.data.lookDirection_Flat;
+                if (!Finite(direction) || direction.sqrMagnitude < .01f) direction = Vector3.forward;
+                Vector3 position = target.Character.Center + direction.normalized * 1.2f + Vector3.up * .3f;
+                target.Character.refs.items.photonView.RPC(_dropItemFromSlot.Name, RpcTarget.All, new object[] { slot, position });
+                return ActionResult.Ok("Dropped " + target.Name + "'s held slot item through PEAK's native RPC.");
+            }
+            catch (System.Exception ex) { return Error("Drop held item", ex); }
         }
 
         public ActionResult ResurrectAtLastLivingPosition(PlayerEntry target)

@@ -63,10 +63,24 @@ namespace PeakTrollMod
         private void Register(MirageKind kind, GameObject go, int target, int creator)
         {
             MirageRecord record = new MirageRecord(); record.Id = Guid.NewGuid(); record.Kind = kind; record.CreatorActor = creator; record.CreatedUtc = DateTime.UtcNow; record.Position = go.transform.position; record.Rotation = go.transform.rotation; record.TargetActor = target; record.Object = go; _records.Add(record);
+            TrollModPlugin plugin = TrollModPlugin.Instance;
+            if (plugin != null && plugin.LuggageNavigation != null) plugin.LuggageNavigation.SuppressModMirage(go);
             if (TrollModPlugin.Instance.Settings.MirageDebug.Value) _log.LogInfo("Mirage " + record.Id + " created: " + kind);
         }
 
         private bool CanCreate() { Tick(); return _records.Count < Mathf.Clamp(TrollModPlugin.Instance.Settings.MaxSpawnedObjects.Value, 1, 64); }
+
+        public void SuppressTrackedVisuals(Action<Renderer> suppress)
+        {
+            if (suppress == null) return;
+            for (int i = 0; i < _records.Count; i++)
+            {
+                GameObject visual = _records[i].Object;
+                if (visual == null) continue;
+                Renderer[] renderers = visual.GetComponentsInChildren<Renderer>(true);
+                for (int j = 0; j < renderers.Length; j++) suppress(renderers[j]);
+            }
+        }
 
         public void UndoLast() { if (_records.Count == 0) return; MirageRecord record = _records[_records.Count - 1]; if (record.Object != null) UnityEngine.Object.Destroy(record.Object); _records.RemoveAt(_records.Count - 1); }
         public void ClearType(MirageKind kind) { for (int i = _records.Count - 1; i >= 0; i--) if (_records[i].Kind == kind) { if (_records[i].Object != null) UnityEngine.Object.Destroy(_records[i].Object); _records.RemoveAt(i); } }

@@ -21,14 +21,40 @@ namespace PeakTrollMod
         public bool Enabled
         {
             get { return _settings.CampfireResetEnabled.Value; }
-            set { _settings.CampfireResetEnabled.Value = value; }
+            set
+            {
+                _settings.CampfireResetEnabled.Value = value;
+                if (value) _settings.CampfireDeathTrapEnabled.Value = false;
+            }
+        }
+
+        public bool DeathTrapEnabled
+        {
+            get { return _settings.CampfireDeathTrapEnabled.Value; }
+            set
+            {
+                _settings.CampfireDeathTrapEnabled.Value = value;
+                if (value) _settings.CampfireResetEnabled.Value = false;
+            }
+        }
+
+        public float DeathRadius
+        {
+            get { return Mathf.Clamp(_settings.CampfireDeathRadius.Value, 3f, 50f); }
+            set { _settings.CampfireDeathRadius.Value = Mathf.Clamp(value, 3f, 50f); }
         }
 
         public void ResetScene() { _triggered.Clear(); }
 
         public void OnCampfireLit(Campfire campfire)
         {
-            if (!Enabled || campfire == null || !_triggered.Add(campfire.GetInstanceID())) return;
+            if (campfire == null || (!Enabled && !DeathTrapEnabled) || !_triggered.Add(campfire.GetInstanceID())) return;
+            if (DeathTrapEnabled)
+            {
+                EliminateNearby(campfire);
+                return;
+            }
+
             Vector3 start;
             if (!_actions.TryGetStartEnd(false, out start)) { _log.LogWarning("Campfire reset could not resolve the first segment start."); return; }
             IList<PlayerEntry> entries = _players.Entries;
@@ -44,6 +70,29 @@ namespace PeakTrollMod
                 catch (Exception ex) { _log.LogWarning("Campfire reset warp failed for " + player.Name + ": " + ex.Message); }
             }
             _log.LogInfo("Campfire troll returned " + moved + " scouts to the start.");
+        }
+
+        private void EliminateNearby(Campfire campfire)
+        {
+            Vector3 center = campfire.transform.position;
+            if (!PlayerActions.Finite(center)) { _log.LogWarning("Campfire death trap received an invalid campfire position."); return; }
+
+            float radius = DeathRadius;
+            float radiusSquared = radius * radius;
+            IList<PlayerEntry> entries = _players.Entries;
+            int eliminated = 0;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                PlayerEntry player = entries[i];
+                if (player == null || player.Character == null || player.Character.data == null || player.Character.data.dead) continue;
+                Vector3 position = player.Character.Center;
+                if (!PlayerActions.Finite(position) || (position - center).sqrMagnitude > radiusSquared) continue;
+
+                ActionResult result = _actions.EliminateLocal(player);
+                if (result.Success) eliminated++;
+                else _log.LogWarning("Campfire death trap could not eliminate " + player.Name + ": " + result.Message);
+            }
+            _log.LogInfo("Campfire death trap eliminated " + eliminated + " scouts within " + radius.ToString("0.#") + " m.");
         }
     }
 

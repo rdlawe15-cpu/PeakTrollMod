@@ -27,11 +27,19 @@ namespace PeakTrollMod
         public LuggageNavigationManager(ModConfig settings, ManualLogSource log) { _settings = settings; _log = log; }
 
         public bool DirectionsEnabled { get { return _settings.RealLuggageDirectionsEnabled.Value; } set { _settings.RealLuggageDirectionsEnabled.Value = value; } }
-        public bool AntiMiragesEnabled { get { return _settings.MesaAntiMiragesEnabled.Value; } set { _settings.MesaAntiMiragesEnabled.Value = value; } }
+        public bool AntiMiragesEnabled
+        {
+            get { return _settings.MesaAntiMiragesEnabled.Value; }
+            set
+            {
+                _settings.MesaAntiMiragesEnabled.Value = value;
+                if (value) _nextMirageScan = 0f;
+                else if (_wasSuppressing || _suppressedRenderers.Count > 0) { RestoreMirages(); _wasSuppressing = false; }
+            }
+        }
         public int HiddenRendererCount { get { return _suppressedRenderers.Count; } }
-        public bool InMesa { get { return IsMesa(); } }
         public string LuggageStatus { get { return _nearest == null ? "No unopened real luggage detected" : Mathf.RoundToInt(_distance) + " m to nearest real luggage"; } }
-        public string MirageStatus { get { return !AntiMiragesEnabled ? "Off" : !InMesa ? "Armed; activates in the Mesa" : "Hiding " + HiddenRendererCount + " native mirage renderer(s)"; } }
+        public string MirageStatus { get { return !AntiMiragesEnabled ? "Off" : "Hiding " + HiddenRendererCount + " native and mod mirage renderer(s)"; } }
 
         public void Tick()
         {
@@ -40,10 +48,18 @@ namespace PeakTrollMod
                 if (DirectionsEnabled && Time.unscaledTime >= _nextLuggageScan) { _nextLuggageScan = Time.unscaledTime + .35f; RefreshNearestLuggage(); }
                 if (!DirectionsEnabled) _nearest = null;
 
-                bool suppress = AntiMiragesEnabled && IsMesa();
-                if (suppress && Time.unscaledTime >= _nextMirageScan) { _nextMirageScan = Time.unscaledTime + .75f; FindAndSuppressMesaMirages(); }
-                if (!suppress && _wasSuppressing) RestoreMirages();
-                _wasSuppressing = suppress;
+                bool suppress = AntiMiragesEnabled;
+                if (suppress)
+                {
+                    if (!_wasSuppressing) _nextMirageScan = 0f;
+                    _wasSuppressing = true;
+                    if (Time.unscaledTime >= _nextMirageScan) { _nextMirageScan = Time.unscaledTime + .75f; FindAndSuppressMirages(); }
+                }
+                else if (_wasSuppressing || _suppressedRenderers.Count > 0)
+                {
+                    RestoreMirages();
+                    _wasSuppressing = false;
+                }
             }
             catch (Exception ex)
             {
@@ -76,7 +92,7 @@ namespace PeakTrollMod
 
         public void SuppressNativeMirage(Component component)
         {
-            if (component == null || !AntiMiragesEnabled || !_wasSuppressing) return;
+            if (component == null || !AntiMiragesEnabled) return;
             try
             {
                 MirageLuggage luggageMirage = component as MirageLuggage;
@@ -84,6 +100,7 @@ namespace PeakTrollMod
                 {
                     Renderer[] renderers = MirageLuggageRenderers == null ? null : MirageLuggageRenderers.GetValue(luggageMirage) as Renderer[];
                     Suppress(renderers);
+                    Suppress(luggageMirage.GetComponentsInChildren<Renderer>(true));
                     return;
                 }
 
@@ -99,6 +116,12 @@ namespace PeakTrollMod
             {
                 if (Time.unscaledTime >= _nextErrorLog) { _nextErrorLog = Time.unscaledTime + 10f; _log.LogWarning("[PTM] Mesa mirage suppression skipped an unsupported object: " + ex.Message); }
             }
+        }
+
+        public void SuppressModMirage(GameObject visual)
+        {
+            if (visual == null || !AntiMiragesEnabled) return;
+            Suppress(visual.GetComponentsInChildren<Renderer>(true));
         }
 
         public void ResetScene()
@@ -135,12 +158,14 @@ namespace PeakTrollMod
             return !luggage.gameObject.name.StartsWith("PTM_Mirage_", StringComparison.Ordinal);
         }
 
-        private void FindAndSuppressMesaMirages()
+        private void FindAndSuppressMirages()
         {
             MirageLuggage[] luggageMirages = Resources.FindObjectsOfTypeAll<MirageLuggage>();
             for (int i = 0; i < luggageMirages.Length; i++) if (luggageMirages[i] != null && luggageMirages[i].gameObject.scene.IsValid()) SuppressNativeMirage(luggageMirages[i]);
             global::Mirage[] mirages = Resources.FindObjectsOfTypeAll<global::Mirage>();
             for (int i = 0; i < mirages.Length; i++) if (mirages[i] != null && mirages[i].gameObject.scene.IsValid()) SuppressNativeMirage(mirages[i]);
+            TrollModPlugin plugin = TrollModPlugin.Instance;
+            if (plugin != null && plugin.Mirages != null) plugin.Mirages.SuppressTrackedVisuals(Suppress);
             RemoveDestroyedRendererKeys();
         }
 
@@ -168,12 +193,6 @@ namespace PeakTrollMod
             List<Renderer> destroyed = null;
             foreach (KeyValuePair<Renderer, bool> pair in _suppressedRenderers) if (pair.Key == null) { if (destroyed == null) destroyed = new List<Renderer>(); destroyed.Add(pair.Key); }
             if (destroyed != null) for (int i = 0; i < destroyed.Count; i++) _suppressedRenderers.Remove(destroyed[i]);
-        }
-
-        private static bool IsMesa()
-        {
-            try { MapHandler map = UnityEngine.Object.FindFirstObjectByType<MapHandler>(); return map != null && map.GetCurrentBiome() == Biome.BiomeType.Mesa; }
-            catch { return false; }
         }
 
         private string DirectionGlyph(Character local)

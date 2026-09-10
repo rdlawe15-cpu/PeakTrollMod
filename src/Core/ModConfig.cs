@@ -22,6 +22,8 @@ namespace PeakTrollMod
         public readonly ConfigEntry<bool> UnlockAllCosmetics;
         public readonly ConfigEntry<bool> UnlockAllBadges;
         public readonly ConfigEntry<bool> CampfireResetEnabled;
+        public readonly ConfigEntry<bool> CampfireDeathTrapEnabled;
+        public readonly ConfigEntry<float> CampfireDeathRadius;
         public readonly ConfigEntry<bool> HelicopterSuppressionEnabled;
         public readonly ConfigEntry<bool> NoWaitEnabled;
         public readonly ConfigEntry<NoWaitDestination> NoWaitDestinationMode;
@@ -72,6 +74,10 @@ namespace PeakTrollMod
         public readonly ConfigEntry<bool> PartySupplyIncludeBackpacks;
         public readonly ConfigEntry<bool> HotkeyConflictDoctorEnabled;
         public readonly ConfigEntry<bool> InfiniteRescueClawReachEnabled;
+        public readonly ConfigEntry<float> MindControlDuration;
+        public readonly ConfigEntry<float> MindControlCameraDistance;
+        public readonly ConfigEntry<float> MindControlHostPuppetForce;
+        public readonly ConfigEntry<KeyboardShortcut> MindControlEscapeKey;
 
         public ModConfig(ConfigFile config)
         {
@@ -92,6 +98,8 @@ namespace PeakTrollMod
             UnlockAllCosmetics = config.Bind("Progression", "UnlockAllCosmetics", false, "Expose all PEAK cosmetics while the mod is enabled without granting platform achievements.");
             UnlockAllBadges = config.Bind("Progression", "UnlockAllBadges", false, "Expose all PEAK badges and sync the local sash while enabled without granting platform achievements.");
             CampfireResetEnabled = config.Bind("World", "CampfireTeleportsEveryoneToStart", false, "When this client observes a campfire ignition, teleport all scouts back to the first segment start.");
+            CampfireDeathTrapEnabled = config.Bind("World", "CampfireDeathTrap", false, "When this client observes a campfire ignition, eliminate every living scout within the configured radius. Takes precedence over the reset trap.");
+            CampfireDeathRadius = config.Bind("World", "CampfireDeathRadius", 12f, "Radius in metres around an ignited campfire affected by the death trap (3-50).");
             HelicopterSuppressionEnabled = config.Bind("World", "SuppressSummitHelicopter", false, "Suppress the summit rescue sequence locally and advertise suppression to compatible clients.");
             NoWaitEnabled = config.Bind("Player", "NoWait", true, "When joining an expedition already in progress, automatically revive the local scout beside the nearest living player.");
             NoWaitDestinationMode = config.Bind("Player", "NoWaitDestination", NoWaitDestination.NearestLiving, "Where No Wait places a late joiner: nearest living scout, lowest living scout, or the active checkpoint.");
@@ -124,7 +132,7 @@ namespace PeakTrollMod
             InfiniteStaminaEnabled = config.Bind("Player", "InfiniteStamina", false, "Continuously refill the local scout's available stamina while enabled.");
             RealLuggageDirectionsEnabled = config.Bind("Quality of Life", "RealLuggageDirections", false, "Show direction and distance to the nearest unopened genuine luggage while ignoring native and mod-created mirages.");
             RealLuggageMaximumDistance = config.Bind("Quality of Life", "RealLuggageMaximumDistance", 750f, "Maximum real-luggage search distance in metres (25-2000).");
-            MesaAntiMiragesEnabled = config.Bind("Quality of Life", "MesaAntiMirages", false, "Locally hide native Mirage and MirageLuggage renderers while the current biome is the Mesa.");
+            MesaAntiMiragesEnabled = config.Bind("Quality of Life", "MesaAntiMirages", false, "Locally hide native and PEAK Troll Mod-created mirage visuals wherever they appear. The legacy setting name is retained so existing configs keep working.");
             FavoritesAndRecentsEnabled = config.Bind("Quality of Life", "FavoritesAndRecentActions", true, "Remember favorite and recently used items/effect previews.");
             FavoriteItemsData = config.Bind("Quick Access", "FavoriteItems", string.Empty, "Newline-separated favorite runtime item names.");
             RecentItemsData = config.Bind("Quick Access", "RecentItems", string.Empty, "Newline-separated recently used runtime item names.");
@@ -142,6 +150,10 @@ namespace PeakTrollMod
             PartySupplyIncludeBackpacks = config.Bind("Smart Quality of Life", "PartySupplyIncludeBackpacks", true, "Include already-synchronized equipped-backpack contents in party supply analysis.");
             HotkeyConflictDoctorEnabled = config.Bind("Smart Quality of Life", "HotkeyConflictDoctor", true, "Detect exact duplicate BepInEx KeyboardShortcut and KeyCode bindings across enabled plugins.");
             InfiniteRescueClawReachEnabled = config.Bind("Quality of Life", "InfiniteRescueClawReach", false, "Give the locally held Rescue Claw map-wide targeting and zip the local scout toward distant wall anchors. Yields to a standalone infinite-range rescue-hook mod.");
+            MindControlDuration = config.Bind("Mind Control", "MaximumDuration", 60f, "Maximum in-game Mind Control session duration in seconds (10-180).");
+            MindControlCameraDistance = config.Bind("Mind Control", "ThirdPersonCameraDistance", 5.5f, "Controller's third-person follow-camera distance in metres (3-10).");
+            MindControlHostPuppetForce = config.Bind("Mind Control", "HostPuppetForce", 2.5f, "Bounded native movement force for host-only control of unmodded scouts (1-8).");
+            MindControlEscapeKey = config.Bind("Mind Control", "ReleaseKey", new KeyboardShortcut(KeyCode.F6), "Immediately release or break free from an active Mind Control session.");
         }
     }
 }

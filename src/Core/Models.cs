@@ -6,12 +6,12 @@ namespace PeakTrollMod
     internal enum FeatureCapability
     {
         PlayerDiscovery, Ragdoll, Launch, Speed, Flight, Visibility, Teleport, StartEndTeleport, Resurrect, QuickReconnect, EmergencyRecovery,
-        Knockout, Eliminate, StatusEffects, GiveItem, ScoutmasterSpawn, MushroomZombieSpawn,
+        Knockout, Eliminate, StatusEffects, HungerAmplifier, DropHeldItem, GiveItem, ScoutmasterSpawn, MushroomZombieSpawn,
         LookerSpawn, Mandrake, PingPlacement, MirageLuggage, MirageStatue, MirageCapybara,
         MirageScout, FakeEnemyScoutmaster, FakeEnemyZombie, FakeEnemyLooker, FakeAudio,
         AppearanceSwap, VoiceSwap, IncomingVoiceMute, TalkWhileKnockedOut, PoisonCloud, SporeCloud, ZombieTargeting,
         DynamiteShower, ItemStorm, SkyLaunch, HorizonLaunch, WrongMountain, CosmeticUnlocks, BadgeUnlocks,
-        PositionRoulette, OneLiveOne, ComboBuilder, CampfireReset, HelicopterSuppression, PhantomPings
+        PositionRoulette, OneLiveOne, ComboBuilder, SummitSaboteur, MindControl, CampfireReset, CampfireDeathTrap, HelicopterSuppression, PhantomPings
     }
 
     internal enum PermissionKind { Anyone, EveryoneNeedsMod, HostOnly, Unsupported }
@@ -23,7 +23,8 @@ namespace PeakTrollMod
         Reset = 12, FakeAudio = 13, MirageScout = 14, FakeEnemy = 15, ClearMirages = 16,
         HostSpawnScoutmaster = 17, HostSpawnZombie = 18, HostClearRequestedSpawns = 19,
         MirageProp = 20, SetHelicopterSuppression = 21, PhantomPings = 22, CancelPhantomPings = 23,
-        Flight = 24
+        Flight = 24, SetHungerAmplifier = 25, SummitSabotageVictim = 26,
+        MindControlStart = 27, MindControlAck = 28, MindControlInput = 29, MindControlStop = 30
     }
 
     internal enum MirageKind { Luggage, AmuletStatue, CapybaraPool, Scout, FakeEnemy }

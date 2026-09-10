@@ -42,6 +42,8 @@ namespace PeakTrollMod
         internal PartySupplyAdvisorManager PartySupplyAdvisor;
         internal HotkeyConflictDoctor HotkeyDoctor;
         internal InfiniteRescueClawManager InfiniteRescueClaw;
+        internal HungerAmplifierManager HungerAmplifier;
+        internal MindControlManager MindControl;
         internal SpawnManager Spawns;
         internal MirageManager Mirages;
         internal PingPlacementManager PingPlacement;
@@ -52,6 +54,7 @@ namespace PeakTrollMod
         internal CampfireTrollManager CampfireTroll;
         internal HelicopterTrollManager HelicopterTroll;
         internal ChaosManager Chaos;
+        internal SummitSaboteurManager SummitSaboteur;
         internal ResetManager Reset;
         internal TrollUIManager Ui;
         internal UiFontManager UiFonts;
@@ -90,7 +93,9 @@ namespace PeakTrollMod
             PartySupplyAdvisor = new PartySupplyAdvisorManager(Players, Settings, Logger);
             HotkeyDoctor = new HotkeyConflictDoctor(ModBrowser, Settings, Logger);
             InfiniteRescueClaw = new InfiniteRescueClawManager(Settings, Logger);
-            Network = new TrollNetworkManager(Logger, Players, Actions, Mirages, Audio);
+            HungerAmplifier = new HungerAmplifierManager(Logger, Players, Actions);
+            Network = new TrollNetworkManager(Logger, Players, Actions, Mirages, Audio, HungerAmplifier);
+            MindControl = new MindControlManager(Logger, Players, Network, Settings, Capabilities);
             PingPlacement = new PingPlacementManager(Logger, Mirages, Players, Network);
             PhantomPings = new PhantomPingManager(Logger, Players);
             Appearance = new AppearanceManager(Logger);
@@ -99,6 +104,7 @@ namespace PeakTrollMod
             HelicopterTroll = new HelicopterTrollManager(Logger, Settings);
             Reset = new ResetManager(Logger, Actions, Mirages, Spawns, Audio, Appearance);
             Chaos = new ChaosManager(Logger, Players, Network, Actions, Mirages, Audio, Spawns);
+            SummitSaboteur = new SummitSaboteurManager(Logger, Players, Actions, Network, Spawns, Capabilities);
             Ui = new TrollUIManager(this);
 
             _harmony = new Harmony(Guid); _harmony.PatchAll(typeof(TrollModPlugin).Assembly);
@@ -112,7 +118,7 @@ namespace PeakTrollMod
         {
             if (Ui.IsOpen && Input.GetKeyDown(KeyCode.Escape)) Ui.ForceClose();
             if (Settings.MenuActivation.Value == MenuActivationMode.Toggle) { if (Settings.MenuKey.Value.IsDown()) Ui.Toggle(); } else Ui.SetOpen(Settings.MenuKey.Value.IsPressed());
-            Players.Tick(); PlayerPreferences.Tick(); LobbyReadiness.Tick(); QuickReconnect.Tick(); Network.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); QuickBackpack.Tick(Ui.IsOpen); BetterSpectating.Tick(Ui.IsOpen); StaminaEffectPreview.Tick(); SurvivalAssist.Tick(); LuggageNavigation.Tick(); ClimbForecast.Tick(); PartySupplyAdvisor.Tick(); HotkeyDoctor.Tick(); InfiniteRescueClaw.Tick(); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); UnlimitedLobby.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); Ui.Tick();
+            Players.Tick(); PlayerPreferences.Tick(); LobbyReadiness.Tick(); QuickReconnect.Tick(); Network.Tick(); MindControl.Tick(); Actions.Tick(); Recovery.Tick(); NoWait.Tick(); QuickBackpack.Tick(Ui.IsOpen); BetterSpectating.Tick(Ui.IsOpen); StaminaEffectPreview.Tick(); SurvivalAssist.Tick(); HungerAmplifier.Tick(); LuggageNavigation.Tick(); ClimbForecast.Tick(); PartySupplyAdvisor.Tick(); HotkeyDoctor.Tick(); InfiniteRescueClaw.Tick(); Audio.Tick(); Mirages.Tick(); PhantomPings.Tick(); Spawns.Tick(); UnlimitedLobby.Tick(); Progression.Tick(); HelicopterTroll.Tick(); Chaos.Tick(); SummitSaboteur.Tick(); Ui.Tick();
 
             bool inRoom = PhotonNetwork.InRoom;
             if (_wasInRoom && !inRoom) Reset.ResetAll();
@@ -124,7 +130,7 @@ namespace PeakTrollMod
             }
         }
 
-        private void OnGUI() { bool menuOpen=Ui!=null&&Ui.IsOpen; if (TeamStatus != null) TeamStatus.Draw(menuOpen); if (BetterSpectating != null) BetterSpectating.Draw(menuOpen); if (StaminaEffectPreview != null) StaminaEffectPreview.Draw(menuOpen); if (LuggageNavigation != null) LuggageNavigation.Draw(menuOpen); if (ClimbForecast != null) ClimbForecast.Draw(menuOpen); if (Ui != null) Ui.Draw(); }
+        private void OnGUI() { bool menuOpen=Ui!=null&&Ui.IsOpen; if (TeamStatus != null) TeamStatus.Draw(menuOpen); if (BetterSpectating != null) BetterSpectating.Draw(menuOpen); if (StaminaEffectPreview != null) StaminaEffectPreview.Draw(menuOpen); if (LuggageNavigation != null) LuggageNavigation.Draw(menuOpen); if (ClimbForecast != null) ClimbForecast.Draw(menuOpen); if (MindControl != null) MindControl.Draw(menuOpen); if (Ui != null) Ui.Draw(); }
 
         private void FixedUpdate() { if (Actions != null) Actions.FixedTick(); if (InfiniteRescueClaw != null) InfiniteRescueClaw.FixedTick(); }
 
@@ -144,8 +150,11 @@ namespace PeakTrollMod
             if (ClimbForecast != null) ClimbForecast.ResetScene();
             if (PartySupplyAdvisor != null) PartySupplyAdvisor.ResetScene();
             if (InfiniteRescueClaw != null) InfiniteRescueClaw.ResetScene();
+            if (HungerAmplifier != null) HungerAmplifier.Reset();
+            if (MindControl != null) MindControl.Reset();
             if (Ui != null) Ui.ResetVisualAssets();
             if (CampfireTroll != null) CampfireTroll.ResetScene();
+            if (SummitSaboteur != null) SummitSaboteur.Reset();
             if (HelicopterTroll != null) HelicopterTroll.ResetScene();
             DebugLog("Scene loaded: " + scene.name);
         }
@@ -162,6 +171,9 @@ namespace PeakTrollMod
             if (ClimbForecast != null) ClimbForecast.ResetScene();
             if (PartySupplyAdvisor != null) PartySupplyAdvisor.ResetScene();
             if (InfiniteRescueClaw != null) InfiniteRescueClaw.RestoreAll();
+            if (HungerAmplifier != null) HungerAmplifier.Reset();
+            if (MindControl != null) MindControl.Reset();
+            if (SummitSaboteur != null) SummitSaboteur.Reset();
             if (Reset != null) Reset.ResetAll();
             if (Network != null) Network.Dispose();
             if (_harmony != null) _harmony.UnpatchSelf();
@@ -274,6 +286,26 @@ namespace PeakTrollMod
             if (ShowingCursor != null) ShowingCursor.SetValue(__instance, true);
             if (BlockingInput != null) BlockingInput.SetValue(__instance, plugin.Ui.IsTyping);
             if (LastBlockedInput != null && plugin.Ui.IsTyping) LastBlockedInput.SetValue(__instance, Time.frameCount);
+        }
+    }
+
+    [HarmonyPatch(typeof(CharacterInput), "Sample")]
+    internal static class MindControlInputPatch
+    {
+        private static void Postfix(CharacterInput __instance, bool __0)
+        {
+            TrollModPlugin plugin = TrollModPlugin.Instance;
+            if (plugin != null && plugin.MindControl != null) plugin.MindControl.OnInputSampled(__instance, __0);
+        }
+    }
+
+    [HarmonyPatch(typeof(MainCameraMovement), "LateUpdate")]
+    internal static class MindControlCameraPatch
+    {
+        private static void Postfix(MainCameraMovement __instance)
+        {
+            TrollModPlugin plugin = TrollModPlugin.Instance;
+            if (plugin != null && plugin.MindControl != null) plugin.MindControl.OverrideCamera(__instance);
         }
     }
 

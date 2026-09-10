@@ -71,6 +71,28 @@ namespace PeakTrollMod
         public ActionResult SpawnZombie(PlayerEntry target, float distance)
         { return SpawnZombie(target, distance, _players.Local == null ? 0 : _players.Local.ActorNumber); }
 
+        public ActionResult SpawnZombieBehind(PlayerEntry target, float distance)
+        {
+            if (target == null || target.Character == null || target.Character.data == null) return ActionResult.Fail("Select one available target.");
+            if (!_players.IsHost) return ActionResult.Fail("Host authority is required.");
+            if (!CanSpawn()) return ActionResult.Fail("Maximum mod-spawned object count reached.");
+            MushroomZombie prefab = FindZombiePrefab(); if (prefab == null) return ActionResult.Fail("No runtime zombie prefab reference is loaded.");
+            try
+            {
+                distance = Mathf.Clamp(distance, 4f, 12f);
+                Vector3 backward = -target.Character.data.lookDirection_Flat;
+                if (!PlayerActions.Finite(backward) || backward.sqrMagnitude < .01f) backward = Vector3.back;
+                Vector3 desired = target.Character.Center + backward.normalized * distance + Vector3.up * 3f;
+                RaycastHit hit; Vector3 position = Physics.Raycast(desired, Vector3.down, out hit, 12f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) ? hit.point + Vector3.up * .2f : desired;
+                GameObject go = PhotonNetwork.Instantiate(prefab.gameObject.name, position, Quaternion.identity, 0, null);
+                ForceTarget(go, target, 300f);
+                int creator = _players.Local == null ? 0 : _players.Local.ActorNumber;
+                Track(go, creator, target.ActorNumber);
+                return ActionResult.Ok("Spawned a tracked Mushroom Zombie behind " + target.Name + ".");
+            }
+            catch (Exception ex) { _log.LogWarning("Behind-target zombie spawn failed: " + ex); return ActionResult.Fail(ex.Message); }
+        }
+
         public ActionResult SpawnZombie(PlayerEntry target, float distance, int creatorActor)
         {
             if (target == null || target.Character == null) return ActionResult.Fail("Select an individual target.");

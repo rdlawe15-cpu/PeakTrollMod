@@ -1,6 +1,17 @@
 # Changelog
 
-## 0.4.5 Prerelease — 2026-09-08
+## 0.4.5 — 2026-09-10
+
+- Added Mind Control for one selected scout, with full acknowledged input relaying for compatible clients plus a host-only native puppet fallback for unmodded scouts. The fallback provides bounded movement, sprint, jump, and crouch while leaving the target's own local controls active. Sessions include a third-person camera, reliable cleanup, and F6 release; pause, voice, and non-game computer input are explicitly excluded.
+- Updated compatible-client networking to protocol v9 for validated Mind Control start, acknowledgement, input-stream, and stop commands.
+- Fixed Anti-Mirages' first-pass activation guard and expanded the local filter beyond the Mesa: it now immediately suppresses full native `MirageLuggage` hierarchies, `Mirage` particles and referenced objects, and PEAK Troll Mod-created mirages wherever they appear, while retaining reversible renderer restoration.
+- Added Summit Saboteur, a cancellable host-only final-approach trap with adjustable trigger distance, stamina-lock duration, and horizontal launch distance. Its staged sequence drops the selected scout's held slot item, maxes Hunger, briefly suppresses stamina, spawns a tracked targeted zombie behind them, displays a fake recovery notice on compatible targets, and launches them toward the horizon.
+- Updated compatible-client networking to protocol v8 for the bounded owner-side Summit Saboteur stamina/notification step.
+- Added Amplify Hunger Rates controls with an adjustable 2×–20× multiplier and explicit normal-rate reset. Compatible owners temporarily scale PEAK's native `hungerPerSecond` only during `UpdateNormalStatuses`; the host can additionally affect unmodded targets by accumulating the same extra rate and sending bounded native Hunger-status pulses.
+- Updated compatible-client networking to protocol v7 for the validated hunger-amplifier command before the subsequent v8 Summit Saboteur addition.
+- Added an opt-in Campfire Death Trap that uses PEAK's native synchronized death RPC to eliminate the igniter and every other living scout within a configurable 3–50 m radius. It is mutually exclusive with Campfire Reset in the menu and takes precedence if both settings are enabled externally.
+
+### Earlier prerelease contents
 
 - Added **Far Horizon**, a selectable 25–300 m horizontal counterpart to Sky High that chooses an outward route direction, finds a clear endpoint offset, and combines PEAK's native ragdoll, force, and warp RPCs.
 - Upgraded Infinite Rescue Claw Reach with a local, bounded distant-wall zip that extends the one-second wall timeout only while travelling, releases near the anchor, ignores friend/item/empty hits, and restores cached ragdoll physics on every exit path.

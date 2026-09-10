@@ -31,11 +31,15 @@ namespace PeakTrollMod
         private float _speed = 1f;
         private float _flightSpeed = 10f;
         private float _statusAmount = .15f;
+        private float _hungerMultiplier = 5f;
         private float _spawnDistance = 10f;
         private float _lifetime = 12f;
         private float _volume = .8f;
         private float _skyHeight = 150f;
         private float _horizonDistance = 200f;
+        private float _summitTriggerDistance = 18f;
+        private float _summitStaminaLock = 6f;
+        private float _summitLaunchDistance = 200f;
         private int _dynamiteCount = 6;
         private float _dynamiteHeight = 18f;
         private float _dynamiteSpread = 5f;
@@ -310,6 +314,13 @@ namespace PeakTrollMod
                 GUILayout.BeginHorizontal(); if (CapabilityButton("ON", FeatureCapability.Flight, _success, 38)) Owner(NetCommand.Flight, new object[] { true, _flightSpeed }); if (CapabilityButton("OFF", FeatureCapability.Flight, _button, 38)) Owner(NetCommand.Flight, new object[] { false, _flightSpeed }); GUILayout.EndHorizontal();
                 GUILayout.Label("Flight speed                                      " + _flightSpeed.ToString("0") + " m/s", _small); _flightSpeed = GUILayout.HorizontalSlider(_flightSpeed, 4f, 20f);
                 GUILayout.Label("[W] [A] [S] [D] move   [SPACE] up   [CTRL] down   [SHIFT] boost", _small);
+                GUILayout.Space(12); Badge(PermissionKind.HostOnly); GUILayout.Label("Mind Control", _label);
+                GUILayout.Label("Full control with UPM; hosts get movement, jump, and crouch puppet control for unmodded scouts. Their own input stays active.", _small);
+                GUILayout.Label("Duration  " + Mathf.Clamp(_plugin.Settings.MindControlDuration.Value,10f,180f).ToString("0") + " s", _small); _plugin.Settings.MindControlDuration.Value=GUILayout.HorizontalSlider(_plugin.Settings.MindControlDuration.Value,10f,180f);
+                GUILayout.Label("Camera distance  " + Mathf.Clamp(_plugin.Settings.MindControlCameraDistance.Value,3f,10f).ToString("0.0") + " m", _small); _plugin.Settings.MindControlCameraDistance.Value=GUILayout.HorizontalSlider(_plugin.Settings.MindControlCameraDistance.Value,3f,10f);
+                GUILayout.Label("Host puppet force  " + Mathf.Clamp(_plugin.Settings.MindControlHostPuppetForce.Value,1f,8f).ToString("0.0"), _small); _plugin.Settings.MindControlHostPuppetForce.Value=GUILayout.HorizontalSlider(_plugin.Settings.MindControlHostPuppetForce.Value,1f,8f);
+                GUI.enabled=!_targetAll; if(CapabilityButton(_plugin.MindControl.Active?"STOP MIND CONTROL":"CONTROL SELECTED SCOUT",FeatureCapability.MindControl,_plugin.MindControl.Active?_danger:_success,38)){ActionResult result=_plugin.MindControl.Active?_plugin.MindControl.Stop():_plugin.MindControl.Start(Target());Say(result);if(result.Success&&_plugin.MindControl.Active)ForceClose();} GUI.enabled=true;
+                GUILayout.Label(_plugin.MindControl.Status + "  •  " + _plugin.Settings.MindControlEscapeKey.Value + " releases either side.", _small);
                 GUILayout.Space(12); Badge(PermissionKind.Anyone); GUILayout.Label("Launch strength  " + _launchStrength.ToString("0"), _label); _launchStrength = GUILayout.HorizontalSlider(_launchStrength, 5f, 120f);
                 GUILayout.BeginHorizontal(); _randomLaunch = GUILayout.Toggle(_randomLaunch, "Random direction"); _ragdollLaunch = GUILayout.Toggle(_ragdollLaunch, "Ragdoll"); GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal(); if (CapabilityButton("LAUNCH", FeatureCapability.Launch, _button, 34)) { Vector3 d = _randomLaunch ? new Vector3(UnityEngine.Random.Range(-.5f,.5f),1f,UnityEngine.Random.Range(-.5f,.5f)).normalized : Vector3.up; Owner(NetCommand.Launch, new object[] { d.x, d.y, d.z, _launchStrength, _ragdollLaunch }); } if(CapabilityButton("SKY HIGH",FeatureCapability.SkyLaunch,_danger,34))SkyLaunch(); if(CapabilityButton("FAR HORIZON",FeatureCapability.HorizonLaunch,_danger,34))HorizonLaunch(); GUILayout.EndHorizontal();
@@ -344,6 +355,10 @@ namespace PeakTrollMod
                 GUILayout.Label("Intensity  " + _statusAmount.ToString("0.00"), _small); _statusAmount = GUILayout.HorizontalSlider(_statusAmount, .01f, .5f);
                 GUILayout.Label(_plugin.Players.IsHost&&_statusIndex!=7&&_statusIndex!=9&&_statusIndex!=12?"Host-native status; target mod not required.":"Status requires the selected target's mod.",_small);
                 if(AnimatedButton("CLEAR MOD STATUSES",_button,GUILayout.Height(34)))ClearStatuses();
+                GUILayout.Space(12);Badge(PermissionKind.EveryoneNeedsMod);if(_plugin.Players.IsHost)Badge(PermissionKind.HostOnly);GUILayout.Label("Amplify Hunger Rates",_label);
+                GUILayout.Label("Natural hunger speed  "+_hungerMultiplier.ToString("0.0")+"x",_small);_hungerMultiplier=GUILayout.HorizontalSlider(_hungerMultiplier,2f,20f);
+                GUILayout.BeginHorizontal();if(CapabilityButton("AMPLIFY SELECTED",FeatureCapability.HungerAmplifier,_danger,34))Owner(NetCommand.SetHungerAmplifier,new object[]{true,_hungerMultiplier});if(CapabilityButton("NORMAL RATE",FeatureCapability.HungerAmplifier,_button,34))Owner(NetCommand.SetHungerAmplifier,new object[]{false,2f});GUILayout.EndHorizontal();
+                GUILayout.Label("Exact multiplier for compatible owners. The host can use bounded native Hunger pulses on unmodded targets.",_small);
             });
             Card(new Rect(238, 522, 310, 168), "⌖  Teleport", new Color(.43f, .66f, .64f), delegate
             {
@@ -480,13 +495,16 @@ namespace PeakTrollMod
                 GUILayout.Label(_plugin.LuggageNavigation.LuggageStatus,_small);
                 GUILayout.Label("Search range  "+Mathf.RoundToInt(_plugin.Settings.RealLuggageMaximumDistance.Value)+" m",_small);_plugin.Settings.RealLuggageMaximumDistance.Value=GUILayout.HorizontalSlider(_plugin.Settings.RealLuggageMaximumDistance.Value,25f,2000f);
                 GUILayout.Space(8);
-                Badge(PermissionKind.Anyone);GUILayout.Label("Lighting a campfire returns the lobby to the start.",_small);
-                if(CapabilityButton(_plugin.CampfireTroll.Enabled?"ENABLED — CLICK TO DISABLE":"ENABLE CAMPFIRE TRAP",FeatureCapability.CampfireReset,_plugin.CampfireTroll.Enabled?_success:_danger,34)){_plugin.CampfireTroll.Enabled=!_plugin.CampfireTroll.Enabled;Say("Campfire reset trap "+(_plugin.CampfireTroll.Enabled?"enabled.":"disabled."));}
+                Badge(PermissionKind.Anyone);GUILayout.Label("Choose one trap for the next campfire ignition.",_small);
+                if(CapabilityButton(_plugin.CampfireTroll.Enabled?"RESET TRAP: ENABLED":"ENABLE CAMPFIRE RESET TRAP",FeatureCapability.CampfireReset,_plugin.CampfireTroll.Enabled?_success:_danger,34)){_plugin.CampfireTroll.Enabled=!_plugin.CampfireTroll.Enabled;Say("Campfire reset trap "+(_plugin.CampfireTroll.Enabled?"enabled.":"disabled."));}
+                if(CapabilityButton(_plugin.CampfireTroll.DeathTrapEnabled?"DEATH TRAP: ENABLED":"ENABLE CAMPFIRE DEATH TRAP",FeatureCapability.CampfireDeathTrap,_plugin.CampfireTroll.DeathTrapEnabled?_success:_danger,34)){_plugin.CampfireTroll.DeathTrapEnabled=!_plugin.CampfireTroll.DeathTrapEnabled;Say("Campfire death trap "+(_plugin.CampfireTroll.DeathTrapEnabled?"enabled.":"disabled."));}
+                GUILayout.Label("Death radius  "+_plugin.CampfireTroll.DeathRadius.ToString("0")+" m",_small);_plugin.CampfireTroll.DeathRadius=GUILayout.HorizontalSlider(_plugin.CampfireTroll.DeathRadius,3f,50f);
+                GUILayout.Label("The igniter is affected when inside the radius. Local Immortality still blocks your own death.",_small);
             });
-            Card(new Rect(735,525,493,210),"◉  Mesa Clarity & Rescue",new Color(1f,.65f,.22f),delegate
+            Card(new Rect(735,525,493,210),"◉  Mirage Clarity & Rescue",new Color(1f,.65f,.22f),delegate
             {
-                Badge(PermissionKind.Anyone);GUILayout.Label("Locally hides native Mesa mirage visuals and restores them outside the biome.",_small);
-                if(AnimatedButton(_plugin.LuggageNavigation.AntiMiragesEnabled?"ANTI-MIRAGES: ON":"ANTI-MIRAGES: OFF",_plugin.LuggageNavigation.AntiMiragesEnabled?_success:_button,GUILayout.Height(34))){_plugin.LuggageNavigation.AntiMiragesEnabled=!_plugin.LuggageNavigation.AntiMiragesEnabled;Say("Mesa Anti-Mirages "+(_plugin.LuggageNavigation.AntiMiragesEnabled?"enabled.":"disabled."));}
+                Badge(PermissionKind.Anyone);GUILayout.Label("Locally hides every detected native and mod-created mirage visual.",_small);
+                if(AnimatedButton(_plugin.LuggageNavigation.AntiMiragesEnabled?"ANTI-MIRAGES: ON":"ANTI-MIRAGES: OFF",_plugin.LuggageNavigation.AntiMiragesEnabled?_success:_button,GUILayout.Height(34))){_plugin.LuggageNavigation.AntiMiragesEnabled=!_plugin.LuggageNavigation.AntiMiragesEnabled;Say("Anti-Mirages "+(_plugin.LuggageNavigation.AntiMiragesEnabled?"enabled.":"disabled."));}
                 GUILayout.Label(_plugin.LuggageNavigation.MirageStatus,_small);GUILayout.Space(8);
                 Badge(PermissionKind.EveryoneNeedsMod);GUILayout.Label("Suppresses the summit rescue on compatible clients; the host must be compatible to stop completion.",_small);
                 if(CapabilityButton(_plugin.HelicopterTroll.LocalEnabled?"SUPPRESSION ENABLED":"SUPPRESS SUMMIT HELICOPTER",FeatureCapability.HelicopterSuppression,_plugin.HelicopterTroll.LocalEnabled?_success:_danger,34))Say(_plugin.HelicopterTroll.SetLocalEnabled(!_plugin.HelicopterTroll.LocalEnabled));
@@ -519,7 +537,7 @@ namespace PeakTrollMod
                 if(AnimatedButton("CANCEL COMBO",_button,GUILayout.Height(34))){_plugin.Chaos.StopCombo();Say("Combo cancelled.");}
                 if(_targetAll)GUILayout.Label("Choose one scout; combo sequences do not use ALL.",_small);
             });
-            Card(new Rect(907,220,321,480),"☠  Lobby Presets",new Color(1f,.42f,.2f),delegate
+            Card(new Rect(907,220,321,480),"☠  Presets & Sabotage",new Color(1f,.42f,.2f),delegate
             {
                 Badge(PermissionKind.Anyone);GUILayout.Label("Position Roulette moves every scout to another scout's former position. Nobody stays put.",_small);
                 if(CapabilityButton("POSITION ROULETTE",FeatureCapability.PositionRoulette,_danger,44))Say(_plugin.Network.PositionRoulette(_plugin.Players.Entries));
@@ -527,6 +545,15 @@ namespace PeakTrollMod
                 GUILayout.Label("Count  "+_dynamiteCount,_label);_dynamiteCount=Mathf.RoundToInt(GUILayout.HorizontalSlider(_dynamiteCount,2,64));
                 if(CapabilityButton("ONE LIVE ONE",FeatureCapability.OneLiveOne,_danger,44))StartOneLiveOne();
                 if(AnimatedButton("CANCEL + CLEAR DYNAMITE",_button,GUILayout.Height(34)))Say("Removed "+_plugin.Spawns.ClearLocalDynamite()+" tracked dynamite.");
+                GUILayout.Space(18);Badge(PermissionKind.HostOnly);GUILayout.Label("Summit Saboteur",_label);
+                GUILayout.Label("Secretly waits for the selected scout to approach the final summit, then drops their held item, maxes Hunger, locks stamina, spawns a zombie behind them, and launches them toward the horizon.",_small);
+                GUILayout.Label("Trigger distance  "+_summitTriggerDistance.ToString("0")+" m",_small);_summitTriggerDistance=GUILayout.HorizontalSlider(_summitTriggerDistance,8f,35f);
+                GUILayout.Label("Stamina lock  "+_summitStaminaLock.ToString("0.0")+" s",_small);_summitStaminaLock=GUILayout.HorizontalSlider(_summitStaminaLock,2f,10f);
+                GUILayout.Label("Launch distance  "+_summitLaunchDistance.ToString("0")+" m",_small);_summitLaunchDistance=GUILayout.HorizontalSlider(_summitLaunchDistance,50f,300f);
+                GUI.enabled=!_targetAll&&_plugin.Players.IsHost;if(CapabilityButton(_plugin.SummitSaboteur.Armed?"RE-ARM FOR SELECTED":"ARM SUMMIT SABOTEUR",FeatureCapability.SummitSaboteur,_danger,42))Say(_plugin.SummitSaboteur.Arm(Target(),_summitTriggerDistance,_summitStaminaLock,_summitLaunchDistance));GUI.enabled=true;
+                if(AnimatedButton("CANCEL SUMMIT SABOTEUR",_button,GUILayout.Height(34)))Say(_plugin.SummitSaboteur.Cancel());
+                GUILayout.Label(_plugin.SummitSaboteur.Status,_small);
+                if(_targetAll)GUILayout.Label("Choose one scout; Summit Saboteur does not use ALL.",_small);
             });
         }
 
@@ -600,7 +627,7 @@ namespace PeakTrollMod
                 GUILayout.BeginHorizontal();
                 GUILayout.BeginVertical(GUILayout.Width(300)); GUI.enabled=!_plugin.StaminaEffectPreview.StandaloneDetected; _plugin.Settings.StaminaEffectPreviewEnabled.Value=GUILayout.Toggle(_plugin.Settings.StaminaEffectPreviewEnabled.Value,"Held-item Stamina Preview"); GUI.enabled=true; GUILayout.Label(_plugin.StaminaEffectPreview.Status,_small); GUILayout.EndVertical();
                 GUILayout.BeginVertical(GUILayout.Width(300)); GUI.enabled=_plugin.Settings.StaminaEffectPreviewEnabled.Value&&!_plugin.StaminaEffectPreview.StandaloneDetected; _plugin.Settings.StaminaEffectPreviewDetails.Value=GUILayout.Toggle(_plugin.Settings.StaminaEffectPreviewDetails.Value,"Detailed condition changes"); GUI.enabled=true; GUILayout.Label("Shows the result before consumption",_small); GUILayout.EndVertical();
-                GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.LuggageNavigation.DirectionsEnabled=GUILayout.Toggle(_plugin.LuggageNavigation.DirectionsEnabled,"Real Luggage Directions"); _plugin.LuggageNavigation.AntiMiragesEnabled=GUILayout.Toggle(_plugin.LuggageNavigation.AntiMiragesEnabled,"Mesa Anti-Mirages"); GUILayout.EndVertical();
+                GUILayout.BeginVertical(GUILayout.Width(300)); _plugin.LuggageNavigation.DirectionsEnabled=GUILayout.Toggle(_plugin.LuggageNavigation.DirectionsEnabled,"Real Luggage Directions"); _plugin.LuggageNavigation.AntiMiragesEnabled=GUILayout.Toggle(_plugin.LuggageNavigation.AntiMiragesEnabled,"Anti-Mirages"); GUILayout.EndVertical();
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal(); GUI.enabled=!Photon.Pun.PhotonNetwork.InRoom&&!_plugin.UnlimitedLobby.StandaloneDetected; GUILayout.Label("Unlimited lobby cap  " + _plugin.UnlimitedLobby.MaxPlayers, _small, GUILayout.Width(155)); _plugin.Settings.UnlimitedLobbyMaxPlayers.Value=Mathf.RoundToInt(GUILayout.HorizontalSlider(_plugin.Settings.UnlimitedLobbyMaxPlayers.Value,4,30,GUILayout.Width(220))); GUI.enabled=true; _plugin.Settings.UnlimitedLobbyScaleSupplies.Value=GUILayout.Toggle(_plugin.Settings.UnlimitedLobbyScaleSupplies.Value,"Scale food + backpacks"); GUILayout.EndHorizontal();
                 _plugin.Settings.PreferExternalQualityOfLifeMods.Value = GUILayout.Toggle(_plugin.Settings.PreferExternalQualityOfLifeMods.Value, "Prefer enabled external QoL mods when features overlap");

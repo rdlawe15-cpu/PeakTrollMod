@@ -11,12 +11,13 @@ namespace PeakTrollMod
     internal sealed class TrollNetworkManager : IOnEventCallback
     {
         private const byte EventCode = 197;
-        private const int ProtocolVersion = 6;
+        private const int ProtocolVersion = 9;
         private readonly ManualLogSource _log;
         private readonly PlayerManager _players;
         private readonly PlayerActions _actions;
         private readonly MirageManager _mirages;
         private readonly AudioManager _audio;
+        private readonly HungerAmplifierManager _hungerAmplifier;
         private readonly HashSet<int> _compatible = new HashSet<int>();
         private readonly Dictionary<int, int> _advertisedProtocols = new Dictionary<int, int>();
         private readonly Dictionary<int, string> _advertisedVersions = new Dictionary<int, string>();
@@ -27,9 +28,9 @@ namespace PeakTrollMod
         public int CompatibleCount { get { return _compatible.Count; } }
         public bool HostSupportsRequests { get { return _players.IsHost || (PhotonNetwork.InRoom && PhotonNetwork.MasterClient != null && IsCompatible(PhotonNetwork.MasterClient.ActorNumber)); } }
 
-        public TrollNetworkManager(ManualLogSource log, PlayerManager players, PlayerActions actions, MirageManager mirages, AudioManager audio)
+        public TrollNetworkManager(ManualLogSource log, PlayerManager players, PlayerActions actions, MirageManager mirages, AudioManager audio, HungerAmplifierManager hungerAmplifier)
         {
-            _log = log; _players = players; _actions = actions; _mirages = mirages; _audio = audio;
+            _log = log; _players = players; _actions = actions; _mirages = mirages; _audio = audio; _hungerAmplifier = hungerAmplifier;
             PhotonNetwork.AddCallbackTarget(this); _registered = true;
         }
 
@@ -65,12 +66,30 @@ namespace PeakTrollMod
             if (command == NetCommand.Eliminate) return _actions.EliminateLocal(target);
             if (command == NetCommand.GiveItem) return _actions.GiveItemLocal(target, String(args, 0, string.Empty, 128));
             if (command == NetCommand.Status && _players.IsHost && Int(args, 0, 0) != 7 && Int(args, 0, 0) != 9 && Int(args, 0, 0) != 12) return _actions.ApplyStatusAsHost(target, Int(args, 0, 0), Float(args, 1, .1f));
+            if (command == NetCommand.SetHungerAmplifier && !target.IsLocal)
+            {
+                bool enabled = Bool(args, 0, false);
+                float multiplier = Mathf.Clamp(Float(args, 1, 5f), 2f, 20f);
+                if (!IsCompatible(target.ActorNumber)) return _hungerAmplifier.SetHostFallback(target, enabled, multiplier);
+                _hungerAmplifier.ResetTarget(target.ActorNumber);
+                return Send(command, target.ActorNumber, new object[] { enabled, multiplier }, new int[] { target.ActorNumber });
+            }
             if (target.IsLocal) return Execute(command, target.ActorNumber, args, target.ActorNumber);
             if (!IsCompatible(target.ActorNumber))
             {
                 return ActionResult.Fail(target.Name + " does not advertise PEAK Troll Mod; this action has no safe vanilla fallback.");
             }
             return Send(command, target.ActorNumber, args, new int[] { target.ActorNumber });
+        }
+
+        public ActionResult SendMindControlCommand(NetCommand command, int recipientActor, object[] args, bool reliable)
+        {
+            if (command != NetCommand.MindControlStart && command != NetCommand.MindControlAck && command != NetCommand.MindControlInput && command != NetCommand.MindControlStop) return ActionResult.Fail("Invalid Mind Control command.");
+            if (!PhotonNetwork.InRoom || PhotonNetwork.LocalPlayer == null) return ActionResult.Fail("Mind Control requires a Photon room.");
+            PlayerEntry recipient = _players.Find(recipientActor);
+            if (recipient == null || recipient.IsLocal) return ActionResult.Fail("Mind Control recipient is unavailable.");
+            if (!IsCompatible(recipientActor)) return ActionResult.Fail(recipient.Name + " needs the same Mind Control protocol.");
+            return Send(command, recipientActor, args, new int[] { recipientActor }, reliable);
         }
 
         public ActionResult RagdollOffMountain(PlayerEntry target, float strength)
@@ -156,9 +175,14 @@ namespace PeakTrollMod
 
         private ActionResult Send(NetCommand command, int targetActor, object[] args, int[] actors)
         {
+            return Send(command, targetActor, args, actors, true);
+        }
+
+        private ActionResult Send(NetCommand command, int targetActor, object[] args, int[] actors, bool reliable)
+        {
             if (!PhotonNetwork.InRoom) return ActionResult.Fail("Not in a Photon room.");
             RaiseEventOptions options = new RaiseEventOptions(); options.TargetActors = actors;
-            bool ok = PhotonNetwork.RaiseEvent(EventCode, Pack(command, targetActor, args), options, SendOptions.SendReliable);
+            bool ok = PhotonNetwork.RaiseEvent(EventCode, Pack(command, targetActor, args), options, reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable);
             return ok ? ActionResult.Ok("Sent " + command + ".") : ActionResult.Fail("Photon rejected " + command + ".");
         }
 
@@ -231,6 +255,12 @@ namespace PeakTrollMod
                 case NetCommand.Knockout: return _actions.KnockoutLocal(target);
                 case NetCommand.Eliminate: return _actions.EliminateLocal(target);
                 case NetCommand.Status: return _actions.ApplyStatusLocal(target, Mathf.Clamp(Int(args, 0, 0), 0, 14), Mathf.Clamp(Float(args, 1, .1f), 0f, 2f));
+                case NetCommand.SetHungerAmplifier: return _hungerAmplifier.Set(Bool(args, 0, false), Mathf.Clamp(Float(args, 1, 5f), 2f, 20f));
+                case NetCommand.SummitSabotageVictim: return TrollModPlugin.Instance == null || TrollModPlugin.Instance.SummitSaboteur == null ? ActionResult.Fail("Summit Saboteur is unavailable.") : TrollModPlugin.Instance.SummitSaboteur.ActivateVictim(Mathf.Clamp(Float(args, 0, 6f), 0f, 10f));
+                case NetCommand.MindControlStart: return TrollModPlugin.Instance == null || TrollModPlugin.Instance.MindControl == null ? ActionResult.Fail("Mind Control is unavailable.") : TrollModPlugin.Instance.MindControl.ReceiveStart(senderActor, Int(args, 0, 0), Mathf.Clamp(Float(args, 1, 60f), 10f, 180f));
+                case NetCommand.MindControlAck: return TrollModPlugin.Instance == null || TrollModPlugin.Instance.MindControl == null ? ActionResult.Fail("Mind Control is unavailable.") : TrollModPlugin.Instance.MindControl.ReceiveAck(senderActor, Int(args, 0, 0), Bool(args, 1, false));
+                case NetCommand.MindControlInput: return TrollModPlugin.Instance == null || TrollModPlugin.Instance.MindControl == null ? ActionResult.Fail("Mind Control is unavailable.") : TrollModPlugin.Instance.MindControl.ReceiveInput(senderActor, Int(args, 0, 0), Mathf.Max(0, Int(args, 1, 0)), Mathf.Clamp(Float(args, 2, 0f), -1f, 1f), Mathf.Clamp(Float(args, 3, 0f), -1f, 1f), Mathf.Clamp(Float(args, 4, 0f), -50f, 50f), Mathf.Clamp(Float(args, 5, 0f), -50f, 50f), Mathf.Clamp(Float(args, 6, 0f), -10f, 10f), Int(args, 7, 0) & int.MaxValue);
+                case NetCommand.MindControlStop: return TrollModPlugin.Instance == null || TrollModPlugin.Instance.MindControl == null ? ActionResult.Fail("Mind Control is unavailable.") : TrollModPlugin.Instance.MindControl.ReceiveStop(senderActor, Int(args, 0, 0));
                 case NetCommand.ClearStatuses: return _actions.ClearModStatusesLocal(target);
                 case NetCommand.GiveItem: return _actions.GiveItemLocal(target, String(args, 0, string.Empty, 128));
                 case NetCommand.Reset: return ResetTarget(target);
@@ -254,7 +284,7 @@ namespace PeakTrollMod
         private static Vector3 V3(object[] a, int i) { Vector3 value = new Vector3(Float(a, i, 0f), Float(a, i + 1, 0f), Float(a, i + 2, 0f)); return Finite(value) ? value : Vector3.zero; }
         private static Vector3 Position(object[] a, int i, Vector3 origin, float maxDistance) { Vector3 value=V3(a,i);Vector3 delta=value-origin;if(delta.magnitude>maxDistance)value=origin+delta.normalized*maxDistance;return value; }
         private static bool Finite(Vector3 value) { return !float.IsNaN(value.x) && !float.IsNaN(value.y) && !float.IsNaN(value.z) && !float.IsInfinity(value.x) && !float.IsInfinity(value.y) && !float.IsInfinity(value.z); }
-        private ActionResult ResetTarget(PlayerEntry target) { _audio.StopForTarget(target.ActorNumber); _audio.RestoreVoice(target.ActorNumber); _mirages.ClearTarget(target.ActorNumber); if(target.IsLocal&&TrollModPlugin.Instance.PhantomPings!=null)TrollModPlugin.Instance.PhantomPings.Cancel(); if(TrollModPlugin.Instance.Appearance!=null)TrollModPlugin.Instance.Appearance.Restore(target); return _actions.ResetLocal(target); }
+        private ActionResult ResetTarget(PlayerEntry target) { _audio.StopForTarget(target.ActorNumber); _audio.RestoreVoice(target.ActorNumber); _mirages.ClearTarget(target.ActorNumber); if(_hungerAmplifier!=null)_hungerAmplifier.ResetTarget(target.ActorNumber); if(TrollModPlugin.Instance.SummitSaboteur!=null)TrollModPlugin.Instance.SummitSaboteur.ResetTarget(target.ActorNumber); if(TrollModPlugin.Instance.MindControl!=null)TrollModPlugin.Instance.MindControl.ResetTarget(target.ActorNumber); if(target.IsLocal&&TrollModPlugin.Instance.PhantomPings!=null)TrollModPlugin.Instance.PhantomPings.Cancel(); if(target.IsLocal&&_hungerAmplifier!=null)_hungerAmplifier.Set(false,2f); if(target.IsLocal&&TrollModPlugin.Instance.SummitSaboteur!=null)TrollModPlugin.Instance.SummitSaboteur.ActivateVictim(0f); if(TrollModPlugin.Instance.Appearance!=null)TrollModPlugin.Instance.Appearance.Restore(target); return _actions.ResetLocal(target); }
 
         public void Dispose() { if (_registered) { PhotonNetwork.RemoveCallbackTarget(this); _registered = false; } }
     }

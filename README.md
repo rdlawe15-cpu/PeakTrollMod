@@ -6,7 +6,7 @@ A private-lobby trolling and chaos toolkit for **PEAK**, controlled through an i
 
 Skip the spectator wait when joining an expedition in progress, monitor the team, open your backpack instantly, use an upgraded spectator mode, resurrect fallen scouts, fly around the mountain, launch friends into the sky, summon enemy ambushes, create unsettling mirages, or combine multiple effects into custom chaos sequences.
 
-Version 0.4.5 is currently in development. It adds a dedicated searchable item-spawner page, held-item and climb stamina forecasts, party supply advice, hotkey conflict diagnosis, effectively unlimited local Rescue Claw reach, real-luggage navigation, Mesa anti-mirage assistance, safe troll-effect cards, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The scheduled GitHub build will be a prerelease.
+Version 0.4.5 adds a dedicated searchable item-spawner page, held-item and climb stamina forecasts, party supply advice, hotkey conflict diagnosis, effectively unlimited local Rescue Claw reach, real-luggage navigation, Anti-Mirages, Mind Control, Amplify Hunger Rates, Summit Saboteur, new campfire traps, safe troll-effect cards, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The GitHub build remains marked as a prerelease while this large update is field-tested.
 
 > Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
 
@@ -32,8 +32,10 @@ Version 0.4.5 is currently in development. It adds a dedicated searchable item-s
 - **Clean Item Spawner** — Search the live PEAK item catalog, choose quantities, give items to a selected scout or yourself, place tracked world items near a scout, and refresh the catalog without leaving the menu.
 - **Held-item Stamina Preview** — Hold a usable item to see its predicted stamina capacity, condition changes, extra stamina, and pass-out risk before consuming it. This local overlay automatically yields to the standalone Effect Preview mod when installed.
 - **Immortality & Infinite Stamina** — Immortality prevents the local scout from dying or fully passing out and continuously clears every negative stamina-bar condition, including carried-weight encumbrance. Infinite Stamina independently refills usable stamina; both toggles live in Player → Health & Status.
+- **Mind Control** — Select one scout and follow them from a third-person camera. A protocol-compatible target receives full normal PEAK movement, camera-look, jump, sprint, crouch, interaction, item-use/drop/switch, ping, and emote input relaying. The host can also use limited native puppet control on unmodded scouts for bounded movement, sprinting, jumping, and crouching; PEAK keeps their own local input active. Pause and voice are never relayed, no desktop input or computer access exists, and F6 releases control.
+- **Amplify Hunger Rates** — Select a player and accelerate hunger from 2× to 20×, or restore the normal rate at any time. Compatible owners receive an exact native-rate multiplier; hosts can also affect unmodded targets through bounded native Hunger-status pulses.
 - **Real Luggage Directions** — Follow a compact direction-and-distance HUD to the nearest unopened genuine luggage. The search uses PEAK's live luggage registry and rejects native `MirageLuggage`, native `Mirage`, and renderer-only mirages created by this mod.
-- **Mesa Anti-Mirages** — Optionally hide native Mesa mirage renderers on the installing client. Original renderer states are cached and restored when disabled, when leaving the Mesa, during scene changes, or on shutdown.
+- **Anti-Mirages** — Hide detected native `MirageLuggage` hierarchies, native `Mirage` particles and referenced objects, and PEAK Troll Mod-created mirages on the installing client wherever they appear. Original renderer states are cached and restored when disabled, during scene changes, or on shutdown.
 - **Non-Modal F7 Menu** — Continue moving while the menu is visible. Movement pauses only while a named text field has keyboard focus; Enter, clicking away, or closing the menu releases that focus. Opening PEAK's pause menu with Escape closes F7 automatically.
 - **Reliable Typography** — Uses PEAK's native Unity IMGUI font with distinct sizing, weight, color, and spacing for headings, labels, descriptions, navigation, and compact HUD information. Bundled Exo 2 and Inter assets are reserved for a future Unity-native font pipeline because runtime font registration corrupts text in the current PEAK build.
 - **Safe Troll Effect Cards** — Inspect a troll effect's target, authority, current strength/count/timing, cleanup behavior, and a small non-executing animation before opening its controls.
@@ -57,8 +59,9 @@ Version 0.4.5 is currently in development. It adds a dedicated searchable item-s
 - **Fake Audio** — Play discovered in-game sounds as targeted 2D or positioned 3D cues.
 - **Item Chaos** — Item Storm, Mandrake Rain, dynamite showers, Wrong Mountain, and One Live One.
 - **Chaos Combo Builder** — Assemble reusable timed sequences from several troll actions.
+- **Summit Saboteur** — Arm a hidden host-controlled trap for one scout's final summit approach. It drops their held item, maxes Hunger, briefly locks stamina, places a targeted zombie behind them, shows a fake recovery notice, and sends them toward the far horizon. Native steps still affect unmodded targets; the stamina lock and notice require their compatible client.
 - **Position Roulette** — Randomly rotate the positions of available scouts.
-- **Campfire Reset Trap** — Return the lobby to the first segment when a campfire is ignited.
+- **Campfire Traps** — Choose between returning the lobby to the first segment or instantly killing every living scout within a configurable 3–50 m radius when a campfire is ignited. The igniter is included when nearby.
 - **Helicopter Suppression** — Suppress the summit rescue presentation for compatible clients.
 - **Cosmetic Controls** — Reversible local all-cosmetics and all-badges toggles without granting platform achievements.
 - **Safe Cleanup** — Tracks mod-created objects and restores reversible state during resets, scene changes, shutdown, or plugin disable.
@@ -95,8 +98,8 @@ When **Prefer enabled external QoL mods** is on, the built-in Team Status Panel 
 
 ## Compatibility
 
-- Mod version: **0.4.5 Development**
-- Networking protocol: **v6**
+- Mod version: **0.4.5**
+- Networking protocol: **v9**
 - Inspected PEAK build: **2.4.b (`3e62ee214`)**
 
 Game updates may change internal APIs or prefab availability. Unsupported capabilities disable themselves instead of relying on guessed game behavior.

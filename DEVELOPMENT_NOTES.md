@@ -35,6 +35,9 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 - **Off Mountain** samples 24 horizontal directions at 3 m intervals using ordinary world raycasts, selects the nearby direction with the strongest ground loss, and otherwise pushes away from the centroid of PEAK's loaded map-segment reconnect points. It uses the same bounded native ragdoll RPC path.
 - Public `PassOutInstantly()` sets the pass-out value and sends `[PunRPC] RPCA_PassOut` to all clients on that character view. Neither path checks host/caller ownership, so Instant Knockout is available to non-host callers and the target does not need the mod.
 - `[PunRPC] Character.RPCA_Die()` is the normal all-client death handler: it marks the character dead, unequips/drops their items, handles skeleton visuals, warps the body to the death position, checks the end game, and emits the death event. It contains no host/caller-ownership gate. Eliminate calls this native RPC on the selected character view, so non-host callers work and the target does not need the mod.
+- `CharacterItems.currentSelectedSlot` exposes the equipped pocket slot and `[PunRPC] DropItemFromSlotRPC(byte,Vector3)` is the verified native drop handler without a sender parameter. Summit Saboteur sends that exact RPC on the selected character's item view and does not destroy the item.
+- `CharacterData.currentStamina` is reduced by `Character.UseStamina`; zero is the exhausted state. Summit Saboteur's compatible-owner step caches current and bonus stamina, holds both at zero for 2–10 seconds, and restores the cached values in its timeout and reset paths. `UI_Notifications.AddNotification(string)` supplies the local fake recovery notice.
+- `CharacterMovement.Update()` invokes `CharacterInput.Sample(bool)` only for the locally owned character, then consumes its public sampled movement/look/action fields through PEAK's normal movement and item systems. Mind Control patches that verified post-sample seam: the controller captures and clears only gameplay fields, the compatible target owner substitutes validated relayed values, and pause/push-to-talk remain untouched. For unmodded targets, the host-only fallback uses PEAK's existing `AddForceAtPosition`, `JumpRpc`, and `RPCA_SetCrouch` replication paths; it cannot suppress the remote owner's input and is deliberately presented as limited puppet control. `MainCameraMovement.LateUpdate()` is followed by a controller-only third-person transform override. No operating-system input, desktop, file, or application API is used.
 
 ### Movement and teleportation
 
@@ -48,6 +51,7 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 ### Status effects
 
 - `CharacterAfflictions.AddStatus(STATUSTYPE,float,bool,bool,bool,bool)` and `SetStatus(STATUSTYPE,float,bool)` are present.
+- `CharacterAfflictions.UpdateNormalStatuses()` reads its public `hungerPerSecond` field in the installed build. For compatible owners, Amplify Hunger Rates patches only that native update, only for the local character, temporarily multiplies the field by a validated 2×–20× value, and restores the original value in a Harmony finalizer. When the caller is host and the remote target is unmodded, a host-side scheduler reads the same native rate, accumulates only the additional multiplier amount, and submits bounded 0.01–0.05 Hunger increments through the verified master-only status RPC. The fallback stops on host loss, player reset, scene change, or global cleanup. Non-host callers cannot safely sustain hunger amplification on an unmodded target.
 - `[PunRPC] RPC_ApplyStatusesFromFloatArray(float[],PhotonMessageInfo)` explicitly accepts only the master client. The mod uses this validated native route when it is host (except Weight, Thorns, and Arrow, which PEAK deliberately excludes); non-host callers continue to require a compatible target owner.
 - Discovered `STATUSTYPE` values: `Injury`, `Hunger`, `Cold`, `Poison`, `Crab`, `Curse`, `Drowsy`, `Weight`, `Hot`, `Thorns`, `Spores`, `Web`, `Arrow`, `Petrify`, `FlyTrap`.
 - The game method enforces ownership/invincibility/status locks and clamps against its own status caps. The mod additionally clamps requested amounts to 0.01–1.0 and tracks only mod-applied statuses for reset.
@@ -104,7 +108,9 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 | No Wait / resurrection | 🟢 Anyone | Native `RPCA_ReviveAtPosition` broadcast clears death/pass-out state and warps the target; host and target mod not required |
 | Quick Reconnect | 🟢 Local | Saves the current `IMatchmakingAPI.LobbyId` and calls PEAK's public `SteamLobbyHandler.TryJoinLobby`, preserving native lobby lookup and version validation |
 | Emergency Recovery | 🟢 Local | Tracks only stable grounded positions, uses native safe warps/revive, and halts registered ragdoll velocity before and after movement |
-| Speed / Flight | 🟡 Everyone Needs Mod | Request sent only to compatible target owner; flight caches and restores registered rigidbody gravity/velocity limits |
+| Speed / Flight / Hunger Amplifier | 🟡 Everyone Needs Mod / 🔒 Host fallback | Compatible owners apply the exact multiplier; the host may use PEAK's master-authorized status RPC for unmodded hunger targets |
+| Summit Saboteur | 🔒 Host Only / 🟡 partial target step | Host watches the final reconnect point, runs native item/Hunger/zombie/launch steps, and asks only a compatible target owner to render the notice and temporary stamina lock |
+| Mind Control | 🟠 Host fallback / 🟡 full mode | Host-only native puppet control works on unmodded targets for bounded movement/jump/crouch; compatible targets receive acknowledged normal gameplay inputs at 20 Hz. F6 releases and packet loss fails closed. |
 | Statuses | 🔒 Host native / 🟡 non-host | PEAK validates the host sender natively; otherwise a compatible target owner executes the normal path |
 | Visibility | 🟡 Everyone Needs Mod | Compatible observers apply/restore cached renderer state locally |
 | Mirage Scout, props, fake enemies, fake sound | 🟡 Everyone Needs Mod | Intended victim renders/plays locally; no real identity/entity created |
@@ -116,18 +122,19 @@ Assembly metadata was inspected with the BepInEx-shipped Mono.Cecil. The impleme
 
 - `Peak.Network.NetworkingUtilities.MAX_PLAYERS` and the parameterless `HostRoomOptions()` method are the two room-cap sources used by the current inspected build. The built-in v0.4.5 option patches only these entry points, clamps the requested cap to 4–30, and applies it to newly hosted rooms.
 - Campfire supply scaling runs only for the Photon master client, uses runtime-discovered Marshmallow and Backpack item prefabs, accounts only for players above the vanilla four-player baseline, and adds food as late joiners increase the room count.
+- `Campfire.Light_Rpc(bool updateSegment, float burningFor)` is the verified ignition RPC in the installed build. Campfire Death Trap runs once per observed campfire instance, bounds its radius to 3–50 m, filters already-dead or invalid-position scouts, and routes each affected character through the verified native `RPCA_Die` action. Death mode takes precedence over the reset trap if both config values are externally enabled; local Immortality still protects the installing scout.
 - The built-in implementation scans loaded BepInEx plugin identity and assembly names and yields completely when the standalone PEAK Unlimited plugin is present, preventing competing room-option or provision patches.
 
-### Luggage navigation and Mesa mirages
+### Luggage navigation and mirages
 
 - `Luggage.ALL_LUGGAGE` is PEAK's public live `List<Luggage>` registry, and `Luggage.IsOpen` identifies already-used containers. Real Luggage Directions searches this registry at a bounded interval and never scans or guesses prefab names.
 - False native containers carry the verified `MirageLuggage` component; broader biome illusions carry `Mirage`. The luggage search rejects either component in the candidate's parent/child hierarchy. PEAK Troll Mod's own luggage mirages are renderer-only objects without a `Luggage` component and are therefore naturally absent from the real-luggage registry.
-- `MapHandler.GetCurrentBiome()` returns the verified `Biome.BiomeType` enum, which includes `Mesa`. Anti-Mirages activates only when the current value is `Mesa`.
-- Anti-Mirages caches and disables renderer state referenced by live scene `MirageLuggage` and `Mirage` components. Small postfixes reapply suppression after PEAK's native mirage updates; disabling the option, leaving the Mesa, changing scenes, or shutting down restores only those cached renderer states.
+- Anti-Mirages is client-only and remains active wherever verified mirage components appear; the persistent config key retains its older `MesaAntiMirages` name for migration-free compatibility.
+- Anti-Mirages caches and disables complete live-scene `MirageLuggage` renderer hierarchies, `Mirage` particle renderers and referenced object hierarchies, and this mod's tracked renderer-only mirages. Small postfixes reapply suppression after PEAK's native mirage updates; disabling the option, changing scenes, or shutting down restores only those cached renderer states.
 
 ## Network validation
 
-- Custom Photon event code 197, exact protocol 6 / mod version `0.4.5` development.
+- Custom Photon event code 197, exact protocol 9 / mod version `0.4.5` development.
 - Sender must resolve to a player in the current room.
 - Target actor must resolve to a participating character.
 - Command enum, argument count/type, enum range, string length, position type, speed, force, duration, volume, status, and object limits are checked or clamped.
