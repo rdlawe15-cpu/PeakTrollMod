@@ -78,10 +78,32 @@ namespace PeakTrollMod
         public readonly ConfigEntry<float> MindControlCameraDistance;
         public readonly ConfigEntry<float> MindControlHostPuppetForce;
         public readonly ConfigEntry<KeyboardShortcut> MindControlEscapeKey;
+        public readonly ConfigEntry<bool> InfiniteJetpackFuelEnabled;
+        public readonly ConfigEntry<bool> BiggerBackpackEnabled;
+        public readonly ConfigEntry<bool> BackpackProtectionEnabled;
+        public readonly ConfigEntry<bool> StartAsSkeletonEnabled;
+        public readonly ConfigEntry<bool> ScoutCompassEnabled;
+        public readonly ConfigEntry<bool> ScoutEspEnabled;
+        public readonly ConfigEntry<bool> LuggageEspEnabled;
+        public readonly ConfigEntry<bool> ZombieEspEnabled;
+        public readonly ConfigEntry<bool> ScoutmasterEspEnabled;
+        public readonly ConfigEntry<bool> EspLabelsEnabled;
+        public readonly ConfigEntry<bool> EspTracersEnabled;
+        public readonly ConfigEntry<float> EspMaximumDistance;
+        public readonly ConfigEntry<float> EspOutlineWidth;
+        public readonly ConfigEntry<string> ScoutEspColor;
+        public readonly ConfigEntry<string> LuggageEspColor;
+        public readonly ConfigEntry<string> ZombieEspColor;
+        public readonly ConfigEntry<string> ScoutmasterEspColor;
+        public readonly ConfigEntry<string> ActiveProfileName;
+        public readonly ConfigEntry<string> SavedProfileCode;
+        public readonly ConfigEntry<bool> AntiSoftlockDoctorEnabled;
+        public readonly ConfigEntry<float> AntiSoftlockDetectionDelay;
+        public readonly ConfigEntry<string> DirectorScenarioCode;
 
         public ModConfig(ConfigFile config)
         {
-            MenuKey = config.Bind("UI", "MenuKey", new KeyboardShortcut(KeyCode.F7), "Open or close the troll menu.");
+            MenuKey = config.Bind("UI", "MenuKey", new KeyboardShortcut(KeyCode.F7), "Open or close the PEAK Troll Mod menu.");
             UiScale = config.Bind("UI", "Scale", 1.0f, "UI scale (0.75-1.5).");
             Transparency = config.Bind("UI", "Transparency", 0.96f, "Window opacity (0.55-1.0).");
             ConfirmDestructive = config.Bind("Safety", "ConfirmDestructiveActions", true, "Require a second click for elimination and bulk reset.");
@@ -154,6 +176,28 @@ namespace PeakTrollMod
             MindControlCameraDistance = config.Bind("Mind Control", "ThirdPersonCameraDistance", 5.5f, "Controller's third-person follow-camera distance in metres (3-10).");
             MindControlHostPuppetForce = config.Bind("Mind Control", "HostPuppetForce", 2.5f, "Bounded native movement force for host-only control of unmodded scouts (1-8).");
             MindControlEscapeKey = config.Bind("Mind Control", "ReleaseKey", new KeyboardShortcut(KeyCode.F6), "Immediately release or break free from an active Mind Control session.");
+            InfiniteJetpackFuelEnabled = config.Bind("Player", "InfiniteJetpackFuel", false, "Keep the locally equipped Jetpack at its native maximum fuel and restore its original fuel when disabled.");
+            BiggerBackpackEnabled = config.Bind("Quality of Life", "BiggerBackpack", false, "Expand the local Backpack to eight slots and Fanny Pack to four slots. Extra slots require this mod to display on other clients.");
+            BackpackProtectionEnabled = config.Bind("Quality of Life", "BackpackProtection", false, "Prevent other scouts from withdrawing items from your equipped backpack when you or the current host runs a compatible protocol.");
+            StartAsSkeletonEnabled = config.Bind("Player", "StartAsSkeleton", false, "Start each island expedition with PEAK's native Book of Bones skeleton state.");
+            ScoutCompassEnabled = config.Bind("ESP", "ScoutCompass", false, "Show the direction and distance to the nearest other living scout.");
+            ScoutEspEnabled = config.Bind("ESP", "Scouts", false, "Draw local through-wall outlines around other scouts.");
+            LuggageEspEnabled = config.Bind("ESP", "Luggage", false, "Draw local through-wall outlines around unopened genuine luggage.");
+            ZombieEspEnabled = config.Bind("ESP", "Zombies", false, "Draw local through-wall outlines around loaded Mushroom Zombies.");
+            ScoutmasterEspEnabled = config.Bind("ESP", "Scoutmaster", false, "Draw local through-wall outlines around loaded Scoutmasters.");
+            EspLabelsEnabled = config.Bind("ESP", "Labels", true, "Show category/name and distance labels above ESP outlines.");
+            EspTracersEnabled = config.Bind("ESP", "Tracers", false, "Draw colored lines from the bottom-center of the screen to highlighted ESP targets.");
+            EspMaximumDistance = config.Bind("ESP", "MaximumDistance", 600f, "Maximum ESP rendering distance in metres (25-2000).");
+            EspOutlineWidth = config.Bind("ESP", "OutlineWidth", 2f, "ESP outline and tracer thickness (1-8 pixels).");
+            ScoutEspColor = config.Bind("ESP Colors", "Scout", "#40FFC7", "Scout ESP outline color as #RRGGBB.");
+            LuggageEspColor = config.Bind("ESP Colors", "Luggage", "#FFC233", "Luggage ESP outline color as #RRGGBB.");
+            ZombieEspColor = config.Bind("ESP Colors", "Zombie", "#FF4040", "Zombie ESP outline color as #RRGGBB.");
+            ScoutmasterEspColor = config.Bind("ESP Colors", "Scoutmaster", "#B861FF", "Scoutmaster ESP outline color as #RRGGBB.");
+            ActiveProfileName = config.Bind("Profiles", "ActiveProfileName", "Custom", "Display name of the last applied or saved PEAK Troll Mod profile.");
+            SavedProfileCode = config.Bind("Profiles", "SavedProfileCode", string.Empty, "Portable code for the last saved PEAK Troll Mod profile.");
+            AntiSoftlockDoctorEnabled = config.Bind("Anti-Softlock", "Enabled", true, "Detect likely local softlocks and offer explicit safe recovery actions.");
+            AntiSoftlockDetectionDelay = config.Bind("Anti-Softlock", "DetectionDelay", 10f, "Seconds a suspicious state must persist before the doctor recommends a repair (6-30).");
+            DirectorScenarioCode = config.Bind("Expedition Director", "LastScenarioCode", string.Empty, "Last validated PTMD1 scenario code exported or imported through Expedition Director.");
         }
     }
 }

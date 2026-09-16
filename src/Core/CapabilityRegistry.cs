@@ -47,12 +47,17 @@ namespace PeakTrollMod
             Need(FeatureCapability.ComboBuilder, Available(FeatureCapability.Ragdoll) && Available(FeatureCapability.Knockout) && Available(FeatureCapability.SkyLaunch), "one or more native combo action paths are missing");
             Need(FeatureCapability.SummitSaboteur, Available(FeatureCapability.StartEndTeleport) && Available(FeatureCapability.HorizonLaunch) && Available(FeatureCapability.DropHeldItem) && Available(FeatureCapability.MushroomZombieSpawn) && ReflectionHelpers.Method(typeof(CharacterAfflictions), "RPC_ApplyStatusesFromFloatArray", new Type[] { typeof(float[]), typeof(Photon.Pun.PhotonMessageInfo) }) != null && typeof(UI_Notifications).GetMethod("AddNotification") != null, "summit reference, native drop/Hunger/launch path, loaded zombie prefab, or notification path missing");
             Need(FeatureCapability.MindControl, ReflectionHelpers.Method(typeof(CharacterInput), "Sample", new Type[] { typeof(bool) }) != null && ReflectionHelpers.Method(typeof(MainCameraMovement), "LateUpdate", Type.EmptyTypes) != null && ReflectionHelpers.HasField(typeof(CharacterInput), "movementInput") && ReflectionHelpers.HasField(typeof(CharacterInput), "lookInput"), "owned CharacterInput sampling or third-person camera update path missing");
+            Need(FeatureCapability.InfiniteJetpackFuel, ReflectionHelpers.HasField(typeof(JetpackItem), "startingFuel") && typeof(ItemSlot).GetProperty("data") != null && ReflectionHelpers.HasField(typeof(FloatItemData), "Value"), "Jetpack starting fuel or backpack instance-data path missing");
+            Need(FeatureCapability.BiggerBackpack, ReflectionHelpers.HasField(typeof(BackpackData), "itemSlots") && ReflectionHelpers.Method(typeof(BackpackData), "DeserializeValue", new Type[] { typeof(Zorro.Core.Serizalization.BinaryDeserializer) }) != null && ReflectionHelpers.Method(typeof(BackpackWheel), "InitWheel", new Type[] { typeof(BackpackReference), typeof(int), typeof(BackpackSlot.BackpackType) }) != null, "variable backpack data or radial-wheel initialization path missing");
+            Need(FeatureCapability.BackpackProtection, ReflectionHelpers.Method(typeof(Item), "RequestPickup", new Type[] { typeof(Photon.Pun.PhotonView) }) != null && ReflectionHelpers.HasField(typeof(Item), "backpackReference") && ReflectionHelpers.HasField(typeof(BackpackReference), "view"), "master pickup or equipped-backpack reference path missing");
+            Need(FeatureCapability.StartAsSkeleton, ReflectionHelpers.Method(typeof(CharacterData), "SetSkeleton", new Type[] { typeof(bool) }) != null && typeof(CharacterData).GetProperty("isSkeleton") != null, "native Book of Bones skeleton state path missing");
             Need(FeatureCapability.CampfireReset, ReflectionHelpers.Method(typeof(Campfire), "Light_Rpc", new Type[] { typeof(bool), typeof(float) }) != null && Available(FeatureCapability.StartEndTeleport) && Available(FeatureCapability.Teleport), "campfire ignition or native start-warp path missing");
             Need(FeatureCapability.CampfireDeathTrap, ReflectionHelpers.Method(typeof(Campfire), "Light_Rpc", new Type[] { typeof(bool), typeof(float) }) != null && Available(FeatureCapability.Eliminate), "campfire ignition or native death RPC path missing");
             Need(FeatureCapability.HelicopterSuppression, ReflectionHelpers.Method(typeof(PeakHandler), "SummonHelicopter", Type.EmptyTypes) != null && ReflectionHelpers.HasField(typeof(PeakHandler), "summonedHelicopter"), "summit helicopter summon path missing");
             Need(FeatureCapability.Mandrake, Available(FeatureCapability.ItemStorm) && HasLoadedItem("Mandrake"), "no loaded network Mandrake item prefab");
             Need(FeatureCapability.ScoutmasterSpawn, ReflectionHelpers.HasMethod(typeof(Scoutmaster), "SetCurrentTarget", typeof(Character), typeof(float)), "Scoutmaster.SetCurrentTarget missing");
-            Need(FeatureCapability.MushroomZombieSpawn, FindZombiePrefab() != null, "no loaded MushroomZombieSpawner prefab reference");
+            string zombiePrefabName;
+            Need(FeatureCapability.MushroomZombieSpawn, SpawnManager.TryResolveZombiePrefabName(out zombiePrefabName), "verified Mushroom Zombie resource unavailable");
             Need(FeatureCapability.LookerSpawn, false, "no verified network prefab path in PEAK 2.4.b");
             Need(FeatureCapability.PingPlacement, ReflectionHelpers.HasMethod(typeof(PointPinger), "TryGetPingHit", typeof(RaycastHit).MakeByRefType(), typeof(Vector3)), "PointPinger.TryGetPingHit missing");
             Need(FeatureCapability.PhantomPings, ReflectionHelpers.HasMethod(typeof(PointPinger), "ReceivePoint_Rpc", typeof(Vector3), typeof(Vector3)) && ReflectionHelpers.HasField(typeof(PointPinger), "character"), "PointPinger.ReceivePoint_Rpc or character reference missing");
@@ -83,12 +88,6 @@ namespace PeakTrollMod
             Item[] items = Resources.FindObjectsOfTypeAll<Item>();
             for (int i = 0; i < items.Length; i++) if (items[i] != null && items[i].gameObject != null && items[i].gameObject.name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0) return true;
             return false;
-        }
-        private static MushroomZombie FindZombiePrefab()
-        {
-            MushroomZombieSpawner[] spawners = Resources.FindObjectsOfTypeAll<MushroomZombieSpawner>();
-            for (int i = 0; i < spawners.Length; i++) if (spawners[i] != null && spawners[i].mushroomZombiePrefab != null) return spawners[i].mushroomZombiePrefab;
-            return null;
         }
         public bool Available(FeatureCapability feature) { return !_unavailable.ContainsKey(feature); }
         public string Reason(FeatureCapability feature) { string value; return _unavailable.TryGetValue(feature, out value) ? value : string.Empty; }

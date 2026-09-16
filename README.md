@@ -2,13 +2,31 @@
 
 [![Download latest release](https://img.shields.io/badge/Download-Latest%20Release-2ea44f?style=for-the-badge&logo=github)](https://github.com/rdlawe15-cpu/PeakTrollMod/releases/latest)
 
-A private-lobby trolling and chaos toolkit for **PEAK**, controlled through an in-game menu opened with **F7**.
+**An all-in-one BepInEx 5 mod for PEAK.** Open the polished in-game control center with **F7** and configure the experience without juggling a pile of separate menus.
 
-Skip the spectator wait when joining an expedition in progress, monitor the team, open your backpack instantly, use an upgraded spectator mode, resurrect fallen scouts, fly around the mountain, launch friends into the sky, summon enemy ambushes, create unsettling mirages, or combine multiple effects into custom chaos sequences.
+PEAK Troll Mod combines everyday quality-of-life improvements, accessibility controls, team navigation, lobby management, recovery tools, practice utilities, inventory upgrades, item spawning, visual customization, and an optional private-lobby chaos suite. v0.5.0 expands the project into a broader all-in-one mod without removing its personality.
 
-Version 0.4.5 adds a dedicated searchable item-spawner page, held-item and climb stamina forecasts, party supply advice, hotkey conflict diagnosis, effectively unlimited local Rescue Claw reach, real-luggage navigation, Anti-Mirages, Mind Control, Amplify Hunger Rates, Summit Saboteur, new campfire traps, safe troll-effect cards, an optional unlimited-lobby mode, and persistent Favorites & Recent Actions. The GitHub build remains marked as a prerelease while this large update is field-tested.
+## Expedition Director
 
-> Use only in private/cooperative lobbies where everyone is comfortable with modded antics.
+Expedition Director is v0.5.0's headline feature: a host-controlled custom-game system for complete PEAK rounds.
+
+- Run **Zombie Outbreak**, **Survival**, **Rescue Rush**, **Hardcore**, or **Chaos Climb**, or configure a custom scenario.
+- Tune round duration, event interval, starting/adaptive difficulty, active-enemy cap, zombie waves, Scoutmaster events, supply drops, automatic rescues, and chaos pulses.
+- Track every scout's live/down/dead state and altitude alongside score, rescues, deaths, event count, current difficulty, next event, and Director-owned threats.
+- Pause, resume, stop, and clean a round without deleting unrelated mod-spawned objects.
+- Export or import bounded `PTMD1` scenario codes. The host can offer rules to compatible lobby members, who must explicitly accept or decline before their local scenario configuration changes.
+- Director gameplay uses host-authorized native PEAK paths where available; compatibility labels remain visible and unmodded clients are never sent custom packets.
+
+Version 0.5.0 is currently in development. It adds Scout Compass, customizable ESP, Infinite Jetpack Fuel, Bigger Backpack, Backpack Protection, and Start as Skeleton while retaining the complete v0.4.5 item, survival, mobility, mirage, sabotage, and smart quality-of-life toolset.
+
+> Cooperative tools work well for ordinary expeditions. Player-targeted and chaos features should be used only in private lobbies where everyone is comfortable with modded antics.
+
+## Why Install It?
+
+- **One menu, one configuration** for QoL, accessibility, navigation, lobby tools, practice assists, items, cosmetics, and optional chaos.
+- **Useful with unmodded friends** wherever PEAK exposes a safe native path, with clear compatibility labels when another client or the host needs PEAK Troll Mod.
+- **Profiles and lobby sync** make it easy for a group to agree on the same setup without silently changing anyone's settings.
+- **Fail-safe behavior** keeps unsupported actions disabled, bounds disruptive effects, and restores state created or cached by the mod.
 
 ## v0.4 Quality-of-Life Bundle
 
@@ -32,6 +50,15 @@ Version 0.4.5 adds a dedicated searchable item-spawner page, held-item and climb
 - **Clean Item Spawner** — Search the live PEAK item catalog, choose quantities, give items to a selected scout or yourself, place tracked world items near a scout, and refresh the catalog without leaving the menu.
 - **Held-item Stamina Preview** — Hold a usable item to see its predicted stamina capacity, condition changes, extra stamina, and pass-out risk before consuming it. This local overlay automatically yields to the standalone Effect Preview mod when installed.
 - **Immortality & Infinite Stamina** — Immortality prevents the local scout from dying or fully passing out and continuously clears every negative stamina-bar condition, including carried-weight encumbrance. Infinite Stamina independently refills usable stamina; both toggles live in Player → Health & Status.
+- **Infinite Jetpack Fuel** — Keeps the locally equipped Jetpack at its native maximum fuel while enabled. Disabling the option, unequipping the Jetpack, resetting effects, or changing scenes restores the fuel value that existed before the option took control.
+- **Bigger Backpack** — Expands the Backpack from four to eight usable slots and the Fanny Pack from two to four. Turning it off restores the native capacity once every extra slot is empty, preventing hidden-item loss; compatible clients preserve all expanded slots while unmodded clients safely see only PEAK's native slots.
+- **Backpack Protection** — Locks withdrawals from your equipped Backpack or Fanny Pack while still allowing you to take your own items. The setting is enforced by PEAK's authoritative pickup host, so it works against ordinary unmodded scouts when you are host or the current host runs the same protocol; an unmodded host cannot enforce another client's lock.
+- **Skeleton Controls** — Start your living local scout on each island or instantly transform one selected living scout using PEAK's real synchronized Book of Bones skeleton state. Neither action consumes or spawns the book or triggers its item-use achievement. A paired Restore Human action and global cleanup revert only transformations tracked as menu-applied, while disabling Start as Skeleton restores only its own current transformation.
+- **Scout Compass** — Shows the direction, distance, and name of the nearest other living scout so separated teammates can find their way back without opening the menu.
+- **Customizable ESP** — A dedicated ESP page independently highlights real scouts, unopened genuine luggage, Mushroom Zombies, and Scoutmasters with local 3D wire outlines that remain visible through walls. Toggle labels and bottom-center tracers, then customize each category's RGB color, maximum range, and line thickness.
+- **One-Click Profiles** — Apply Vanilla+, Accessibility, Large Lobby, or Practice presets, save the current PEAK Troll Mod setup under a custom name, and export or import a bounded portable profile code. Profiles contain only an explicit allowlist of PEAK Troll Mod settings and never edit another plugin's configuration.
+- **Consent-Based Lobby Sync** — A compatible host can offer its current profile to the lobby. Each recipient reviews the named offer and must explicitly accept or decline; settings are never silently applied, and the host receives an acceptance summary.
+- **Anti-Softlock Doctor** — Locally monitors stalled initialization, invalid coordinates, prolonged incapacitation, and motionless off-ground states. It recommends an appropriate existing recovery path but never teleports, revives, stabilizes, or resets state without an explicit click.
 - **Mind Control** — Select one scout and follow them from a third-person camera. A protocol-compatible target receives full normal PEAK movement, camera-look, jump, sprint, crouch, interaction, item-use/drop/switch, ping, and emote input relaying. The host can also use limited native puppet control on unmodded scouts for bounded movement, sprinting, jumping, and crouching; PEAK keeps their own local input active. Pause and voice are never relayed, no desktop input or computer access exists, and F6 releases control.
 - **Amplify Hunger Rates** — Select a player and accelerate hunger from 2× to 20×, or restore the normal rate at any time. Compatible owners receive an exact native-rate multiplier; hosts can also affect unmodded targets through bounded native Hunger-status pulses.
 - **Real Luggage Directions** — Follow a compact direction-and-distance HUD to the nearest unopened genuine luggage. The search uses PEAK's live luggage registry and rejects native `MirageLuggage`, native `Mirage`, and renderer-only mirages created by this mod.
@@ -55,8 +82,9 @@ Version 0.4.5 adds a dedicated searchable item-spawner page, held-item and climb
 - **Resurrection Controls** — Revive the selected scout, yourself, or queue the whole fallen party at safe intervals through PEAK's native synchronized revive path; the caller does not need to be host and the target does not need the mod.
 - **Player Effects** — Reversible owner-controlled flight, ragdoll, knockout, launch, Horizontal Yeet, Sky High, Far Horizon, Off Mountain, teleportation, status effects, and movement-speed controls. Far Horizon sends the selected scout 25–300 m outward through the same bounded native warp/ragdoll path as Sky High.
 - **Fake Enemies and Mirages** — Create visual-only scouts, luggage, statues, creatures, and enemy decoys with configurable behaviors.
-- **Enemy Ambushes** — Spawn and track supported real enemies when host authority and runtime prefabs are available.
+- **Enemy Ambushes** — Spawn and track supported real enemies with host authority. Mushroom Zombies use PEAK's verified global resource path, so they can be spawned outside the Roots and in any biome.
 - **Fake Audio** — Play discovered in-game sounds as targeted 2D or positioned 3D cues.
+- **Responsive Menu Audio** — Every enabled menu button plays a bundled local click sound alongside its hover glow and press animation.
 - **Item Chaos** — Item Storm, Mandrake Rain, dynamite showers, Wrong Mountain, and One Live One.
 - **Chaos Combo Builder** — Assemble reusable timed sequences from several troll actions.
 - **Summit Saboteur** — Arm a hidden host-controlled trap for one scout's final summit approach. It drops their held item, maxes Hunger, briefly locks stamina, places a targeted zombie behind them, shows a fake recovery notice, and sends them toward the far horizon. Native steps still affect unmodded targets; the stamina lock and notice require their compatible client.
@@ -76,6 +104,8 @@ The menu labels actions by their authority requirements:
 - **Unsupported** — Disabled when PEAK does not expose a reliable compatible API.
 
 Some native PEAK actions—including resurrection, recovery warps, ragdoll, knockout, teleport, and several item effects—can affect unmodded targets. No Wait and Quick Reconnect operate on the installing client. Phantom Pings, mirages, fake audio, and other mod-rendered effects require compatible clients.
+
+Backpack Protection can reject an unmodded scout's normal withdrawal because the compatible host intercepts PEAK's authoritative pickup request. If the protected backpack owner is not host and the host is unmodded or on another protocol, protection is advertised but cannot be enforced.
 
 For the best experience, have everyone install the same version before joining the lobby.
 
@@ -98,8 +128,8 @@ When **Prefer enabled external QoL mods** is on, the built-in Team Status Panel 
 
 ## Compatibility
 
-- Mod version: **0.4.5**
-- Networking protocol: **v9**
+- Mod version: **0.5.0 Development**
+- Networking protocol: **v12**
 - Inspected PEAK build: **2.4.b (`3e62ee214`)**
 
 Game updates may change internal APIs or prefab availability. Unsupported capabilities disable themselves instead of relying on guessed game behavior.

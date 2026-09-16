@@ -11,7 +11,7 @@ namespace PeakTrollMod
         MirageScout, FakeEnemyScoutmaster, FakeEnemyZombie, FakeEnemyLooker, FakeAudio,
         AppearanceSwap, VoiceSwap, IncomingVoiceMute, TalkWhileKnockedOut, PoisonCloud, SporeCloud, ZombieTargeting,
         DynamiteShower, ItemStorm, SkyLaunch, HorizonLaunch, WrongMountain, CosmeticUnlocks, BadgeUnlocks,
-        PositionRoulette, OneLiveOne, ComboBuilder, SummitSaboteur, MindControl, CampfireReset, CampfireDeathTrap, HelicopterSuppression, PhantomPings
+        PositionRoulette, OneLiveOne, ComboBuilder, SummitSaboteur, MindControl, InfiniteJetpackFuel, BiggerBackpack, BackpackProtection, StartAsSkeleton, CampfireReset, CampfireDeathTrap, HelicopterSuppression, PhantomPings
     }
 
     internal enum PermissionKind { Anyone, EveryoneNeedsMod, HostOnly, Unsupported }
@@ -24,7 +24,8 @@ namespace PeakTrollMod
         HostSpawnScoutmaster = 17, HostSpawnZombie = 18, HostClearRequestedSpawns = 19,
         MirageProp = 20, SetHelicopterSuppression = 21, PhantomPings = 22, CancelPhantomPings = 23,
         Flight = 24, SetHungerAmplifier = 25, SummitSabotageVictim = 26,
-        MindControlStart = 27, MindControlAck = 28, MindControlInput = 29, MindControlStop = 30
+        MindControlStart = 27, MindControlAck = 28, MindControlInput = 29, MindControlStop = 30,
+        ProfileOffer = 31, ProfileResponse = 32, DirectorScenarioOffer = 33, DirectorScenarioResponse = 34
     }
 
     internal enum MirageKind { Luggage, AmuletStatue, CapybaraPool, Scout, FakeEnemy }
@@ -33,6 +34,8 @@ namespace PeakTrollMod
     internal enum PhantomPingPattern { BreadcrumbTrail, Circle, BehindYou }
     internal enum NoWaitDestination { NearestLiving, LowestLiving, Checkpoint }
     internal enum MenuActivationMode { Toggle, Hold }
+    internal enum ExpeditionMode { ZombieOutbreak, Survival, RescueRush, Hardcore, ChaosClimb, Custom }
+    internal enum DirectorRoundState { Stopped, Running, Paused, Completed, Failed }
 
     internal sealed class ActionResult
     {

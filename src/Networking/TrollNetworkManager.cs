@@ -11,7 +11,7 @@ namespace PeakTrollMod
     internal sealed class TrollNetworkManager : IOnEventCallback
     {
         private const byte EventCode = 197;
-        private const int ProtocolVersion = 9;
+        private const int ProtocolVersion = 12;
         private readonly ManualLogSource _log;
         private readonly PlayerManager _players;
         private readonly PlayerActions _actions;
@@ -22,6 +22,7 @@ namespace PeakTrollMod
         private readonly Dictionary<int, int> _advertisedProtocols = new Dictionary<int, int>();
         private readonly Dictionary<int, string> _advertisedVersions = new Dictionary<int, string>();
         private readonly Dictionary<int, bool> _advertisedReady = new Dictionary<int, bool>();
+        private readonly Dictionary<int, bool> _advertisedBackpackProtection = new Dictionary<int, bool>();
         private bool _localReady;
         private float _nextHello;
         private bool _registered;
@@ -36,16 +37,19 @@ namespace PeakTrollMod
 
         public void Tick()
         {
-            if (!PhotonNetwork.InRoom) { _compatible.Clear(); _advertisedProtocols.Clear(); _advertisedVersions.Clear(); _advertisedReady.Clear(); _localReady=false; return; }
-            if (PhotonNetwork.LocalPlayer != null) { int actor=PhotonNetwork.LocalPlayer.ActorNumber; _compatible.Add(actor); _advertisedProtocols[actor]=ProtocolVersion; _advertisedVersions[actor]=TrollModPlugin.Version; _advertisedReady[actor]=_localReady; }
-            if (Time.unscaledTime >= _nextHello) { _nextHello = Time.unscaledTime + 5f; Broadcast(NetCommand.Hello, Pack(NetCommand.Hello, PhotonNetwork.LocalPlayer.ActorNumber, new object[] { ProtocolVersion, TrollModPlugin.Version, _localReady }), true); }
+            if (!PhotonNetwork.InRoom) { _compatible.Clear(); _advertisedProtocols.Clear(); _advertisedVersions.Clear(); _advertisedReady.Clear(); _advertisedBackpackProtection.Clear(); _localReady=false; return; }
+            bool protection = TrollModPlugin.Instance != null && TrollModPlugin.Instance.BackpackProtection != null && TrollModPlugin.Instance.BackpackProtection.Enabled;
+            if (PhotonNetwork.LocalPlayer != null) { int actor=PhotonNetwork.LocalPlayer.ActorNumber; _compatible.Add(actor); _advertisedProtocols[actor]=ProtocolVersion; _advertisedVersions[actor]=TrollModPlugin.Version; _advertisedReady[actor]=_localReady; _advertisedBackpackProtection[actor]=protection; }
+            if (Time.unscaledTime >= _nextHello) { _nextHello = Time.unscaledTime + 5f; Broadcast(NetCommand.Hello, Pack(NetCommand.Hello, PhotonNetwork.LocalPlayer.ActorNumber, new object[] { ProtocolVersion, TrollModPlugin.Version, _localReady, protection }), true); }
         }
 
         public bool IsCompatible(int actor) { return _compatible.Contains(actor); }
         public bool HasAdvertisement(int actor) { return _advertisedProtocols.ContainsKey(actor); }
         public bool IsReady(int actor) { bool ready; return _advertisedReady.TryGetValue(actor,out ready)&&ready; }
+        public bool IsBackpackProtected(int actor) { bool enabled; return _compatible.Contains(actor) && _advertisedBackpackProtection.TryGetValue(actor,out enabled) && enabled; }
         public bool LocalReady { get { return _localReady; } }
         public void SetLocalReady(bool ready) { _localReady=ready;_nextHello=0f; }
+        public void RefreshLocalAdvertisement() { _nextHello=0f; if(PhotonNetwork.LocalPlayer!=null)_advertisedBackpackProtection[PhotonNetwork.LocalPlayer.ActorNumber]=TrollModPlugin.Instance!=null&&TrollModPlugin.Instance.BackpackProtection!=null&&TrollModPlugin.Instance.BackpackProtection.Enabled; }
         public string CompatibilityStatus(int actor)
         {
             int protocol; string version;
@@ -178,6 +182,38 @@ namespace PeakTrollMod
             return Send(command, targetActor, args, actors, true);
         }
 
+        public ActionResult OfferLobbyProfile(string name, string code)
+        {
+            if (!_players.IsHost || PhotonNetwork.LocalPlayer == null) return ActionResult.Fail("Only the current host can offer a lobby profile.");
+            if (string.IsNullOrEmpty(code) || code.Length > 4096) return ActionResult.Fail("The profile code is empty or too large.");
+            RaiseEventOptions options = new RaiseEventOptions(); options.Receivers = ReceiverGroup.Others;
+            int actor = PhotonNetwork.LocalPlayer.ActorNumber;
+            bool ok = PhotonNetwork.RaiseEvent(EventCode, Pack(NetCommand.ProfileOffer, actor, new object[] { SafeString(name,32), code }), options, SendOptions.SendReliable);
+            return ok ? ActionResult.Ok("Offered profile " + SafeString(name,32) + " to compatible lobby members.") : ActionResult.Fail("Photon rejected the profile offer.");
+        }
+
+        public ActionResult RespondLobbyProfile(int hostActor, bool accepted, string name)
+        {
+            if (!PhotonNetwork.InRoom || PhotonNetwork.MasterClient == null || PhotonNetwork.MasterClient.ActorNumber != hostActor) return ActionResult.Fail("The offering host is no longer available.");
+            return Send(NetCommand.ProfileResponse, hostActor, new object[] { accepted, SafeString(name,32) }, new int[] { hostActor });
+        }
+
+        public ActionResult OfferDirectorScenario(string name, string code)
+        {
+            if (!_players.IsHost || PhotonNetwork.LocalPlayer == null) return ActionResult.Fail("Only the current host can offer a Director scenario.");
+            if (string.IsNullOrEmpty(code) || code.Length > 512) return ActionResult.Fail("The Director scenario code is empty or too large.");
+            RaiseEventOptions options = new RaiseEventOptions(); options.Receivers = ReceiverGroup.Others;
+            int actor = PhotonNetwork.LocalPlayer.ActorNumber;
+            bool ok = PhotonNetwork.RaiseEvent(EventCode, Pack(NetCommand.DirectorScenarioOffer, actor, new object[] { SafeString(name,32), code }), options, SendOptions.SendReliable);
+            return ok ? ActionResult.Ok("Offered " + SafeString(name,32) + " rules to compatible lobby members.") : ActionResult.Fail("Photon rejected the Director scenario offer.");
+        }
+
+        public ActionResult RespondDirectorScenario(int hostActor, bool accepted, string name)
+        {
+            if (!PhotonNetwork.InRoom || PhotonNetwork.MasterClient == null || PhotonNetwork.MasterClient.ActorNumber != hostActor) return ActionResult.Fail("The offering host is no longer available.");
+            return Send(NetCommand.DirectorScenarioResponse, hostActor, new object[] { accepted, SafeString(name,32) }, new int[] { hostActor });
+        }
+
         private ActionResult Send(NetCommand command, int targetActor, object[] args, int[] actors, bool reliable)
         {
             if (!PhotonNetwork.InRoom) return ActionResult.Fail("Not in a Photon room.");
@@ -217,6 +253,7 @@ namespace PeakTrollMod
                 string version = args.Length > 1 && args[1] is string ? (string)args[1] : string.Empty;
                 _advertisedVersions[photonEvent.Sender] = version.Length > 32 ? version.Substring(0,32) : version;
                 _advertisedReady[photonEvent.Sender] = args.Length > 2 && args[2] is bool && (bool)args[2];
+                _advertisedBackpackProtection[photonEvent.Sender] = protocol == ProtocolVersion && args.Length > 3 && args[3] is bool && (bool)args[3];
                 if (protocol == ProtocolVersion) _compatible.Add(photonEvent.Sender); else _compatible.Remove(photonEvent.Sender);
                 return;
             }
@@ -228,6 +265,30 @@ namespace PeakTrollMod
 
         private ActionResult Execute(NetCommand command, int targetActor, object[] args, int senderActor)
         {
+            if (command == NetCommand.ProfileOffer)
+            {
+                if (PhotonNetwork.MasterClient == null || senderActor != PhotonNetwork.MasterClient.ActorNumber || targetActor != senderActor) return ActionResult.Fail("Rejected invalid profile offer authority.");
+                if (args == null || args.Length != 2 || !(args[0] is string) || !(args[1] is string) || ((string)args[1]).Length > 4096) return ActionResult.Fail("Rejected malformed profile offer.");
+                return TrollModPlugin.Instance == null || TrollModPlugin.Instance.LobbyProfileSync == null ? ActionResult.Fail("Lobby profile sync is unavailable.") : TrollModPlugin.Instance.LobbyProfileSync.ReceiveOffer(senderActor, SafeString((string)args[0],32), (string)args[1]);
+            }
+            if (command == NetCommand.ProfileResponse)
+            {
+                if (!_players.IsHost || PhotonNetwork.LocalPlayer == null || targetActor != PhotonNetwork.LocalPlayer.ActorNumber) return ActionResult.Fail("Rejected profile response on a non-host target.");
+                if (args == null || args.Length != 2 || !(args[0] is bool) || !(args[1] is string)) return ActionResult.Fail("Rejected malformed profile response.");
+                return TrollModPlugin.Instance == null || TrollModPlugin.Instance.LobbyProfileSync == null ? ActionResult.Fail("Lobby profile sync is unavailable.") : TrollModPlugin.Instance.LobbyProfileSync.ReceiveResponse(senderActor, (bool)args[0], SafeString((string)args[1],32));
+            }
+            if (command == NetCommand.DirectorScenarioOffer)
+            {
+                if (PhotonNetwork.MasterClient == null || senderActor != PhotonNetwork.MasterClient.ActorNumber || targetActor != senderActor) return ActionResult.Fail("Rejected invalid Director scenario authority.");
+                if (args == null || args.Length != 2 || !(args[0] is string) || !(args[1] is string) || ((string)args[1]).Length > 512) return ActionResult.Fail("Rejected malformed Director scenario offer.");
+                return TrollModPlugin.Instance == null || TrollModPlugin.Instance.Director == null ? ActionResult.Fail("Expedition Director is unavailable.") : TrollModPlugin.Instance.Director.ReceiveOffer(senderActor, SafeString((string)args[0],32), (string)args[1]);
+            }
+            if (command == NetCommand.DirectorScenarioResponse)
+            {
+                if (!_players.IsHost || PhotonNetwork.LocalPlayer == null || targetActor != PhotonNetwork.LocalPlayer.ActorNumber) return ActionResult.Fail("Rejected Director response on a non-host target.");
+                if (args == null || args.Length != 2 || !(args[0] is bool) || !(args[1] is string)) return ActionResult.Fail("Rejected malformed Director response.");
+                return TrollModPlugin.Instance == null || TrollModPlugin.Instance.Director == null ? ActionResult.Fail("Expedition Director is unavailable.") : TrollModPlugin.Instance.Director.ReceiveResponse(senderActor, (bool)args[0], SafeString((string)args[1],32));
+            }
             if (command == NetCommand.SetHelicopterSuppression)
             {
                 if (TrollModPlugin.Instance != null && TrollModPlugin.Instance.HelicopterTroll != null) TrollModPlugin.Instance.HelicopterTroll.SetRemote(senderActor, Bool(args, 0, false));
@@ -281,6 +342,7 @@ namespace PeakTrollMod
         private static int Int(object[] a, int i, int d) { return a != null && i < a.Length && a[i] is int ? (int)a[i] : d; }
         private static bool Bool(object[] a, int i, bool d) { return a != null && i < a.Length && a[i] is bool ? (bool)a[i] : d; }
         private static string String(object[] a, int i, string d, int max) { string value = a != null && i < a.Length && a[i] is string ? (string)a[i] : d; return value.Length <= max ? value : value.Substring(0, max); }
+        private static string SafeString(string value, int max) { if (string.IsNullOrEmpty(value)) return string.Empty; value=value.Replace("\r"," ").Replace("\n"," "); return value.Length<=max?value:value.Substring(0,max); }
         private static Vector3 V3(object[] a, int i) { Vector3 value = new Vector3(Float(a, i, 0f), Float(a, i + 1, 0f), Float(a, i + 2, 0f)); return Finite(value) ? value : Vector3.zero; }
         private static Vector3 Position(object[] a, int i, Vector3 origin, float maxDistance) { Vector3 value=V3(a,i);Vector3 delta=value-origin;if(delta.magnitude>maxDistance)value=origin+delta.normalized*maxDistance;return value; }
         private static bool Finite(Vector3 value) { return !float.IsNaN(value.x) && !float.IsNaN(value.y) && !float.IsNaN(value.z) && !float.IsInfinity(value.x) && !float.IsInfinity(value.y) && !float.IsInfinity(value.z); }

@@ -27,6 +27,8 @@ namespace PeakTrollMod
             public readonly Dictionary<Renderer, bool> Renderers = new Dictionary<Renderer, bool>();
             public readonly HashSet<CharacterAfflictions.STATUSTYPE> Statuses = new HashSet<CharacterAfflictions.STATUSTYPE>();
             public readonly Dictionary<CharacterAfflictions.STATUSTYPE, float> HostStatusDeltas = new Dictionary<CharacterAfflictions.STATUSTYPE, float>();
+            public bool SkeletonApplied;
+            public float SkeletonApplyGraceUntil;
         }
         private sealed class FlightBodyState
         {
@@ -204,6 +206,13 @@ namespace PeakTrollMod
 
         public void Tick()
         {
+            foreach (KeyValuePair<int, CachedState> pair in _states)
+            {
+                CachedState state = pair.Value;
+                if (!state.SkeletonApplied || Time.unscaledTime < state.SkeletonApplyGraceUntil) continue;
+                PlayerEntry target = _players.Find(pair.Key);
+                if (target == null || target.Character == null || target.Character.data == null || !target.Character.data.isSkeleton) state.SkeletonApplied = false;
+            }
             for (int i = _wrongMountainJobs.Count - 1; i >= 0; i--)
             {
                 WrongMountainJob job = _wrongMountainJobs[i];
@@ -520,6 +529,35 @@ namespace PeakTrollMod
             catch (Exception ex) { return Error("Eliminate", ex); }
         }
 
+        public ActionResult SetSkeletonState(PlayerEntry target, bool skeleton)
+        {
+            if (!_capabilities.Available(FeatureCapability.StartAsSkeleton)) return Missing(FeatureCapability.StartAsSkeleton);
+            if (target == null || target.Character == null || target.Character.data == null) return ActionResult.Fail("Target skeleton state is unavailable.");
+            if (skeleton && (target.Character.data.dead || target.Character.data.fullyPassedOut)) return ActionResult.Fail(target.Name + " must be alive before becoming a skeleton.");
+            CachedState state;
+            if (!skeleton)
+            {
+                if (!_states.TryGetValue(target.ActorNumber, out state) || !state.SkeletonApplied) return ActionResult.Fail("No menu-applied skeleton transformation is tracked for " + target.Name + ".");
+                try
+                {
+                    target.Character.data.SetSkeleton(false);
+                    state.SkeletonApplied = false;
+                    return ActionResult.Ok("Restored " + target.Name + " through PEAK's native skeleton RPC.");
+                }
+                catch (Exception ex) { return Error("Restore skeleton", ex); }
+            }
+            if (target.Character.data.isSkeleton) return ActionResult.Ok(target.Name + " is already a skeleton; their existing state was left unchanged.");
+            try
+            {
+                target.Character.data.SetSkeleton(true);
+                state = State(target);
+                state.SkeletonApplied = true;
+                state.SkeletonApplyGraceUntil = Time.unscaledTime + 2f;
+                return ActionResult.Ok("Made " + target.Name + " a skeleton through PEAK's native Book of Bones state; no host or target mod required.");
+            }
+            catch (Exception ex) { return Error("Make skeleton", ex); }
+        }
+
         public ActionResult ApplyStatusLocal(PlayerEntry target, int statusIndex, float amount)
         {
             if (!_capabilities.Available(FeatureCapability.StatusEffects)) return Missing(FeatureCapability.StatusEffects);
@@ -669,6 +707,12 @@ namespace PeakTrollMod
             if (target.Character.refs != null && target.Character.refs.afflictions != null)
                 foreach (CharacterAfflictions.STATUSTYPE status in state.Statuses) target.Character.refs.afflictions.SetStatus(status, 0f, true);
             if (_players.IsHost && state.HostStatusDeltas.Count > 0) ClearHostStatuses(target);
+            if (state.SkeletonApplied && target.Character.data != null)
+            {
+                try { target.Character.data.SetSkeleton(false); }
+                catch (Exception ex) { _log.LogWarning("Tracked skeleton cleanup failed safely: " + ex.Message); }
+            }
+            state.SkeletonApplied = false;
             _states.Remove(target.ActorNumber);
             return ActionResult.Ok("Restored reversible changes for " + target.Name + ".");
         }

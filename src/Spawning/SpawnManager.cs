@@ -8,7 +8,9 @@ namespace PeakTrollMod
 {
     internal sealed class SpawnManager
     {
-        private sealed class TrackedSpawn { public GameObject Object; public int CreatorActor; public int TargetActor; public bool IsDynamite; public bool IsItemStorm; }
+        private const string ZombieResourcePath = "mushroomzombie";
+        private static string _verifiedZombiePrefabName;
+        private sealed class TrackedSpawn { public GameObject Object; public int CreatorActor; public int TargetActor; public bool IsDynamite; public bool IsItemStorm; public bool IsDirector; }
         private sealed class DynamiteShowerJob
         {
             public int TargetActor;
@@ -46,6 +48,7 @@ namespace PeakTrollMod
         private float _nextOrphanCheck;
         private float _nextTargetRefresh;
         public int Count { get { Prune(); return _tracked.Count; } }
+        public int DirectorEnemyCount { get { Prune(); int count = 0; for (int i = 0; i < _tracked.Count; i++) if (_tracked[i].IsDirector && !_tracked[i].IsItemStorm && !_tracked[i].IsDynamite) count++; return count; } }
         public int DynamiteCount { get { Prune(); int count = 0; for (int i = 0; i < _tracked.Count; i++) if (_tracked[i].IsDynamite) count++; return count; } }
         public int ItemStormCount { get { Prune(); int count = 0; for (int i = 0; i < _tracked.Count; i++) if (_tracked[i].IsItemStorm) count++; return count; } }
         public SpawnManager(ManualLogSource log, PlayerManager players, CapabilityRegistry capabilities) { _log = log; _players = players; _capabilities = capabilities; }
@@ -54,6 +57,12 @@ namespace PeakTrollMod
         { return SpawnScoutmaster(target, distance, _players.Local == null ? 0 : _players.Local.ActorNumber); }
 
         public ActionResult SpawnScoutmaster(PlayerEntry target, float distance, int creatorActor)
+        { return SpawnScoutmaster(target, distance, creatorActor, false); }
+
+        public ActionResult SpawnDirectorScoutmaster(PlayerEntry target, float distance)
+        { return SpawnScoutmaster(target, distance, _players.Local == null ? 0 : _players.Local.ActorNumber, true); }
+
+        private ActionResult SpawnScoutmaster(PlayerEntry target, float distance, int creatorActor, bool director)
         {
             if (target == null || target.Character == null) return ActionResult.Fail("Select an individual target.");
             if (!_players.IsHost) return ActionResult.Fail("Host authority is required.");
@@ -63,7 +72,7 @@ namespace PeakTrollMod
             {
                 Vector3 pos = Nearby(target, distance); GameObject go = PhotonNetwork.InstantiateRoomObject("Character_Scoutmaster", pos, Quaternion.identity, 0, null);
                 ForceTarget(go,target,300f);
-                Track(go, creatorActor, target.ActorNumber); return ActionResult.Ok("Spawned tracked Scoutmaster targeting " + target.Name + ".");
+                Track(go, creatorActor, target.ActorNumber, false, false, director); return ActionResult.Ok("Spawned tracked Scoutmaster targeting " + target.Name + ".");
             }
             catch (Exception ex) { _log.LogWarning("Scoutmaster spawn failed: " + ex); return ActionResult.Fail(ex.Message); }
         }
@@ -76,7 +85,7 @@ namespace PeakTrollMod
             if (target == null || target.Character == null || target.Character.data == null) return ActionResult.Fail("Select one available target.");
             if (!_players.IsHost) return ActionResult.Fail("Host authority is required.");
             if (!CanSpawn()) return ActionResult.Fail("Maximum mod-spawned object count reached.");
-            MushroomZombie prefab = FindZombiePrefab(); if (prefab == null) return ActionResult.Fail("No runtime zombie prefab reference is loaded.");
+            string prefabName; if (!TryResolveZombiePrefabName(out prefabName)) return ActionResult.Fail("The verified Mushroom Zombie resource could not be loaded.");
             try
             {
                 distance = Mathf.Clamp(distance, 4f, 12f);
@@ -84,7 +93,7 @@ namespace PeakTrollMod
                 if (!PlayerActions.Finite(backward) || backward.sqrMagnitude < .01f) backward = Vector3.back;
                 Vector3 desired = target.Character.Center + backward.normalized * distance + Vector3.up * 3f;
                 RaycastHit hit; Vector3 position = Physics.Raycast(desired, Vector3.down, out hit, 12f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) ? hit.point + Vector3.up * .2f : desired;
-                GameObject go = PhotonNetwork.Instantiate(prefab.gameObject.name, position, Quaternion.identity, 0, null);
+                GameObject go = PhotonNetwork.Instantiate(prefabName, position, Quaternion.identity, 0, null);
                 ForceTarget(go, target, 300f);
                 int creator = _players.Local == null ? 0 : _players.Local.ActorNumber;
                 Track(go, creator, target.ActorNumber);
@@ -94,25 +103,53 @@ namespace PeakTrollMod
         }
 
         public ActionResult SpawnZombie(PlayerEntry target, float distance, int creatorActor)
+        { return SpawnZombie(target, distance, creatorActor, false); }
+
+        public ActionResult SpawnDirectorZombie(PlayerEntry target, float distance)
+        { return SpawnZombie(target, distance, _players.Local == null ? 0 : _players.Local.ActorNumber, true); }
+
+        private ActionResult SpawnZombie(PlayerEntry target, float distance, int creatorActor, bool director)
         {
             if (target == null || target.Character == null) return ActionResult.Fail("Select an individual target.");
             if (!_players.IsHost) return ActionResult.Fail("Host authority is required.");
             if (!CanSpawn()) return ActionResult.Fail("Maximum mod-spawned object count reached.");
-            MushroomZombie prefab = FindZombiePrefab(); if (prefab == null) return ActionResult.Fail("No runtime zombie prefab reference is loaded.");
+            string prefabName; if (!TryResolveZombiePrefabName(out prefabName)) return ActionResult.Fail("The verified Mushroom Zombie resource could not be loaded.");
             try
             {
-                Vector3 pos = Nearby(target, distance); GameObject go = PhotonNetwork.Instantiate(prefab.gameObject.name, pos, Quaternion.identity, 0, null);
+                Vector3 pos = Nearby(target, distance); GameObject go = PhotonNetwork.Instantiate(prefabName, pos, Quaternion.identity, 0, null);
                 ForceTarget(go,target,300f);
-                Track(go, creatorActor, target.ActorNumber); return ActionResult.Ok("Spawned tracked Mushroom Zombie targeting " + target.Name + ".");
+                Track(go, creatorActor, target.ActorNumber, false, false, director); return ActionResult.Ok("Spawned tracked Mushroom Zombie targeting " + target.Name + ".");
             }
             catch (Exception ex) { _log.LogWarning("Zombie spawn failed: " + ex); return ActionResult.Fail(ex.Message); }
         }
 
-        private static MushroomZombie FindZombiePrefab()
+        internal static bool TryResolveZombiePrefabName(out string prefabName)
         {
+            if (!string.IsNullOrEmpty(_verifiedZombiePrefabName)) { prefabName = _verifiedZombiePrefabName; return true; }
             MushroomZombieSpawner[] spawners = Resources.FindObjectsOfTypeAll<MushroomZombieSpawner>();
-            for (int i = 0; i < spawners.Length; i++) if (spawners[i] != null && spawners[i].mushroomZombiePrefab != null) return spawners[i].mushroomZombiePrefab;
-            return null;
+            for (int i = 0; i < spawners.Length; i++)
+            {
+                if (spawners[i] == null || spawners[i].mushroomZombiePrefab == null || spawners[i].mushroomZombiePrefab.gameObject == null) continue;
+                _verifiedZombiePrefabName = spawners[i].mushroomZombiePrefab.gameObject.name;
+                prefabName = _verifiedZombiePrefabName;
+                return !string.IsNullOrEmpty(prefabName);
+            }
+
+            GameObject resource = Resources.Load<GameObject>(ZombieResourcePath);
+            if (resource != null)
+            {
+                MushroomZombie zombie = resource.GetComponent<MushroomZombie>();
+                if (zombie == null) zombie = resource.GetComponentInChildren<MushroomZombie>(true);
+                if (zombie != null)
+                {
+                    _verifiedZombiePrefabName = ZombieResourcePath;
+                    prefabName = _verifiedZombiePrefabName;
+                    return true;
+                }
+            }
+
+            prefabName = null;
+            return false;
         }
 
         public ActionResult StartDynamiteShower(PlayerEntry target, int count, float height, float spread, float interval, bool lightFuses)
@@ -226,6 +263,30 @@ namespace PeakTrollMod
             catch (Exception ex) { _log.LogWarning("World item spawn failed safely: " + ex.Message); return ActionResult.Fail(ex.Message); }
         }
 
+        public ActionResult SpawnDirectorSupply(PlayerEntry target)
+        {
+            if (target == null || target.Character == null) return ActionResult.Fail("No living scout is available for a supply drop.");
+            if (!PhotonNetwork.InRoom || PhotonNetwork.LocalPlayer == null) return ActionResult.Fail("Join a Photon room before spawning supplies.");
+            if (!CanSpawnItemStorm()) return ActionResult.Fail("The configured network-item cap has been reached.");
+            List<string> prefabs = FindItemPrefabNames();
+            string[] tokens = { "Marshmallow", "First Aid", "Bandage", "Energy", "Cure", "Antidote" };
+            List<string> supplies = new List<string>();
+            for (int i = 0; i < prefabs.Count; i++) for (int j = 0; j < tokens.Length; j++) if (prefabs[i].IndexOf(tokens[j], StringComparison.OrdinalIgnoreCase) >= 0) { supplies.Add(prefabs[i]); break; }
+            if (supplies.Count == 0) return ActionResult.Fail("No supported supply item is loaded in this biome.");
+            string prefabName = supplies[UnityEngine.Random.Range(0, supplies.Count)];
+            Vector2 offset = UnityEngine.Random.insideUnitCircle * 2f;
+            Vector3 position = target.Character.Center + new Vector3(offset.x, 1.5f, offset.y);
+            try
+            {
+                GameObject go = PhotonNetwork.Instantiate("0_Items/" + prefabName, position, UnityEngine.Random.rotation, 0, null);
+                if (go == null) throw new InvalidOperationException("Photon returned no supply object.");
+                Item item = go.GetComponent<Item>(); if (item != null) item.SetKinematicNetworked(false, position, go.transform.rotation);
+                Track(go, PhotonNetwork.LocalPlayer.ActorNumber, 0, go.GetComponent<Dynamite>() != null, true, true);
+                return ActionResult.Ok("Dropped " + prefabName + " near " + target.Name + ".");
+            }
+            catch (Exception ex) { _log.LogWarning("Director supply drop failed safely: " + ex.Message); return ActionResult.Fail(ex.Message); }
+        }
+
         private static List<string> FindItemPrefabNames()
         {
             Item[] items = Resources.FindObjectsOfTypeAll<Item>();
@@ -291,7 +352,8 @@ namespace PeakTrollMod
         private void Track(GameObject go, int creatorActor, int targetActor) { Track(go, creatorActor, targetActor, false, false); }
         private void Track(GameObject go, int creatorActor, bool isDynamite) { Track(go, creatorActor, 0, isDynamite, false); }
         private void Track(GameObject go, int creatorActor, bool isDynamite, bool isItemStorm) { Track(go, creatorActor, 0, isDynamite, isItemStorm); }
-        private void Track(GameObject go, int creatorActor, int targetActor, bool isDynamite, bool isItemStorm) { if (go != null) { go.name = "PTM_TRACKED_" + go.name; _tracked.Add(new TrackedSpawn { Object=go, CreatorActor=creatorActor, TargetActor=targetActor, IsDynamite=isDynamite, IsItemStorm=isItemStorm }); _log.LogInfo("Tracking troll spawn view " + (go.GetComponent<PhotonView>() == null ? 0 : go.GetComponent<PhotonView>().ViewID) + " requested by actor " + creatorActor + (targetActor > 0 ? " targeting actor " + targetActor : string.Empty)); } }
+        private void Track(GameObject go, int creatorActor, int targetActor, bool isDynamite, bool isItemStorm) { Track(go, creatorActor, targetActor, isDynamite, isItemStorm, false); }
+        private void Track(GameObject go, int creatorActor, int targetActor, bool isDynamite, bool isItemStorm, bool isDirector) { if (go != null) { go.name = "PTM_TRACKED_" + go.name; _tracked.Add(new TrackedSpawn { Object=go, CreatorActor=creatorActor, TargetActor=targetActor, IsDynamite=isDynamite, IsItemStorm=isItemStorm, IsDirector=isDirector }); _log.LogInfo("Tracking troll spawn view " + (go.GetComponent<PhotonView>() == null ? 0 : go.GetComponent<PhotonView>().ViewID) + " requested by actor " + creatorActor + (targetActor > 0 ? " targeting actor " + targetActor : string.Empty) + (isDirector ? " for Expedition Director" : string.Empty)); } }
         private void Prune() { for (int i = _tracked.Count - 1; i >= 0; i--) if (_tracked[i].Object == null) _tracked.RemoveAt(i); }
 
         public void Tick()
@@ -390,6 +452,19 @@ namespace PeakTrollMod
                 try { PhotonView view = go.GetComponent<PhotonView>(); if (!_players.IsHost && view != null && !view.IsMine) continue; if (view != null && view.ViewID != 0) PhotonNetwork.Destroy(go); else UnityEngine.Object.Destroy(go); _tracked.RemoveAt(i); }
                 catch (Exception ex) { _log.LogWarning("Tracked spawn cleanup failed: " + ex.Message); }
             }
+        }
+
+        public int ClearDirectorSpawns()
+        {
+            Prune(); int removed = 0;
+            for (int i = _tracked.Count - 1; i >= 0; i--)
+            {
+                if (!_tracked[i].IsDirector) continue;
+                GameObject go = _tracked[i].Object;
+                try { if (go != null) { PhotonView view = go.GetComponent<PhotonView>(); if (view != null && view.ViewID != 0) PhotonNetwork.Destroy(go); else UnityEngine.Object.Destroy(go); } _tracked.RemoveAt(i); removed++; }
+                catch (Exception ex) { _log.LogWarning("Director spawn cleanup failed: " + ex.Message); }
+            }
+            return removed;
         }
 
         public int ClearLocalDynamite()
